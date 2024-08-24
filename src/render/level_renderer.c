@@ -1,23 +1,28 @@
 #include "./level_renderer.h"
 
-#include <GL/gl.h>
 #include <assert.h>
 #include <stdlib.h>
 
+#include <GL/glew.h>
+#include <GL/gl.h>
+
+#include "../rudyscung.h"
+#include "../world/chunk.h"
+#include "../world/level.h"
+#include "../util.h"
 #include "./chunk_renderer.h"
 #include "./tessellator.h"
 #include "./shaders.h"
 #include "./shader.h"
 #include "./textures.h"
-#include "../util.h"
 #include "camera.h"
 
 #define CHUNK_COORD(x, y, z) (((y) * self->size_z * self->size_x) + ((z) * self->size_x) + (x))
-#define TO_CHUNK_SPACE(coord) ((coord) / CHUNK_SIZE)
-#define TO_TILE_SPACE(coord) ((coord) * CHUNK_SIZE)
+#define TO_CHUNK_SPACE(tile_coord) ((tile_coord) / CHUNK_SIZE)
+#define TO_TILE_SPACE(chunk_coord) ((chunk_coord) * CHUNK_SIZE)
 
 struct level_renderer {
-    textures_t* textures;
+    rudyscung_t* rudyscung;
     level_t const* level;
     size_chunks_t size_x;
     size_chunks_t size_y;
@@ -27,13 +32,13 @@ struct level_renderer {
     bool all_ready;
 };
 
-level_renderer_t* const level_renderer_new(textures_t* const textures, level_t const* const level) {
+level_renderer_t* const level_renderer_new(rudyscung_t* const rudyscung, level_t const* const level) {
     assert(level != nullptr);
 
     level_renderer_t* const self = malloc(sizeof(level_renderer_t));
     assert(self != nullptr);
 
-    self->textures = textures;
+    self->rudyscung = rudyscung;
     self->level = level;
 
     size_chunks_t size[3];
@@ -51,7 +56,7 @@ level_renderer_t* const level_renderer_new(textures_t* const textures, level_t c
         for (size_chunks_t y = 0; y < self->size_y; y++) {
             for (size_chunks_t z = 0; z < self->size_z; z++) {
                 chunk_t const* const chunk = level_get_chunk(level, x, y, z);
-                self->chunk_renderers[CHUNK_COORD(x, y, z)] = chunk_renderer_new(chunk);
+                self->chunk_renderers[CHUNK_COORD(x, y, z)] = chunk_renderer_new(self, chunk);
                 assert(self->chunk_renderers[CHUNK_COORD(x, y, z)] != nullptr);
             }
         }
@@ -103,7 +108,8 @@ void level_renderer_tick(level_renderer_t* const self) {
 void level_renderer_draw(level_renderer_t const* const self, camera_t const* const camera) {
     assert(self != nullptr);
 
-    shader_t* const shader = shaders_get("main");
+    shaders_t* const shaders = rudyscung_get_shaders(self->rudyscung);
+    shader_t* const shader = shaders_get(shaders, "main");
     shader_bind(shader);
 
     float camera_pos[3];
@@ -115,7 +121,7 @@ void level_renderer_draw(level_renderer_t const* const self, camera_t const* con
     mat4x4_identity(mat_view);
     mat4x4_rotate(mat_view, mat_view, 1.0f, 0.0f, 0.0f, camera_rot[1]);
     mat4x4_rotate(mat_view, mat_view, 0.0f, 1.0f, 0.0f, camera_rot[0]);
-    mat4x4_translate_in_place(mat_view, camera_pos[0], camera_pos[1], camera_pos[2]);
+    mat4x4_translate_in_place(mat_view, camera_pos[0], -camera_pos[1], camera_pos[2]);
     shader_put_uniform_mat4x4(shader, "view", mat_view);
 
     mat4x4 mat_proj;
@@ -133,7 +139,8 @@ void level_renderer_draw(level_renderer_t const* const self, camera_t const* con
 
     glEnable(GL_DEPTH_TEST);
 
-    glBindTexture(GL_TEXTURE_2D, textures_get_texture(self->textures, TEXTURE_NAME__TERRAIN));
+    textures_t* const textures = rudyscung_get_textures(self->rudyscung);
+    glBindTexture(GL_TEXTURE_2D, textures_get_texture(textures, TEXTURE_NAME__TERRAIN));
 
     for (size_chunks_t x = 0; x < self->size_x; x++) {
         for (size_chunks_t y = 0; y < self->size_y; y++) {
@@ -153,4 +160,37 @@ void level_renderer_draw(level_renderer_t const* const self, camera_t const* con
 
     glDisable(GL_DEPTH_TEST);
     glDisable(GL_CULL_FACE);
+}
+
+bool level_renderer_is_tile_side_occluded(level_renderer_t const* const self, size_t const x, size_t const y, size_t const z, side_t const side) {
+    assert(self != nullptr);
+    assert(x >= 0 && x < TO_TILE_SPACE(self->size_x));
+    assert(y >= 0 && y < TO_TILE_SPACE(self->size_y));
+    assert(z >= 0 && z < TO_TILE_SPACE(self->size_z));
+    assert(side >= 0 && side < NUM_SIDES);
+
+    if (
+        (x == 0 && side == SIDE__NORTH) ||
+        (x == TO_TILE_SPACE(self->size_x) - 1 && side == SIDE__SOUTH) ||
+        (y == 0 && side == SIDE__BOTTOM) ||
+        (z == 0 && side == SIDE__WEST) ||
+        (z == TO_TILE_SPACE(self->size_z) - 1 && side == SIDE__EAST)
+    ) {
+        return true;
+    }
+    if (y == TO_TILE_SPACE(self->size_y) - 1 && side == SIDE__TOP) {
+        return false;
+    }
+
+    int offsets[3];
+    side_get_offsets(side, offsets);
+
+    int tx = x + offsets[0];
+    int ty = y + offsets[1];
+    int tz = z + offsets[2];
+
+    tile_shape_t tshape = level_get_tile_shape(self->level, tx, ty, tz);
+    side_t tside = side_get_opposite(side);
+
+    return tile_shape_can_side_occlude(tshape, tside);
 }

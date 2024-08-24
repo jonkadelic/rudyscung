@@ -28,6 +28,7 @@ static void render_shape_corner_b_north_east(tessellator_t* const self, float co
 static void render_shape_corner_b_south_east(tessellator_t* const self, float const x, float const y, float const z, tile_t const* const tile, bool is_side_occluded[NUM_SIDES]);
 
 static tile_shape_renderer_t const SHAPE_RENDERERS[NUM_TILE_SHAPES] = {
+    [TILE_SHAPE__NO_RENDER] = nullptr,
     [TILE_SHAPE__FLAT] = render_shape_flat,
     [TILE_SHAPE__RAMP_NORTH] = render_shape_ramp_north,
     [TILE_SHAPE__RAMP_SOUTH] = render_shape_ramp_south,
@@ -70,8 +71,21 @@ void tile_renderer_render_tile_f(tessellator_t* const self, float const x, float
     assert(tile != nullptr);
     assert(tile_shape >= 0 && tile_shape < NUM_TILE_SHAPES);
 
-    // SHAPE_RENDERERS[tile_shape](tessellator, x, y, z, tile, is_side_occluded);
-    render_shape_flat(self, x, y, z, tile, is_side_occluded);
+    bool all_occluded = true;
+    for (size_t i = 0; i < NUM_SIDES; i++) {
+        if (!is_side_occluded[i]) {
+            all_occluded = false;
+            break;
+        }
+    }
+
+    if (all_occluded) {
+        return;
+    }
+
+    if (SHAPE_RENDERERS[tile_shape] != nullptr) {
+        SHAPE_RENDERERS[tile_shape](self, x, y, z, tile, is_side_occluded);
+    }
 }
 
 #define X_MIN (x + 0.0f)

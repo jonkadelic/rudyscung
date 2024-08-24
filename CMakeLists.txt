@@ -25,6 +25,7 @@ set(SOURCES
     src/world/tile_shape.c
     src/world/tile.c
     src/main.c
+    src/rudyscung.c
     src/util.c
     src/window.c
 )

@@ -1,5 +1,4 @@
 #include "./chunk.h"
-#include "side.h"
 #include "tile.h"
 #include "tile_shape.h"
 
@@ -27,7 +26,7 @@ chunk_t* const chunk_new(size_chunks_t const x, size_chunks_t const y, size_chun
         for (int y = 0; y < CHUNK_SIZE; y++) {
             for (int z = 0; z < CHUNK_SIZE; z++) {
                 self->tiles[COORD(x, y, z)] = TILE_ID__AIR;
-                self->tile_shapes[COORD(x, y, z)] = TILE_SHAPE__FLAT;
+                self->tile_shapes[COORD(x, y, z)] = TILE_SHAPE__NO_RENDER;
             }
         }
     }
@@ -67,6 +66,8 @@ void chunk_set_tile(chunk_t* const self, size_t const x, size_t const y, size_t 
     tile_id_t id = tile_get_id(tile);
     self->tiles[COORD(x, y, z)] = id;
     if (id == TILE_ID__AIR) {
+        chunk_set_tile_shape(self, x, y, z, TILE_SHAPE__NO_RENDER);
+    } else {
         chunk_set_tile_shape(self, x, y, z, TILE_SHAPE__FLAT);
     }
 }
@@ -88,35 +89,4 @@ void chunk_set_tile_shape(chunk_t* const self, size_t const x, size_t const y, s
     assert(shape >= 0 && shape < NUM_TILE_SHAPES);
 
     self->tile_shapes[COORD(x, y, z)] = shape;
-}
-
-bool chunk_is_tile_side_occluded(chunk_t const* const self, size_t const x, size_t const y, size_t const z, side_t const side) {
-    assert(self != nullptr);
-    assert(x >= 0 && x < CHUNK_SIZE);
-    assert(y >= 0 && y < CHUNK_SIZE);
-    assert(z >= 0 && z < CHUNK_SIZE);
-    assert(side >= 0 && side < NUM_SIDES);
-
-    if (
-        (x == 0 && side == SIDE__NORTH) ||
-        (x == CHUNK_SIZE - 1 && side == SIDE__SOUTH) ||
-        (y == 0 && side == SIDE__BOTTOM) ||
-        (y == CHUNK_SIZE - 1 && side == SIDE__TOP) ||
-        (z == 0 && side == SIDE__WEST) ||
-        (z == CHUNK_SIZE - 1 && side == SIDE__EAST)
-    ) {
-        return false;
-    }
-
-    int offsets[3];
-    side_get_offsets(side, offsets);
-
-    int tx = x + offsets[0];
-    int ty = y + offsets[1];
-    int tz = z + offsets[2];
-
-    tile_shape_t tshape = chunk_get_tile_shape(self, tx, ty, tz);
-    side_t tside = side_get_opposite(side);
-
-    return tile_shape_can_side_occlude(tshape, tside);
 }

@@ -2,7 +2,6 @@
 
 #include "./tile.h"
 #include "./tile_shape.h"
-#include "./side.h"
 
 #define CHUNK_SIZE 16
 
@@ -23,5 +22,3 @@ void chunk_set_tile(chunk_t* const self, size_t const x, size_t const y, size_t 
 tile_shape_t const chunk_get_tile_shape(chunk_t const* const self, size_t const x, size_t const y, size_t const z);
 
 void chunk_set_tile_shape(chunk_t* const self, size_t const x, size_t const y, size_t const z, tile_shape_t const shape);
-
-bool chunk_is_tile_side_occluded(chunk_t const* const self, size_t const x, size_t const y, size_t const z, side_t const side);

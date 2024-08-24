@@ -7,6 +7,10 @@
 
 #include "./shader.h"
 
+struct shaders {
+    shader_t** shaders;
+};
+
 static char* read_file(char const* const path);
 
 static char const* const SHADER_NAMES[] = {
@@ -14,10 +18,14 @@ static char const* const SHADER_NAMES[] = {
     "font"
 };
 static size_t const SHADER_COUNT = sizeof(SHADER_NAMES) / sizeof(SHADER_NAMES[0]);
-static shader_t** shaders = nullptr;
 
-void shaders_init(char const* const resources_path) {
-    shaders = malloc(SHADER_COUNT * sizeof(shader_t*));
+shaders_t* const shaders_new(char const* const resources_path) {
+    assert(resources_path != nullptr);
+
+    shaders_t* const self = malloc(sizeof(shaders_t));
+    assert(self != nullptr);
+
+    self->shaders = malloc(SHADER_COUNT * sizeof(shader_t*));
     for (size_t i = 0; i < SHADER_COUNT; i++) {
         char name[256] = {0};
 
@@ -36,36 +44,38 @@ void shaders_init(char const* const resources_path) {
         shader_attach(shader, SHADER_TYPE__FRAGMENT, fragment_source);
         shader_compile(shader);
 
-        shaders[i] = shader;
+        self->shaders[i] = shader;
 
         free(vertex_source);
         vertex_source = nullptr;
         free(fragment_source);
         fragment_source = nullptr;
     }
+
+    return self;
 }
 
-void shaders_cleanup(void) {
-    assert(shaders != nullptr);
+void shaders_delete(shaders_t* const self) {
+    assert(self != nullptr);
 
     for (size_t i = 0; i < SHADER_COUNT; i++) {
-        if (shaders[i] == nullptr) {
+        if (self->shaders[i] == nullptr) {
             continue;
         }
-        shader_delete(shaders[i]);
-        shaders[i] = nullptr;
+        shader_delete(self->shaders[i]);
+        self->shaders[i] = nullptr;
     }
 
-    free(shaders);
-    shaders = nullptr;
+    free(self->shaders);
+    free(self);
 }
 
-void shaders_bind(char const* const name) {
-    assert(shaders != nullptr);
+void shaders_bind(shaders_t* const self, char const* const name) {
+    assert(self != nullptr);
 
     for (size_t i = 0; i < SHADER_COUNT; i++) {
         if (strncmp(SHADER_NAMES[i], name, 16) == 0) {
-            shader_bind(shaders[i]);
+            shader_bind(self->shaders[i]);
             return;
         }
     }
@@ -73,12 +83,12 @@ void shaders_bind(char const* const name) {
     assert(false);
 }
 
-shader_t* const shaders_get(char const* const name) {
-    assert(shaders != nullptr);
+shader_t* const shaders_get(shaders_t* const self, char const* const name) {
+    assert(self != nullptr);
 
     for (size_t i = 0; i < SHADER_COUNT; i++) {
         if (strncmp(SHADER_NAMES[i], name, 16) == 0) {
-            return shaders[i];
+            return self->shaders[i];
         }
     }
 

@@ -13,20 +13,17 @@
 static void check_errors(void);
 
 struct renderer {
-    window_t const* window;
-    textures_t* textures;
+    rudyscung_t* rudyscung;
     level_renderer_t* level_renderer;
 };
 
-renderer_t* const renderer_new(window_t const* window, textures_t* const textures) {
-    assert(window != nullptr);
-    assert(textures != nullptr);
+renderer_t* const renderer_new(rudyscung_t* const rudyscung) {
+    assert(rudyscung != nullptr);
 
     renderer_t* const self = malloc(sizeof(renderer_t));
     assert(self != nullptr);
 
-    self->window = window;
-    self->textures = textures;
+    self->rudyscung = rudyscung;
     self->level_renderer = nullptr;
 
     return self;
@@ -55,7 +52,7 @@ void renderer_set_level(renderer_t* const self, level_t const *const level) {
         self->level_renderer = nullptr;
     }
 
-    self->level_renderer = level_renderer_new(self->textures, level);
+    self->level_renderer = level_renderer_new(self->rudyscung, level);
 }
 
 void renderer_render(renderer_t* const self, camera_t const* const camera) {

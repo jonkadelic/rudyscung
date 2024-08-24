@@ -1,10 +1,11 @@
 #pragma once
 
-#include "textures.h"
+// Predefines
+typedef struct rudyscung rudyscung_t;
 
 typedef struct font font_t;
 
-font_t* const font_new(textures_t* const textures, char const* const resources_path, char const* const font_name);
+font_t* const font_new(rudyscung_t* const rudyscung, char const* const resources_path, char const* const font_name);
 
 void font_delete(font_t* const self);
 

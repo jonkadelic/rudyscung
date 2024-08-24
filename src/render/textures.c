@@ -22,8 +22,6 @@ char const* const TEXTURE_NAME_LOOKUP[NUM_TEXTURE_NAMES] = {
     [TEXTURE_NAME__TERRAIN] = "/terrain.png"
 };
 
-static bool img_initialized = false;
-
 textures_t* const textures_new(char const* const resources_path) {
     assert(resources_path != nullptr);
 
@@ -36,15 +34,23 @@ textures_t* const textures_new(char const* const resources_path) {
     }
 
     // Initialize SDL_image
-    if (!img_initialized) {
-        
-        int img_flags = IMG_INIT_PNG;
-        int img_initted = IMG_Init(img_flags);
-        assert((img_initted & img_flags) == img_flags);
-        img_initialized = true;
-    }
+    int img_flags = IMG_INIT_PNG;
+    int img_initted = IMG_Init(img_flags);
+    assert((img_initted & img_flags) == img_flags);
 
     return self;
+}
+
+void textures_delete(textures_t* const self) {
+    assert(self != nullptr);
+
+    for (size_t i = 0; i < NUM_TEXTURE_NAMES; i++) {
+        if (self->textures[i] != 0) {
+            glDeleteTextures(1, &(self->textures[i]));
+        }
+    }
+
+    free(self);
 }
 
 GLuint textures_get_texture(textures_t* const self, texture_name_t const texture_name) {

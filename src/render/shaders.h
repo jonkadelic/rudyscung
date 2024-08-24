@@ -2,10 +2,12 @@
 
 #include "shader.h"
 
-void shaders_init(char const* const resources_path);
+typedef struct shaders shaders_t;
 
-void shaders_cleanup(void);
+shaders_t* const shaders_new(char const* const resources_path);
 
-void shaders_bind(char const* const name);
+void shaders_delete(shaders_t* const self);
 
-shader_t* const shaders_get(char const* const name);
+void shaders_bind(shaders_t* const self, char const* const name);
+
+shader_t* const shaders_get(shaders_t* const self, char const* const name);

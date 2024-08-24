@@ -13,6 +13,8 @@ typedef struct textures textures_t;
 
 textures_t* const textures_new(char const* const resources_path);
 
+void textures_delete(textures_t* const self);
+
 GLuint textures_get_texture(textures_t* const self, texture_name_t const texture_name);
 
 // Note - DOES NOT CACHE TEXTURES

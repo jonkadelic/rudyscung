@@ -1,13 +1,12 @@
 #pragma once
 
-#include "../window.h"
-#include "./textures.h"
+#include "../rudyscung.h"
 #include "../world/level.h"
 #include "./camera.h"
 
 typedef struct renderer renderer_t;
 
-renderer_t* const renderer_new(window_t const* const window, textures_t* const textures);
+renderer_t* const renderer_new(rudyscung_t* const rudyscung);
 
 void renderer_delete(renderer_t* const self);
 

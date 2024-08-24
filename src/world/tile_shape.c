@@ -5,6 +5,14 @@
 #include "side.h"
 
 static bool const CAN_OCCLUDE[NUM_TILE_SHAPES][NUM_SIDES] = {
+    [TILE_SHAPE__NO_RENDER] = {
+        [SIDE__NORTH] = false,
+        [SIDE__SOUTH] = false,
+        [SIDE__BOTTOM] = false,
+        [SIDE__TOP] = false,
+        [SIDE__WEST] = false,
+        [SIDE__EAST] = false
+    },
     [TILE_SHAPE__FLAT] = {
         [SIDE__NORTH] = true,
         [SIDE__SOUTH] = true,

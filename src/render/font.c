@@ -11,6 +11,7 @@
 #include <GL/glew.h>
 #include <GL/gl.h>
 
+#include "../rudyscung.h"
 #include "shader.h"
 #include "tessellator.h"
 #include "textures.h"
@@ -27,6 +28,8 @@ typedef struct entry {
 } entry_t;
 
 struct font {
+    rudyscung_t* rudyscung;
+
     GLuint tex;
     size_t char_size_px;
     size_t font_size_px;
@@ -40,8 +43,8 @@ struct font {
 static size_t read_font_txt_file(char const* const path, char*** const lines);
 static uint32_t get_pixel(SDL_Surface const* const surface, size_t const x, size_t const y);
 
-font_t* const font_new(textures_t* const textures, char const* const resources_path, char const* const font_name) {
-    assert(textures != nullptr);
+font_t* const font_new(rudyscung_t* const rudyscung, char const* const resources_path, char const* const font_name) {
+    assert(rudyscung != nullptr);
     assert(resources_path != nullptr);
     assert(font_name != nullptr);
 
@@ -53,6 +56,8 @@ font_t* const font_new(textures_t* const textures, char const* const resources_p
 
     font_t* const self = malloc(sizeof(font_t) + (sizeof(entry_t)));
     assert(self != nullptr);
+
+    self->rudyscung = rudyscung;
 
     // Blank entries
     for (size_t i = 0; i < MAX_ENTRIES; i++) {
@@ -88,6 +93,7 @@ font_t* const font_new(textures_t* const textures, char const* const resources_p
     }
 
     // Get texture
+    textures_t* const textures = rudyscung_get_textures(self->rudyscung);
     snprintf(name_buffer, sizeof(name_buffer) / sizeof(name_buffer[0]), "/font/%s.png", font_name);
     self->tex = textures_get_texture_by_path(textures, name_buffer);
 
@@ -157,12 +163,18 @@ void font_draw(font_t const* const self, char const* const text, int const x, in
 
     size_t elements = tessellator_draw(self->tessellator);
 
-    shader_t* const shader = shaders_get("font");
+    shaders_t* const shaders = rudyscung_get_shaders(self->rudyscung);
+    shader_t* const shader = shaders_get(shaders, "font");
     shader_bind(shader);
+
+    window_t* const window = rudyscung_get_window(self->rudyscung);
+    size_t window_size[2];
+    window_get_size(window, window_size);
+    float gui_scale = window_get_gui_scale(window);
 
     mat4x4 mat_proj;
     mat4x4_identity(mat_proj);
-    mat4x4_ortho(mat_proj, 0, 800 / 2.0f, 600 / 2.0f, 0, 100, 300);
+    mat4x4_ortho(mat_proj, 0, window_size[0] / gui_scale, window_size[1] / gui_scale, 0, 100, 300);
     shader_put_uniform_mat4x4(shader, "projection", mat_proj);
 
     mat4x4 mat_model;

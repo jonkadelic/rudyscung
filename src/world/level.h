@@ -21,5 +21,3 @@ void level_set_tile(level_t* const self, size_t const x, size_t const y, size_t 
 tile_shape_t const level_get_tile_shape(level_t const* const self, size_t const x, size_t const y, size_t const z);
 
 void level_set_tile_shape(level_t* const self, size_t const x, size_t const y, size_t const z, tile_shape_t const shape);
-
-bool level_is_tile_side_occluded(level_t const* const self, size_t const x, size_t const y, size_t const z, side_t const side);
