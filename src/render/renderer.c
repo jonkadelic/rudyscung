@@ -1,0 +1,79 @@
+#include "./renderer.h"
+
+#include <assert.h>
+#include <stdio.h>
+
+#include <SDL2/SDL.h>
+#include <GL/glew.h>
+#include <GL/gl.h>
+
+#include "./textures.h"
+#include "./level_renderer.h"
+
+static void check_errors(void);
+
+struct renderer {
+    window_t const* window;
+    textures_t* textures;
+    level_renderer_t* level_renderer;
+};
+
+renderer_t* const renderer_new(window_t const* window, textures_t* const textures) {
+    assert(window != nullptr);
+    assert(textures != nullptr);
+
+    renderer_t* const self = malloc(sizeof(renderer_t));
+    assert(self != nullptr);
+
+    self->window = window;
+    self->textures = textures;
+    self->level_renderer = nullptr;
+
+    return self;
+}
+
+void renderer_delete(renderer_t* const self) {
+    assert(self != nullptr);
+
+    free(self);
+}
+
+void renderer_tick(renderer_t* const self) {
+    assert(self != nullptr);
+
+    if (self->level_renderer != nullptr) {
+        level_renderer_tick(self->level_renderer);
+    }
+}
+
+void renderer_set_level(renderer_t* const self, level_t const *const level) {
+    assert(self != nullptr);
+    assert(level != nullptr);
+
+    if (self->level_renderer != nullptr) {
+        level_renderer_delete(self->level_renderer);
+        self->level_renderer = nullptr;
+    }
+
+    self->level_renderer = level_renderer_new(self->textures, level);
+}
+
+void renderer_render(renderer_t* const self, camera_t const* const camera) {
+    assert(self != nullptr);
+
+    glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+    level_renderer_draw(self->level_renderer, camera);
+
+    check_errors();
+
+    window_swap(self->window);
+}
+
+static void check_errors(void) {
+    GLenum error;
+    while ((error = glGetError()) != GL_NO_ERROR) {
+        fprintf(stderr, "OpenGL error: %s\n", glewGetErrorString(error));
+    }
+}
