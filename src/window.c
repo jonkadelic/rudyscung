@@ -1,5 +1,6 @@
 #include "./window.h"
 
+#include <SDL_video.h>
 #include <assert.h>
 #include <stdio.h>
 
@@ -26,6 +27,8 @@ window_t* const window_new(char const* const title, int const width, int const h
         fprintf(stderr, "Failed to initialize GLEW\n");
         assert(false);
     }
+
+    SDL_GL_SetSwapInterval(0);
 
     return self;
 }

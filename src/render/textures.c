@@ -1,17 +1,17 @@
 #include "./textures.h"
 
-#include <SDL_surface.h>
 #include <assert.h>
 #include <stdint.h>
 #include <stdlib.h>
 
 #include <SDL2/SDL.h>
-#include <SDL_image.h>
+#include <SDL2/SDL_surface.h>
+#include <SDL2/SDL_image.h>
 #include <GL/gl.h>
 
 #include "../util.h"
 
-static GLuint load_texture(textures_t* const self, texture_name_t const texture_name);
+static GLuint load_texture(textures_t const* const self, char const* const path);
 
 struct textures {
     char const* resources_path;
@@ -37,6 +37,7 @@ textures_t* const textures_new(char const* const resources_path) {
 
     // Initialize SDL_image
     if (!img_initialized) {
+        
         int img_flags = IMG_INIT_PNG;
         int img_initted = IMG_Init(img_flags);
         assert((img_initted & img_flags) == img_flags);
@@ -47,27 +48,40 @@ textures_t* const textures_new(char const* const resources_path) {
 }
 
 GLuint textures_get_texture(textures_t* const self, texture_name_t const texture_name) {
+    assert(self != nullptr);
+    assert(texture_name >= 0 && texture_name < NUM_TEXTURE_NAMES);
+
     GLuint tex = self->textures[texture_name];
     if (tex == 0) {
-        tex = load_texture(self, texture_name);
+        char const* const texture_name_str = TEXTURE_NAME_LOOKUP[texture_name];
+        char* path = strcata(self->resources_path, texture_name_str);
+
+        tex = load_texture(self, path);
+        free(path);
         self->textures[texture_name] = tex;
     }
 
     return tex;
 }
 
-static GLuint load_texture(textures_t* const self, texture_name_t const texture_name) {
+GLuint textures_get_texture_by_path(textures_t const* const self, char const* const texture_path) {
     assert(self != nullptr);
-    assert(texture_name >= 0 && texture_name < NUM_TEXTURE_NAMES);
+    assert(texture_path != nullptr);
 
-    char const* const texture_name_str = TEXTURE_NAME_LOOKUP[texture_name];
+    char* path = strcata(self->resources_path, texture_path);
+    GLuint tex = load_texture(self, path);
+    free(path);
 
-    char* path = strcata(self->resources_path, texture_name_str);
+    return tex;
+}
+
+static GLuint load_texture(textures_t const* const self, char const* const path) {
+    assert(self != nullptr);
+    assert(path != nullptr);
 
     // Load texture using SDL
     SDL_Surface* surface = IMG_Load(path);
     assert(surface != nullptr);
-    free(path);
 
     // Generate texture in OpenGL
     GLuint tex = 0;

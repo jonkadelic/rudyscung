@@ -10,7 +10,8 @@
 static char* read_file(char const* const path);
 
 static char const* const SHADER_NAMES[] = {
-    "main"
+    "main",
+    "font"
 };
 static size_t const SHADER_COUNT = sizeof(SHADER_NAMES) / sizeof(SHADER_NAMES[0]);
 static shader_t** shaders = nullptr;

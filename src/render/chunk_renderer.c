@@ -22,27 +22,27 @@ struct chunk_renderer {
 chunk_renderer_t* const chunk_renderer_new(chunk_t const* const chunk) {
     assert(chunk != nullptr);
 
-    chunk_renderer_t* const chunk_renderer = malloc(sizeof(chunk_renderer_t));
-    assert(chunk_renderer != nullptr);
+    chunk_renderer_t* const self = malloc(sizeof(chunk_renderer_t));
+    assert(self != nullptr);
 
-    chunk_renderer->chunk = chunk;
-    chunk_renderer->ready = false;
-    chunk_renderer->num_elements = 0;
+    self->chunk = chunk;
+    self->ready = false;
+    self->num_elements = 0;
 
     // Set up arrays
-    glGenVertexArrays(1, &(chunk_renderer->vao));
-    assert(chunk_renderer->vao > 0);
-    glBindVertexArray(chunk_renderer->vao);
+    glGenVertexArrays(1, &(self->vao));
+    assert(self->vao > 0);
+    glBindVertexArray(self->vao);
 
-    glGenBuffers(1, &(chunk_renderer->vbo));
-    assert(chunk_renderer->vbo > 0);
+    glGenBuffers(1, &(self->vbo));
+    assert(self->vbo > 0);
 
-    glGenBuffers(1, &(chunk_renderer->ebo));
-    assert(chunk_renderer->ebo > 0);
+    glGenBuffers(1, &(self->ebo));
+    assert(self->ebo > 0);
 
     glBindVertexArray(0);
 
-    return chunk_renderer;
+    return self;
 }
 
 void chunk_renderer_delete(chunk_renderer_t* const self) {

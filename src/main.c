@@ -40,16 +40,17 @@ static void tick(camera_t* const camera);
 int main(int argc, char** argv) {
     window_t* window = window_new(PROJECT_NAME, 800, 600);
 
-    char const* const resources_path = "./res";
+    char const* resources_path = "../res";
+    if (argc > 1) {
+        resources_path = argv[1];
+    }
 
     tiles_init();
     shaders_init(resources_path);
 
     textures_t* textures = textures_new(resources_path);
     renderer_t* renderer = renderer_new(window, textures);
-    char* fonts_path = strcata(resources_path, "/font");
-    font_t* font = font_new(textures, fonts_path, "default");
-    free(fonts_path);
+    font_t* font = font_new(textures, resources_path, "default");
 
 #define LEVEL_SIZE 4
     level_t* level = level_new(LEVEL_SIZE, 4, LEVEL_SIZE);
@@ -71,6 +72,7 @@ int main(int argc, char** argv) {
     uint64_t last_tick = SDL_GetTicks64();
     uint64_t last_fps_tick = SDL_GetTicks64();
     size_t frames = 0;
+    size_t fps = 0;
     while (running) {
         uint64_t tick_start = SDL_GetTicks64();
 
@@ -117,7 +119,15 @@ int main(int argc, char** argv) {
             }
         }
         
+        glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
+        glClear(GL_COLOR_BUFFER_BIT);
+
         renderer_render(renderer, camera);
+        char fps_buffer[32];
+        snprintf(fps_buffer, sizeof(fps_buffer) / sizeof(fps_buffer[0]), "FPS: %zu", fps);
+        font_draw(font, fps_buffer, 0, 0);
+
+        window_swap(window);
 
         uint64_t current_tick = SDL_GetTicks64();
         uint64_t delta_tick = current_tick - last_tick;
@@ -131,7 +141,7 @@ int main(int argc, char** argv) {
         uint64_t tick_end = SDL_GetTicks64();
         uint64_t frame_delta = tick_end - last_fps_tick;
         if (frame_delta > 1000) {
-            printf("FPS: %f\n", (frames / (frame_delta / 1000.0f)));
+            fps = (size_t)(frames / (frame_delta / 1000.0f));
             last_fps_tick = tick_end;
             frames = 0;
         } else {

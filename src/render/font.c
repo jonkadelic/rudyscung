@@ -1,54 +1,188 @@
 #include "./font.h"
 
+#include <SDL2/SDL_pixels.h>
 #include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
+#include <SDL2/SDL_image.h>
+#include <SDL2/SDL_surface.h>
 #include <GL/glew.h>
 #include <GL/gl.h>
 
-#include "../util.h"
+#include "shader.h"
+#include "tessellator.h"
+#include "textures.h"
+#include "shaders.h"
+#include "../linmath.h"
+
+#define MAX_ENTRIES 128
 
 typedef struct entry {
-    char c;
+    bool exists;
     size_t x;
     size_t y;
+    size_t width;
 } entry_t;
 
 struct font {
     GLuint tex;
-    size_t num_entries;
-    entry_t entries[];
+    size_t char_size_px;
+    size_t font_size_px;
+    entry_t entries[MAX_ENTRIES];
+
+    tessellator_t* tessellator;
+    GLuint vbo;
+    GLuint vao;
 };
 
 static size_t read_font_txt_file(char const* const path, char*** const lines);
+static uint32_t get_pixel(SDL_Surface const* const surface, size_t const x, size_t const y);
 
-font_t* const font_new(textures_t* const textures, char const* const fonts_path, char const* const font_name) {
+font_t* const font_new(textures_t* const textures, char const* const resources_path, char const* const font_name) {
     assert(textures != nullptr);
-    assert(fonts_path != nullptr);
+    assert(resources_path != nullptr);
     assert(font_name != nullptr);
 
     char name_buffer[256];
-    snprintf(name_buffer, sizeof(name_buffer) / sizeof(name_buffer[0]), "%s/%s.txt", fonts_path, font_name);
+    snprintf(name_buffer, sizeof(name_buffer) / sizeof(name_buffer[0]), "%s/font/%s.txt", resources_path, font_name);
     char** lookup_lines = nullptr;
     size_t num_lookup_lines = read_font_txt_file(name_buffer, &lookup_lines);
+    size_t lookup_line_len = strlen(lookup_lines[0]);
 
-    for (size_t i = 0; i < num_lookup_lines; i++) {
-        printf("%s\n", lookup_lines[i]);
-        free(lookup_lines[i]);
+    font_t* const self = malloc(sizeof(font_t) + (sizeof(entry_t)));
+    assert(self != nullptr);
+
+    // Blank entries
+    for (size_t i = 0; i < MAX_ENTRIES; i++) {
+        self->entries[i].exists = false;
     }
 
+    snprintf(name_buffer, sizeof(name_buffer) / sizeof(name_buffer[0]), "%s/font/%s.png", resources_path, font_name);
+    SDL_Surface* surface = IMG_Load(name_buffer);
+    assert(surface != nullptr);
+
+    self->font_size_px = surface->w;
+    self->char_size_px = self->font_size_px / lookup_line_len;
+
+    for (size_t y = 0; y < num_lookup_lines; y++) {
+        for (size_t x = 0; x < lookup_line_len; x++) {
+            char c = lookup_lines[y][x];
+            if (self->entries[c].exists) continue;
+            size_t max_px = 0;
+            for (size_t px = 0; px < self->char_size_px; px++) {
+                for (size_t py = 0; py < self->char_size_px; py++) {
+                    uint32_t p = get_pixel(surface, x * self->char_size_px + px, y * self->char_size_px + py);
+                    if ((p & 0x00FFFFFF) != 0x000000) {
+                        max_px = px;
+                        break;
+                    }
+                }
+            }
+            self->entries[c].exists = true;
+            self->entries[c].width = max_px + 1;
+            self->entries[c].x = x * self->char_size_px;
+            self->entries[c].y = y * self->char_size_px;
+        }
+    }
+
+    // Get texture
+    snprintf(name_buffer, sizeof(name_buffer) / sizeof(name_buffer[0]), "/font/%s.png", font_name);
+    self->tex = textures_get_texture_by_path(textures, name_buffer);
+
+    // Delete surface
+    SDL_FreeSurface(surface);
+
+    // Free lookup
+    for (size_t i = 0; i < num_lookup_lines; i++) {
+        free(lookup_lines[i]);
+    }
     free(lookup_lines);
 
-    return nullptr;
+    // Set up arrays
+    glGenVertexArrays(1, &(self->vao));
+    assert(self->vao > 0);
+
+    glGenBuffers(1, &(self->vbo));
+    assert(self->vbo > 0);
+
+    // Set up tessellator
+    self->tessellator = tessellator_new();
+    tessellator_bind(self->tessellator, self->vao, self->vbo, 0);
+
+    return self;
 }
 
-void font_delete(font_t* const font) {
+void font_delete(font_t* const self) {
+    assert(self != nullptr);
 
+    glDeleteBuffers(1, &(self->vbo));
+    glDeleteVertexArrays(1, &(self->vao));
+
+    free(self);
 }
 
-void font_draw(font_t const* const font, char const* const text, int const x, int const y) {
-    
+void font_draw(font_t const* const self, char const* const text, int const x, int const y) {
+    assert(self != nullptr);
+    assert(text != nullptr);
+
+    size_t text_len = strlen(text);
+    if (text_len == 0) return;
+
+    size_t xo = 0;
+    for (size_t i = 0; i < text_len; i++) {
+        char c = text[i];
+        entry_t const* const entry = &(self->entries[c]);
+        if (!self->entries[c].exists) {
+            c = '?';
+        }
+        float u_min = (float)(entry->x) / self->font_size_px;
+        float u_max = u_min + ((float)(entry->width) / self->font_size_px);
+        float v_min = (float)(entry->y) / self->font_size_px;
+        float v_max = v_min + ((float)(self->char_size_px) / self->font_size_px);
+
+        #define Z_POS 0
+
+        tessellator_buffer_vct(self->tessellator, x + xo, y, Z_POS, 1.0f, 1.0f, 1.0f, u_min, v_min);
+        tessellator_buffer_vct(self->tessellator, x + xo + entry->width, y + self->char_size_px, Z_POS, 1.0f, 1.0f, 1.0f, u_max, v_max);
+        tessellator_buffer_vct(self->tessellator, x + xo + entry->width, y, Z_POS, 1.0f, 1.0f, 1.0f, u_max, v_min);
+
+        tessellator_buffer_vct(self->tessellator, x + xo, y, Z_POS, 1.0f, 1.0f, 1.0f, u_min, v_min);
+        tessellator_buffer_vct(self->tessellator, x + xo, y + self->char_size_px, Z_POS, 1.0f, 1.0f, 1.0f, u_min, v_max);
+        tessellator_buffer_vct(self->tessellator, x + xo + entry->width, y + self->char_size_px, Z_POS, 1.0f, 1.0f, 1.0f, u_max, v_max);
+
+        xo += entry->width + 1;        
+    }
+
+    size_t elements = tessellator_draw(self->tessellator);
+
+    shader_t* const shader = shaders_get("font");
+    shader_bind(shader);
+
+    mat4x4 mat_proj;
+    mat4x4_identity(mat_proj);
+    mat4x4_ortho(mat_proj, 0, 800 / 2.0f, 600 / 2.0f, 0, 100, 300);
+    shader_put_uniform_mat4x4(shader, "projection", mat_proj);
+
+    mat4x4 mat_model;
+    mat4x4_identity(mat_model);
+    mat4x4_translate_in_place(mat_model, 0, 0, -200);
+    shader_put_uniform_mat4x4(shader, "model", mat_model);
+
+    glEnable(GL_CULL_FACE);
+    glCullFace(GL_BACK);
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
+    glBindTexture(GL_TEXTURE_2D, self->tex);
+
+    glBindVertexArray(self->vao);
+    glDrawArrays(GL_TRIANGLES, 0, elements);
+    glBindVertexArray(0);
+
+    glDisable(GL_BLEND);
+    glDisable(GL_CULL_FACE);
 }
 
 static size_t read_font_txt_file(char const* const path, char*** const lines) {
@@ -64,6 +198,8 @@ static size_t read_font_txt_file(char const* const path, char*** const lines) {
 
     char* const buffer = malloc(size + 1);
     assert(buffer != nullptr);
+    fread(buffer, 1, size, fp);
+    fclose(fp);
     buffer[size] = '\0';
     
     size_t line_length = 0;
@@ -93,4 +229,16 @@ static size_t read_font_txt_file(char const* const path, char*** const lines) {
     free(buffer);
 
     return num_lines;
+}
+
+static uint32_t get_pixel(SDL_Surface const* const surface, size_t const x, size_t const y) {
+    assert(surface != nullptr);
+
+    if (surface->format->BytesPerPixel == 1) {
+        uint8_t lookup = ((uint8_t*) surface->pixels)[y * surface->w + x];
+        SDL_Color const* const c = &(surface->format->palette->colors[lookup]);
+        return (c->a << 24) | (c->r << 16) | (c->g << 8) | (c->b);
+    }
+
+    return ((uint32_t*) surface->pixels)[y * surface->w + x];
 }

@@ -67,8 +67,6 @@ void renderer_render(renderer_t* const self, camera_t const* const camera) {
     level_renderer_draw(self->level_renderer, camera);
 
     check_errors();
-
-    window_swap(self->window);
 }
 
 static void check_errors(void) {
