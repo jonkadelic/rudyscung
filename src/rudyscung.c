@@ -8,10 +8,12 @@
 #include <SDL_timer.h>
 
 #include "render/font.h"
+#include "render/level_renderer.h"
 #include "render/shaders.h"
 #include "render/textures.h"
 #include "render/camera.h"
 #include "render/renderer.h"
+#include "world/chunk.h"
 #include "world/level.h"
 
 #define WINDOW_TITLE "rudyscung"
@@ -27,6 +29,7 @@ struct rudyscung {
     shaders_t* shaders;
     textures_t* textures;
     font_t* font;
+    renderer_t* renderer;
 };
 
 // TODO: Replace with actual input handling
@@ -43,7 +46,8 @@ static struct {
     bool shift;
 } keys;
 
-static void tick(camera_t* const camera);
+static void tick(rudyscung_t* const self, level_t* const level, camera_t* const camera);
+static void update_slice(rudyscung_t* const self, level_t* const level, camera_t* const camera);
 
 rudyscung_t* const rudyscung_new(char const* const resources_path) {
     assert(resources_path != nullptr);
@@ -55,6 +59,7 @@ rudyscung_t* const rudyscung_new(char const* const resources_path) {
     self->shaders = shaders_new(resources_path);
     self->textures = textures_new(resources_path);
     self->font = font_new(self, resources_path, "default");
+    self->renderer = renderer_new(self);
 
     return self;
 }
@@ -62,6 +67,7 @@ rudyscung_t* const rudyscung_new(char const* const resources_path) {
 void rudyscung_delete(rudyscung_t* const self) {
     assert(self != nullptr);
 
+    renderer_delete(self->renderer);
     font_delete(self->font);
     textures_delete(self->textures);
     shaders_delete(self->shaders);
@@ -73,8 +79,8 @@ void rudyscung_delete(rudyscung_t* const self) {
 void rudyscung_run(rudyscung_t* const self) {
     assert(self != nullptr);
 
-#define LEVEL_SIZE 4
-#define LEVEL_HEIGHT 4
+#define LEVEL_SIZE 32
+#define LEVEL_HEIGHT 8
     level_t* level = level_new(LEVEL_SIZE, LEVEL_HEIGHT, LEVEL_SIZE);
     for (size_t x = 0; x < LEVEL_SIZE * CHUNK_SIZE; x++) {
         for (size_t y = 0; y < LEVEL_HEIGHT * CHUNK_SIZE; y++) {
@@ -94,10 +100,11 @@ void rudyscung_run(rudyscung_t* const self) {
         }
     }
 
-    renderer_t* renderer = renderer_new(self);
-    renderer_set_level(renderer, level);
+    renderer_set_level(self->renderer, level);
 
-    camera_t* camera = camera_new(-32.0f, 70.0f, -100.0f);
+    camera_t* camera = camera_new(0, 70.0f, 0);
+
+    update_slice(self, level, camera);
 
     bool running = true;
     uint64_t last_tick = SDL_GetTicks64();
@@ -153,10 +160,14 @@ void rudyscung_run(rudyscung_t* const self) {
         glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT);
 
-        renderer_render(renderer, camera);
-        char fps_buffer[32];
-        snprintf(fps_buffer, sizeof(fps_buffer) / sizeof(fps_buffer[0]), "FPS: %zu", fps);
-        font_draw(self->font, fps_buffer, 0, 0);
+        renderer_render(self->renderer, camera);
+        char line_buffer[64];
+        snprintf(line_buffer, sizeof(line_buffer) / sizeof(line_buffer[0]), "FPS: %zu", fps);
+        font_draw(self->font, line_buffer, 0, 0);
+        float camera_pos[3];
+        camera_get_pos(camera, camera_pos);
+        snprintf(line_buffer, sizeof(line_buffer) / sizeof(line_buffer[0]), "x: %.2f y: %.2f z: %.2f", camera_pos[0], camera_pos[1], camera_pos[2]);
+        font_draw(self->font, line_buffer, 0, 14);
 
         window_swap(self->window);
 
@@ -164,8 +175,8 @@ void rudyscung_run(rudyscung_t* const self) {
         uint64_t delta_tick = current_tick - last_tick;
         size_t ticks = (size_t)(delta_tick / MS_PER_TICK);
         for (uint64_t t = 0; t < ticks; t++) {
-            tick(camera);
-            renderer_tick(renderer);
+            tick(self, level, camera);
+            renderer_tick(self->renderer);
         }
         last_tick = current_tick - (delta_tick % MS_PER_TICK);
 
@@ -181,7 +192,6 @@ void rudyscung_run(rudyscung_t* const self) {
     }
 
     camera_delete(camera);
-    renderer_delete(renderer);
     level_delete(level);
 }
 
@@ -209,49 +219,124 @@ font_t* const rudyscung_get_font(rudyscung_t* const self) {
     return self->font;
 }
 
-static void tick(camera_t* const camera) {
+static void tick(rudyscung_t* const self, level_t* const level, camera_t* const camera) {
+    assert(self != nullptr);
+    assert(camera != nullptr);
+
+    float left = 0;
+    float up = 0;
+    float forward = 0;
+    float rot_dy = 0;
+    float rot_dx = 0;
+
+    if (keys.w) {
+        forward++;
+    }
+    if (keys.s) {
+        forward--;
+    }
+    if (keys.a) {
+        left++;
+    }
+    if (keys.d) {
+        left--;
+    }
+    if (keys.left) {
+        rot_dy -= 0.05;
+    }
+    if (keys.right) {
+        rot_dy += 0.05;
+    }
+    if (keys.up) {
+        rot_dx -= 0.05;
+    }
+    if (keys.down) {
+        rot_dx += 0.05;
+    }
+    if (keys.space) {
+        up++;
+    }
+    if (keys.shift) {
+        up--;
+    }
+
     float camera_pos[3];
     camera_get_pos(camera, camera_pos);
     float camera_rot[2];
     camera_get_rot(camera, camera_rot);
 
-    float pos_dx = 0;
-    float pos_dy = 0;
-    float pos_dz = 0;
-    float rot_dy = 0;
-    float rot_dx = 0;
+    float cos_rot_dy = cos(camera_rot[0]);
+    float sin_rot_dy = sin(camera_rot[0]);
 
-    if (keys.w) {
-        pos_dz++;
+    float new_x = camera_pos[0] - left * cos_rot_dy + forward * sin_rot_dy;
+    float new_y = camera_pos[1] + up;
+    float new_z = camera_pos[2] - left * sin_rot_dy - forward * cos_rot_dy;
+    float new_rot_y = camera_rot[0] + rot_dy;
+    float new_rot_x = camera_rot[1] + rot_dx;
+
+    size_chunks_t const x_camera = floor(camera_pos[0] / CHUNK_SIZE);
+    size_chunks_t const y_camera = floor(camera_pos[1] / CHUNK_SIZE);
+    size_chunks_t const z_camera = floor(camera_pos[2] / CHUNK_SIZE);
+
+    camera_set_pos(camera, new_x, new_y, new_z);
+    camera_set_rot(camera, new_rot_y, new_rot_x);
+
+    size_chunks_t const new_x_camera = floor(new_x / CHUNK_SIZE);
+    size_chunks_t const new_y_camera = floor(new_y / CHUNK_SIZE);
+    size_chunks_t const new_z_camera = floor(new_z / CHUNK_SIZE);
+
+    if (x_camera != new_x_camera || y_camera != new_y_camera || z_camera != new_z_camera) {
+        update_slice(self, level, camera);
     }
-    if (keys.s) {
-        pos_dz--;
+}
+
+static void update_slice(rudyscung_t* const self, level_t* const level, camera_t* const camera) {
+    assert(self != nullptr);
+    assert(camera != nullptr);
+
+    size_t const slice_diameter = 5;
+    size_t const slice_radius = (slice_diameter - 1) / 2;
+
+    float camera_pos[3];
+    camera_get_pos(camera, camera_pos);
+
+    size_chunks_t level_size[3];
+    level_get_size(level, level_size);
+
+    int const x_camera = floor(camera_pos[0] / CHUNK_SIZE);
+    int const y_camera = floor(camera_pos[1] / CHUNK_SIZE);
+    int const z_camera = floor(camera_pos[2] / CHUNK_SIZE);
+
+    int slice_x = x_camera - slice_radius;
+    int slice_y = y_camera - slice_radius;
+    int slice_z = z_camera - slice_radius;
+    if (slice_x < 0) {
+        slice_x = 0;
     }
-    if (keys.a) {
-        pos_dx++;
+    if (slice_x >= level_size[0] - slice_diameter) {
+        slice_x = level_size[0] - slice_diameter - 1;
     }
-    if (keys.d) {
-        pos_dx--;
+    if (slice_y < 0) {
+        slice_y = 0;
     }
-    if (keys.left) {
-        rot_dy -= 0.01;
+    if (slice_y >= level_size[1] - slice_diameter) {
+        slice_y = level_size[1] - slice_diameter - 1;
     }
-    if (keys.right) {
-        rot_dy += 0.01;
+    if (slice_z < 0) {
+        slice_z = 0;
     }
-    if (keys.up) {
-        rot_dx -= 0.01;
-    }
-    if (keys.down) {
-        rot_dx += 0.01;
-    }
-    if (keys.space) {
-        pos_dy++;
-    }
-    if (keys.shift) {
-        pos_dy--;
+    if (slice_z >= level_size[2] - slice_diameter) {
+        slice_z = level_size[2] - slice_diameter - 1;
     }
 
-    camera_set_pos(camera, camera_pos[0] + pos_dx, camera_pos[1] + pos_dy, camera_pos[2] + pos_dz);
-    camera_set_rot(camera, camera_rot[0] + rot_dy, camera_rot[1] + rot_dx);
+    level_slice_t level_slice = {
+        .size_x = slice_diameter,
+        .size_y = slice_diameter,
+        .size_z = slice_diameter,
+        .x = slice_x,
+        .y = slice_y,
+        .z = slice_z
+    };
+    level_renderer_t* const level_renderer = renderer_get_level_renderer(self->renderer);
+    level_renderer_slice(level_renderer, &level_slice);
 }

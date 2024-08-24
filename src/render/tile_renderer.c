@@ -211,12 +211,13 @@ static void render_side_bottom(tessellator_t* const self, float const x, float c
 static void render_side_top(tessellator_t* const self, float const x, float const y, float const z, tile_texture_coords_t const* const tex, float const r, float const g, float const b) {
     INIT_UV();
 
-    tessellator_buffer_vct(self, X_MIN, Y_MAX, Z_MAX, r, g, b, u_max, v_min);
-    tessellator_buffer_vct(self, X_MAX, Y_MAX, Z_MAX, r, g, b, u_min, v_min);
-    tessellator_buffer_vct(self, X_MIN, Y_MAX, Z_MIN, r, g, b, u_max, v_max);
-    tessellator_buffer_vct(self, X_MAX, Y_MAX, Z_MAX, r, g, b, u_min, v_min);
-    tessellator_buffer_vct(self, X_MAX, Y_MAX, Z_MIN, r, g, b, u_min, v_max);
-    tessellator_buffer_vct(self, X_MIN, Y_MAX, Z_MIN, r, g, b, u_max, v_max);
+    tessellator_buffer_vct(self, X_MIN, Y_MAX, Z_MAX, r, g, b, u_min, v_max);
+    tessellator_buffer_vct(self, X_MAX, Y_MAX, Z_MAX, r, g, b, u_max, v_max);
+    tessellator_buffer_vct(self, X_MIN, Y_MAX, Z_MIN, r, g, b, u_min, v_min);
+
+    tessellator_buffer_vct(self, X_MAX, Y_MAX, Z_MAX, r, g, b, u_max, v_max);
+    tessellator_buffer_vct(self, X_MAX, Y_MAX, Z_MIN, r, g, b, u_max, v_min);
+    tessellator_buffer_vct(self, X_MIN, Y_MAX, Z_MIN, r, g, b, u_min, v_min);
 }
 
 static void render_side_west(tessellator_t* const self, float const x, float const y, float const z, tile_texture_coords_t const* const tex, float const r, float const g, float const b) {

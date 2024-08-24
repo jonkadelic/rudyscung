@@ -7,7 +7,6 @@
 #include <GL/glew.h>
 #include <GL/gl.h>
 
-#include "./textures.h"
 #include "./level_renderer.h"
 
 static void check_errors(void);
@@ -33,6 +32,12 @@ void renderer_delete(renderer_t* const self) {
     assert(self != nullptr);
 
     free(self);
+}
+
+level_renderer_t* const renderer_get_level_renderer(renderer_t* const self) {
+    assert(self != nullptr);
+
+    return self->level_renderer;
 }
 
 void renderer_tick(renderer_t* const self) {

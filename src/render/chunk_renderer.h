@@ -1,9 +1,8 @@
 #pragma once
 
-// Predefines
-typedef struct level_renderer level_renderer_t;
-typedef struct chunk chunk_t;
-typedef struct tessellator tessellator_t;
+#include "tessellator.h"
+#include "level_renderer.h"
+#include "../world/chunk.h"
 
 typedef struct chunk_renderer chunk_renderer_t;
 
