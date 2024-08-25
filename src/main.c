@@ -4,7 +4,7 @@
 #include <SDL2/SDL.h>
 
 int main(int argc, char** argv) {
-    char const* resources_path = "../res";
+    char const* resources_path = "./res";
     if (argc > 1) {
         resources_path = argv[1];
     }

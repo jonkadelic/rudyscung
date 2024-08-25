@@ -22,6 +22,7 @@ static void check_errors(void);
 
 struct renderer {
     rudyscung_t* rudyscung;
+    level_t* level;
     level_renderer_t* level_renderer;
     struct {
         size_t target_fps;
@@ -39,6 +40,7 @@ renderer_t* const renderer_new(rudyscung_t* const rudyscung) {
     assert(self != nullptr);
 
     self->rudyscung = rudyscung;
+    self->level = nullptr;
     self->level_renderer = nullptr;
     self->frames.target_fps = 60;
     self->frames.last_frame_tick = SDL_GetTicks64();
@@ -68,9 +70,11 @@ void renderer_tick(renderer_t* const self) {
     }
 }
 
-void renderer_set_level(renderer_t* const self, level_t const *const level) {
+void renderer_set_level(renderer_t* const self, level_t *const level) {
     assert(self != nullptr);
     assert(level != nullptr);
+
+    self->level = level;
 
     if (self->level_renderer != nullptr) {
         level_renderer_delete(self->level_renderer);
@@ -98,10 +102,16 @@ void renderer_render(renderer_t* const self, camera_t const* const camera) {
         char line_buffer[64];
         snprintf(line_buffer, sizeof(line_buffer) / sizeof(line_buffer[0]), "FPS: %.2f", self->frames.fps);
         font_draw(font, line_buffer, 0, 0);
-        float camera_pos[NUM_AXES];
-        camera_get_pos(camera, camera_pos);
-        snprintf(line_buffer, sizeof(line_buffer) / sizeof(line_buffer[0]), "x: %.2f y: %.2f z: %.2f", camera_pos[AXIS__X], camera_pos[AXIS__Y], camera_pos[AXIS__Z]);
-        font_draw(font, line_buffer, 0, 12);
+
+        if (self->level != nullptr) {
+            ecs_component_pos_t const* const player_pos = ecs_get_component_data(level_get_ecs(self->level), level_get_player(self->level), ECS_COMPONENT__POS);
+            snprintf(line_buffer, sizeof(line_buffer) / sizeof(line_buffer[0]), "x: %.2f y: %.2f z: %.2f", player_pos->pos[AXIS__X], player_pos->pos[AXIS__Y], player_pos->pos[AXIS__Z]);
+            font_draw(font, line_buffer, 0, 12);
+
+            ecs_component_vel_t const* const player_vel = ecs_get_component_data(level_get_ecs(self->level), level_get_player(self->level), ECS_COMPONENT__VEL);
+            snprintf(line_buffer, sizeof(line_buffer) / sizeof(line_buffer[0]), "vx: %.2f vy: %.2f z: %.2f", player_vel->vel[AXIS__X], player_vel->vel[AXIS__Y], player_vel->vel[AXIS__Z]);
+            font_draw(font, line_buffer, 0, 24);
+        }
 
         window_swap(window);
 

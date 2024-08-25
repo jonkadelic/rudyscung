@@ -208,7 +208,7 @@ void level_renderer_draw(level_renderer_t const* const self, camera_t const* con
     mat4x4 mat_proj;
     mat4x4_identity(mat_proj);
     // mat4x4_ortho(mat_proj, 0, 2.0f, 0, 2.0f, 0.1f, 100.0f);
-    mat4x4_perspective(mat_proj, TO_RADIANS(45.0f), (float) window_size[0] / window_size[1], 0.1f, 1000.0f);
+    mat4x4_perspective(mat_proj, TO_RADIANS(65.0f), (float) window_size[0] / window_size[1], 0.1f, 1000.0f);
     shader_put_uniform_mat4x4(shader, "projection", mat_proj);
 
     mat4x4 mat_model;

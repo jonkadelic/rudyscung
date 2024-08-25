@@ -17,7 +17,7 @@
         {
             "label": "Run",
             "type": "shell",
-            "command": "cd ${workspaceFolder}/build-win; ./rudyscung.exe",
+            "command": "./build-win/rudyscung.exe",
             "group": {
                 "kind": "none",
                 "isDefault": true

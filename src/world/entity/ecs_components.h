@@ -7,6 +7,7 @@ typedef enum ecs_component {
     ECS_COMPONENT__VEL,
     ECS_COMPONENT__ROT,
     ECS_COMPONENT__AABB,
+    ECS_COMPONENT__GRAVITY,
     NUM_ECS_COMPONENTS
 } ecs_component_t;
 
@@ -27,3 +28,7 @@ typedef struct ecs_component_aabb {
     aabb_t* aabb;
     bool colliding[NUM_AXES];
 } ecs_component_aabb_t;
+
+typedef struct ecs_component_gravity {
+    float acceleration;
+} ecs_component_gravity_t;

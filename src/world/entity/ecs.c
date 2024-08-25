@@ -26,7 +26,8 @@ static size_t const COMPONENT_SIZES[NUM_ECS_COMPONENTS] = {
     [ECS_COMPONENT__POS] = sizeof(ecs_component_pos_t),
     [ECS_COMPONENT__VEL] = sizeof(ecs_component_vel_t),
     [ECS_COMPONENT__ROT] = sizeof(ecs_component_rot_t),
-    [ECS_COMPONENT__AABB] = sizeof(ecs_component_aabb_t)
+    [ECS_COMPONENT__AABB] = sizeof(ecs_component_aabb_t),
+    [ECS_COMPONENT__GRAVITY] = sizeof(ecs_component_gravity_t)
 };
 
 static void* const new_component(ecs_component_t const component);
@@ -228,6 +229,11 @@ static void* const new_component(ecs_component_t const component) {
         case ECS_COMPONENT__AABB: {
             ecs_component_aabb_t* c_data = data;
             c_data->aabb = aabb_new((float[NUM_AXES]) { 0.0f, 0.0f, 0.0f }, (float[NUM_AXES]) { 1.0f, 1.0f, 1.0f });
+            break;
+        }
+        case ECS_COMPONENT__GRAVITY: {
+            ecs_component_gravity_t* c_data = data;
+            c_data->acceleration = 9.8f / 40;
             break;
         }
         default:

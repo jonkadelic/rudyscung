@@ -16,6 +16,6 @@ level_renderer_t* const renderer_get_level_renderer(renderer_t* const self);
 
 void renderer_tick(renderer_t* const self);
 
-void renderer_set_level(renderer_t* const self, level_t const* const level);
+void renderer_set_level(renderer_t* const self, level_t* const level);
 
 void renderer_render(renderer_t* const self, camera_t const* const camera);

@@ -63,20 +63,25 @@ level_t* const level_new(size_chunks_t const size[NUM_AXES]) {
     ecs_attach_system(self->ecs, ECS_COMPONENT__AABB, ecs_system_collision);
     ecs_attach_system(self->ecs, ECS_COMPONENT__VEL, ecs_system_velocity);
     ecs_attach_system(self->ecs, ECS_COMPONENT__VEL, ecs_system_friction);
+    ecs_attach_system(self->ecs, ECS_COMPONENT__GRAVITY, ecs_system_gravity);
 
     self->player = ecs_new_entity(self->ecs);
     ecs_component_pos_t* const player_pos = ecs_attach_component(self->ecs, self->player, ECS_COMPONENT__POS);
     ecs_attach_component(self->ecs, self->player, ECS_COMPONENT__VEL);
     ecs_component_rot_t* const player_rot = ecs_attach_component(self->ecs, self->player, ECS_COMPONENT__ROT);
     ecs_component_aabb_t* const player_aabb = ecs_attach_component(self->ecs, self->player, ECS_COMPONENT__AABB);
-    float const player_aabb_min[NUM_AXES] = { -0.5f, -1.8f, -0.5f };
-    float const player_aabb_max[NUM_AXES] = { 0.5f, 0.2f, 0.5f };
-    aabb_set_bounds(player_aabb->aabb, player_aabb_min, player_aabb_max);
+    ecs_attach_component(self->ecs, self->player, ECS_COMPONENT__GRAVITY);
     
     player_pos->pos[AXIS__X] = 24.0f;
     player_pos->pos[AXIS__Y] = 100.0f;
     player_pos->pos[AXIS__Z] = 24.0f;
+
     player_rot->rot[ROT_AXIS__Y] = M_PI / 4 * 3;
+
+    float const player_aabb_min[NUM_AXES] = { -0.4f, -1.8f, -0.4f };
+    float const player_aabb_max[NUM_AXES] = { 0.4f, 0.2f, 0.4f };
+    aabb_set_bounds(player_aabb->aabb, player_aabb_min, player_aabb_max);
+
 
     return self;
 }
@@ -194,7 +199,13 @@ float const level_get_distance_on_axis(level_t const* const self, float const po
     int i[NUM_AXES];
     float d[NUM_AXES];
     for (axis_t a = 0; a < NUM_AXES; a++) {
-        i[a] = floor(pos[a]);
+        if (o[a] == 1) {
+            i[a] = ceil(pos[a]);
+        } else if (o[a] == -1) {
+            i[a] = floor(pos[a]);
+        } else {
+            i[a] = (int) pos[a];
+        }
         if (i[a] < 0 || i[a] >= level_size[a] * CHUNK_SIZE) {
             return 0.0f;
         }
@@ -204,18 +215,24 @@ float const level_get_distance_on_axis(level_t const* const self, float const po
 
     for (axis_t a = 0; a < NUM_AXES; a++) {
         if (o[a] != 0) {
-            size_t js = level_size[a] * CHUNK_SIZE;
             tile_t const* tile;
 
             while (true) {
                 if (absf(d[a]) > max_range) {
                     return NAN;
                 }
-                if (i[a] < 0 || i[a] >= js) {
+                if (i[a] < 0 || i[a] >= level_size[a] * CHUNK_SIZE) {
                     break;
                 }
+
+                int tile_offset[NUM_AXES] = { 0, 0, 0 };
+                for (axis_t aa = 0; aa < NUM_AXES; aa++) {
+                    if (o[aa] < 0) {
+                        tile_offset[aa] = o[aa];
+                    }
+                }
                 
-                tile = level_get_tile(self, (size_t[NUM_AXES]) { i[AXIS__X] + o[AXIS__X], i[AXIS__Y] + o[AXIS__Y], i[AXIS__Z] + o[AXIS__Z] });
+                tile = level_get_tile(self, (size_t[NUM_AXES]) { i[AXIS__X] + tile_offset[AXIS__X], i[AXIS__Y] + tile_offset[AXIS__Y], i[AXIS__Z] + tile_offset[AXIS__Z] });
                 if (tile != air_tile) {
                     break;
                 }
