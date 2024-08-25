@@ -90,7 +90,7 @@ void rudyscung_run(rudyscung_t* const self) {
 
 #define LEVEL_SIZE 16
 #define LEVEL_HEIGHT 8
-    level_t* level = level_new(LEVEL_SIZE, LEVEL_HEIGHT, LEVEL_SIZE);
+    level_t* level = level_new((size_chunks_t[NUM_AXES]) { LEVEL_SIZE, LEVEL_HEIGHT, LEVEL_SIZE });
     ecs_t* ecs = level_get_ecs(level);
     entity_t player = level_get_player(level);
 
@@ -178,7 +178,7 @@ void rudyscung_run(rudyscung_t* const self) {
                     case SDLK_r:
                         if (is_pressed && event.key.repeat == SDL_FALSE) {
                             level_delete(level);
-                            level = level_new(LEVEL_SIZE, LEVEL_HEIGHT, LEVEL_SIZE);
+                            level = level_new((size_chunks_t[NUM_AXES]) { LEVEL_SIZE, LEVEL_HEIGHT, LEVEL_SIZE });
                             ecs = level_get_ecs(level);
                             player = level_get_player(level);
                             renderer_set_level(self->renderer, level);
@@ -367,7 +367,7 @@ static void update_slice(rudyscung_t* const self, level_t* const level, bool con
     }
 
     level_slice_t level_slice = {
-        .size = { slice_diameter, 8, slice_radius },
+        .size = { slice_diameter, 8, slice_diameter },
         .pos = { slice_x, 0, slice_z }
     };
     level_renderer_t* const level_renderer = renderer_get_level_renderer(self->renderer);

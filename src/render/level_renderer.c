@@ -272,12 +272,12 @@ bool level_renderer_is_tile_side_occluded(level_renderer_t const* const self, si
     int offsets[NUM_AXES];
     side_get_offsets(side, offsets);
 
-    int t_pos[NUM_AXES];
+    size_t t_pos[NUM_AXES];
     for (axis_t a = 0; a < NUM_AXES; a++) {
         t_pos[a] = pos[a] + offsets[a];
     }
 
-    tile_shape_t tshape = level_get_tile_shape(self->level, t_pos[AXIS__X], t_pos[AXIS__Y], t_pos[AXIS__Z]);
+    tile_shape_t tshape = level_get_tile_shape(self->level, t_pos);
     side_t tside = side_get_opposite(side);
 
     return tile_shape_can_side_occlude(tshape, tside);
@@ -320,7 +320,7 @@ static void reload_chunk_renderers(level_renderer_t* const self) {
         for (size_chunks_t y = 0; y < self->level_slice.size[AXIS__Y] && (self->level_slice.pos[AXIS__Y] + y) < level_size[AXIS__Y]; y++) {
             for (size_chunks_t z = 0; z < self->level_slice.size[AXIS__Z] && (self->level_slice.pos[AXIS__Z] + z) < level_size[AXIS__Z]; z++) {
                 if (self->chunk_renderers[CHUNK_INDEX(x, y, z)] == nullptr) {
-                    chunk_t const* const chunk = level_get_chunk(self->level, self->level_slice.pos[AXIS__X] + x, self->level_slice.pos[AXIS__Y] + y, self->level_slice.pos[AXIS__Z] + z);
+                    chunk_t const* const chunk = level_get_chunk(self->level, (size_chunks_t[NUM_AXES]) { self->level_slice.pos[AXIS__X] + x, self->level_slice.pos[AXIS__Y] + y, self->level_slice.pos[AXIS__Z] + z });
                     self->chunk_renderers[CHUNK_INDEX(x, y, z)] = chunk_renderer_new(self, chunk);
                 }
             }

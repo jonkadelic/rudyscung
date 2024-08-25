@@ -103,7 +103,7 @@ void ecs_system_collision(ecs_t* const self, level_t* const level, entity_t cons
                         if (vel_dir[i] == sides[i]) {
                             float corner_pos[3];
                             aabb_get_point(aabb->aabb, sides, corner_pos);
-                            float d = level_get_distance_on_axis(level, pos->x + corner_pos[0], pos->y + corner_pos[1], pos->z + corner_pos[2], sides[i], 1.0f);
+                            float d = level_get_distance_on_axis(level, (float[NUM_AXES]) { pos->x + corner_pos[0], pos->y + corner_pos[1], pos->z + corner_pos[2] }, sides[i], 1.0f);
                             if (!isnan(d)) {
                                 if (d > 0.01f) {
                                     if (vel_arr[i] < 0) {

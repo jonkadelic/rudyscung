@@ -11,21 +11,21 @@
 #define TO_PIXEL_SPACE(tile_coord) ((tile_coord) * TILE_SIZE_PIXELS)
 #define TO_TEXTURE_SPACE(pixel_coord) ((pixel_coord) / (float) TERRAIN_SIZE_PIXELS)
 
-typedef void (*tile_shape_renderer_t)(tessellator_t* const self, float const x, float const y, float const z, tile_t const* const tile, bool is_side_occluded[NUM_SIDES]);
+typedef void (*tile_shape_renderer_t)(tessellator_t* const self, float const pos[NUM_AXES], tile_t const* const tile, bool is_side_occluded[NUM_SIDES]);
 
-static void render_shape_flat(tessellator_t* const self, float const x, float const y, float const z, tile_t const* const tile, bool is_side_occluded[NUM_SIDES]);
-static void render_shape_ramp_north(tessellator_t* const self, float const x, float const y, float const z, tile_t const* const tile, bool is_side_occluded[NUM_SIDES]);
-static void render_shape_ramp_south(tessellator_t* const self, float const x, float const y, float const z, tile_t const* const tile, bool is_side_occluded[NUM_SIDES]);
-static void render_shape_ramp_west(tessellator_t* const self, float const x, float const y, float const z, tile_t const* const tile, bool is_side_occluded[NUM_SIDES]);
-static void render_shape_ramp_east(tessellator_t* const self, float const x, float const y, float const z, tile_t const* const tile, bool is_side_occluded[NUM_SIDES]);
-static void render_shape_corner_a_north_west(tessellator_t* const self, float const x, float const y, float const z, tile_t const* const tile, bool is_side_occluded[NUM_SIDES]);
-static void render_shape_corner_a_south_west(tessellator_t* const self, float const x, float const y, float const z, tile_t const* const tile, bool is_side_occluded[NUM_SIDES]);
-static void render_shape_corner_a_north_east(tessellator_t* const self, float const x, float const y, float const z, tile_t const* const tile, bool is_side_occluded[NUM_SIDES]);
-static void render_shape_corner_a_south_east(tessellator_t* const self, float const x, float const y, float const z, tile_t const* const tile, bool is_side_occluded[NUM_SIDES]);
-static void render_shape_corner_b_north_west(tessellator_t* const self, float const x, float const y, float const z, tile_t const* const tile, bool is_side_occluded[NUM_SIDES]);
-static void render_shape_corner_b_south_west(tessellator_t* const self, float const x, float const y, float const z, tile_t const* const tile, bool is_side_occluded[NUM_SIDES]);
-static void render_shape_corner_b_north_east(tessellator_t* const self, float const x, float const y, float const z, tile_t const* const tile, bool is_side_occluded[NUM_SIDES]);
-static void render_shape_corner_b_south_east(tessellator_t* const self, float const x, float const y, float const z, tile_t const* const tile, bool is_side_occluded[NUM_SIDES]);
+static void render_shape_flat(tessellator_t* const self, float const pos[NUM_AXES], tile_t const* const tile, bool is_side_occluded[NUM_SIDES]);
+static void render_shape_ramp_north(tessellator_t* const self, float const pos[NUM_AXES], tile_t const* const tile, bool is_side_occluded[NUM_SIDES]);
+static void render_shape_ramp_south(tessellator_t* const self, float const pos[NUM_AXES], tile_t const* const tile, bool is_side_occluded[NUM_SIDES]);
+static void render_shape_ramp_west(tessellator_t* const self, float const pos[NUM_AXES], tile_t const* const tile, bool is_side_occluded[NUM_SIDES]);
+static void render_shape_ramp_east(tessellator_t* const self, float const pos[NUM_AXES], tile_t const* const tile, bool is_side_occluded[NUM_SIDES]);
+static void render_shape_corner_a_north_west(tessellator_t* const self, float const pos[NUM_AXES], tile_t const* const tile, bool is_side_occluded[NUM_SIDES]);
+static void render_shape_corner_a_south_west(tessellator_t* const self, float const pos[NUM_AXES], tile_t const* const tile, bool is_side_occluded[NUM_SIDES]);
+static void render_shape_corner_a_north_east(tessellator_t* const self, float const pos[NUM_AXES], tile_t const* const tile, bool is_side_occluded[NUM_SIDES]);
+static void render_shape_corner_a_south_east(tessellator_t* const self, float const pos[NUM_AXES], tile_t const* const tile, bool is_side_occluded[NUM_SIDES]);
+static void render_shape_corner_b_north_west(tessellator_t* const self, float const pos[NUM_AXES], tile_t const* const tile, bool is_side_occluded[NUM_SIDES]);
+static void render_shape_corner_b_south_west(tessellator_t* const self, float const pos[NUM_AXES], tile_t const* const tile, bool is_side_occluded[NUM_SIDES]);
+static void render_shape_corner_b_north_east(tessellator_t* const self, float const pos[NUM_AXES], tile_t const* const tile, bool is_side_occluded[NUM_SIDES]);
+static void render_shape_corner_b_south_east(tessellator_t* const self, float const pos[NUM_AXES], tile_t const* const tile, bool is_side_occluded[NUM_SIDES]);
 
 static tile_shape_renderer_t const SHAPE_RENDERERS[NUM_TILE_SHAPES] = {
     [TILE_SHAPE__NO_RENDER] = nullptr,
@@ -44,14 +44,14 @@ static tile_shape_renderer_t const SHAPE_RENDERERS[NUM_TILE_SHAPES] = {
     [TILE_SHAPE__CORNER_B_SOUTH_EAST] = render_shape_corner_b_south_east,
 };
 
-typedef void (*tile_side_renderer_t)(tessellator_t* const self, float const x, float const y, float const z, tile_texture_coords_t const* const tex, float const r, float const g, float const b);
+typedef void (*tile_side_renderer_t)(tessellator_t* const self, float const pos[NUM_AXES], tile_texture_coords_t const* const tex, float const color[3]);
 
-static void render_side_north(tessellator_t* const self, float const x, float const y, float const z, tile_texture_coords_t const* const tex, float const r, float const g, float const b);
-static void render_side_south(tessellator_t* const self, float const x, float const y, float const z, tile_texture_coords_t const* const tex, float const r, float const g, float const b);
-static void render_side_bottom(tessellator_t* const self, float const x, float const y, float const z, tile_texture_coords_t const* const tex, float const r, float const g, float const b);
-static void render_side_top(tessellator_t* const self, float const x, float const y, float const z, tile_texture_coords_t const* const tex, float const r, float const g, float const b);
-static void render_side_west(tessellator_t* const self, float const x, float const y, float const z, tile_texture_coords_t const* const tex, float const r, float const g, float const b);
-static void render_side_east(tessellator_t* const self, float const x, float const y, float const z, tile_texture_coords_t const* const tex, float const r, float const g, float const b);
+static void render_side_north(tessellator_t* const self, float const pos[NUM_AXES], tile_texture_coords_t const* const tex, float const color[3]);
+static void render_side_south(tessellator_t* const self, float const pos[NUM_AXES], tile_texture_coords_t const* const tex, float const color[3]);
+static void render_side_bottom(tessellator_t* const self, float const pos[NUM_AXES], tile_texture_coords_t const* const tex, float const color[3]);
+static void render_side_top(tessellator_t* const self, float const pos[NUM_AXES], tile_texture_coords_t const* const tex, float const color[3]);
+static void render_side_west(tessellator_t* const self, float const pos[NUM_AXES], tile_texture_coords_t const* const tex, float const color[3]);
+static void render_side_east(tessellator_t* const self, float const pos[NUM_AXES], tile_texture_coords_t const* const tex, float const color[3]);
 
 static tile_side_renderer_t const SIDE_RENDERERS[NUM_SIDES] = {
     [SIDE__NORTH] = render_side_north,
@@ -62,11 +62,11 @@ static tile_side_renderer_t const SIDE_RENDERERS[NUM_SIDES] = {
     [SIDE__EAST] = render_side_east
 };
 
-void tile_renderer_render_tile(tessellator_t* const self, int const x, int const y, int const z, tile_t const* const tile, tile_shape_t const tile_shape, bool is_side_occluded[NUM_SIDES]) {
-    tile_renderer_render_tile_f(self, floor(x), floor(y), floor(z), tile, tile_shape, is_side_occluded);
+void tile_renderer_render_tile(tessellator_t* const self, int const pos[NUM_AXES], tile_t const* const tile, tile_shape_t const tile_shape, bool is_side_occluded[NUM_SIDES]) {
+    tile_renderer_render_tile_f(self, (float[NUM_AXES]) { floor(pos[AXIS__X]), floor(pos[AXIS__Y]), floor(pos[AXIS__Z]) }, tile, tile_shape, is_side_occluded);
 }
 
-void tile_renderer_render_tile_f(tessellator_t* const self, float const x, float const y, float const z, tile_t const* const tile, tile_shape_t const tile_shape, bool is_side_occluded[NUM_SIDES]) {
+void tile_renderer_render_tile_f(tessellator_t* const self, float const pos[NUM_AXES], tile_t const* const tile, tile_shape_t const tile_shape, bool is_side_occluded[NUM_SIDES]) {
     assert(self != nullptr);
     assert(tile != nullptr);
     assert(tile_shape >= 0 && tile_shape < NUM_TILE_SHAPES);
@@ -84,19 +84,19 @@ void tile_renderer_render_tile_f(tessellator_t* const self, float const x, float
     }
 
     if (SHAPE_RENDERERS[tile_shape] != nullptr) {
-        SHAPE_RENDERERS[tile_shape](self, x, y, z, tile, is_side_occluded);
+        SHAPE_RENDERERS[tile_shape](self, pos, tile, is_side_occluded);
     }
 }
 
-#define X_MIN (x + 0.0f)
-#define X_MID (x + 0.5f)
-#define X_MAX (x + 1.0f)
-#define Y_MIN (y + 0.0f)
-#define Y_MID (y + 0.5f)
-#define Y_MAX (y + 1.0f)
-#define Z_MIN (z + 0.0f)
-#define Z_MID (z + 0.5f)
-#define Z_MAX (z + 1.0f)
+#define X_MIN (pos[AXIS__X] + 0.0f)
+#define X_MID (pos[AXIS__X] + 0.5f)
+#define X_MAX (pos[AXIS__X] + 1.0f)
+#define Y_MIN (pos[AXIS__Y] + 0.0f)
+#define Y_MID (pos[AXIS__Y] + 0.5f)
+#define Y_MAX (pos[AXIS__Y] + 1.0f)
+#define Z_MIN (pos[AXIS__Z] + 0.0f)
+#define Z_MID (pos[AXIS__Z] + 0.5f)
+#define Z_MAX (pos[AXIS__Z] + 1.0f)
 
 #define INIT_UV(x, y) \
     size_t px_min = TO_PIXEL_SPACE(x) + 0; \
@@ -112,16 +112,16 @@ void tile_renderer_render_tile_f(tessellator_t* const self, float const x, float
     float v_mid = TO_TEXTURE_SPACE(py_mid); \
     float v_max = TO_TEXTURE_SPACE(py_max);
 
-static float const BRIGHTNESSES[NUM_SIDES] = {
-    [SIDE__NORTH] = 0.8f,
-    [SIDE__SOUTH] = 0.8f,
-    [SIDE__BOTTOM] = 0.5f,
-    [SIDE__TOP] = 1.0f,
-    [SIDE__WEST] = 0.6f,
-    [SIDE__EAST] = 0.6f
+static float const BRIGHTNESSES[NUM_SIDES][NUM_AXES] = {
+    [SIDE__NORTH] = { 0.8f, 0.8f, 0.8f },
+    [SIDE__SOUTH] = { 0.8f, 0.8f, 0.8f },
+    [SIDE__BOTTOM] = { 0.5f, 0.5f, 0.5f },
+    [SIDE__TOP] = { 1.0f, 1.0f, 1.0f },
+    [SIDE__WEST] = { 0.6f, 0.6f, 0.6f },
+    [SIDE__EAST] = { 0.6f, 0.6f, 0.6f }
 };
 
-static void render_shape_flat(tessellator_t* const self, float const x, float const y, float const z, tile_t const* const tile, bool is_side_occluded[NUM_SIDES]) {
+static void render_shape_flat(tessellator_t* const self, float const pos[NUM_AXES], tile_t const* const tile, bool is_side_occluded[NUM_SIDES]) {
     for (size_t i = 0; i < NUM_SIDES; i++) {
         if (is_side_occluded[i]) {
             continue;
@@ -130,11 +130,11 @@ static void render_shape_flat(tessellator_t* const self, float const x, float co
         tile_texture_coords_t tex;
         tile_texture_dispatcher_get_tile_texture_coords(tile, i, &tex);
 
-        SIDE_RENDERERS[i](self, x, y, z, &tex, BRIGHTNESSES[i], BRIGHTNESSES[i], BRIGHTNESSES[i]);
+        SIDE_RENDERERS[i](self, pos, &tex, BRIGHTNESSES[i]);
     }
 }
 
-static void render_shape_ramp_north(tessellator_t* const self, float const x, float const y, float const z, tile_t const* const tile, bool is_side_occluded[NUM_SIDES]) {
+static void render_shape_ramp_north(tessellator_t* const self, float const pos[NUM_AXES], tile_t const* const tile, bool is_side_occluded[NUM_SIDES]) {
     for (size_t i = 0; i < NUM_SIDES; i++) {
         if (is_side_occluded[i]) {
             continue;
@@ -144,34 +144,36 @@ static void render_shape_ramp_north(tessellator_t* const self, float const x, fl
         tile_texture_dispatcher_get_tile_texture_coords(tile, i, &tex);
         INIT_UV(tex.x, tex.y);
 
-        float br = BRIGHTNESSES[i];
+        float br[3] = { BRIGHTNESSES[i][0], BRIGHTNESSES[i][1], BRIGHTNESSES[i][2] };
 
         if (i == SIDE__TOP) {
-            br = BRIGHTNESSES[SIDE__SOUTH] + ((BRIGHTNESSES[SIDE__TOP] - BRIGHTNESSES[SIDE__SOUTH]) / 2);
+            for (size_t j = 0; j < 3; j++) {
+                br[j] = BRIGHTNESSES[SIDE__SOUTH][j] + ((BRIGHTNESSES[SIDE__TOP][j] - BRIGHTNESSES[SIDE__SOUTH][j]) / 2);
+            }
 
-            tessellator_buffer_vct(self, X_MAX, Y_MIN, Z_MIN, br, br, br, u_max, v_min);
-            tessellator_buffer_vct(self, X_MIN, Y_MAX, Z_MIN, br, br, br, u_min, v_min);
-            tessellator_buffer_vct(self, X_MAX, Y_MIN, Z_MAX, br, br, br, u_max, v_max);
-            tessellator_buffer_vct(self, X_MIN, Y_MAX, Z_MAX, br, br, br, u_min, v_max);
-            tessellator_buffer_vct(self, X_MAX, Y_MIN, Z_MAX, br, br, br, u_max, v_max);
-            tessellator_buffer_vct(self, X_MIN, Y_MAX, Z_MIN, br, br, br, u_min, v_min);
+            tessellator_buffer_vct(self, X_MAX, Y_MIN, Z_MIN, br[0], br[1], br[2], u_max, v_min);
+            tessellator_buffer_vct(self, X_MIN, Y_MAX, Z_MIN, br[0], br[1], br[2], u_min, v_min);
+            tessellator_buffer_vct(self, X_MAX, Y_MIN, Z_MAX, br[0], br[1], br[2], u_max, v_max);
+            tessellator_buffer_vct(self, X_MIN, Y_MAX, Z_MAX, br[0], br[1], br[2], u_min, v_max);
+            tessellator_buffer_vct(self, X_MAX, Y_MIN, Z_MAX, br[0], br[1], br[2], u_max, v_max);
+            tessellator_buffer_vct(self, X_MIN, Y_MAX, Z_MIN, br[0], br[1], br[2], u_min, v_min);
         } else if (i == SIDE__WEST) {
-            tessellator_buffer_vct(self, X_MIN, Y_MIN, Z_MIN, br, br, br, u_max, v_max);
-            tessellator_buffer_vct(self, X_MIN, Y_MAX, Z_MIN, br, br, br, u_max, v_min);
-            tessellator_buffer_vct(self, X_MAX, Y_MIN, Z_MIN, br, br, br, u_min, v_max);
+            tessellator_buffer_vct(self, X_MIN, Y_MIN, Z_MIN, br[0], br[1], br[2], u_max, v_max);
+            tessellator_buffer_vct(self, X_MIN, Y_MAX, Z_MIN, br[0], br[1], br[2], u_max, v_min);
+            tessellator_buffer_vct(self, X_MAX, Y_MIN, Z_MIN, br[0], br[1], br[2], u_min, v_max);
         } else if (i == SIDE__EAST) {
-            tessellator_buffer_vct(self, X_MIN, Y_MAX, Z_MAX, br, br, br, u_min, v_min);
-            tessellator_buffer_vct(self, X_MIN, Y_MIN, Z_MAX, br, br, br, u_min, v_max);
-            tessellator_buffer_vct(self, X_MAX, Y_MIN, Z_MAX, br, br, br, u_max, v_max);
+            tessellator_buffer_vct(self, X_MIN, Y_MAX, Z_MAX, br[0], br[1], br[2], u_min, v_min);
+            tessellator_buffer_vct(self, X_MIN, Y_MIN, Z_MAX, br[0], br[1], br[2], u_min, v_max);
+            tessellator_buffer_vct(self, X_MAX, Y_MIN, Z_MAX, br[0], br[1], br[2], u_max, v_max);
         } else if (i == SIDE__SOUTH) {
             // Do nothing
         } else {
-            SIDE_RENDERERS[i](self, x, y, z, &tex, br, br, br);
+            SIDE_RENDERERS[i](self, pos, &tex, br);
         }
     }
 }
 
-static void render_shape_ramp_south(tessellator_t* const self, float const x, float const y, float const z, tile_t const* const tile, bool is_side_occluded[NUM_SIDES]) {
+static void render_shape_ramp_south(tessellator_t* const self, float const pos[NUM_AXES], tile_t const* const tile, bool is_side_occluded[NUM_SIDES]) {
     for (size_t i = 0; i < NUM_SIDES; i++) {
         if (is_side_occluded[i]) {
             continue;
@@ -181,34 +183,36 @@ static void render_shape_ramp_south(tessellator_t* const self, float const x, fl
         tile_texture_dispatcher_get_tile_texture_coords(tile, i, &tex);
         INIT_UV(tex.x, tex.y);
 
-        float br = BRIGHTNESSES[i];
+        float br[3] = { BRIGHTNESSES[i][0], BRIGHTNESSES[i][1], BRIGHTNESSES[i][2] };
 
         if (i == SIDE__TOP) {
-            br = BRIGHTNESSES[SIDE__NORTH] + ((BRIGHTNESSES[SIDE__TOP] - BRIGHTNESSES[SIDE__NORTH]) / 2);
+            for (size_t j = 0; j < 3; j++) {
+                br[j] = BRIGHTNESSES[SIDE__NORTH][j] + ((BRIGHTNESSES[SIDE__TOP][j] - BRIGHTNESSES[SIDE__NORTH][j]) / 2);
+            }
 
-            tessellator_buffer_vct(self, X_MIN, Y_MIN, Z_MAX, br, br, br, u_min, v_max);
-            tessellator_buffer_vct(self, X_MAX, Y_MAX, Z_MIN, br, br, br, u_max, v_min);
-            tessellator_buffer_vct(self, X_MIN, Y_MIN, Z_MIN, br, br, br, u_min, v_min);
-            tessellator_buffer_vct(self, X_MAX, Y_MAX, Z_MIN, br, br, br, u_max, v_min);
-            tessellator_buffer_vct(self, X_MIN, Y_MIN, Z_MAX, br, br, br, u_min, v_max);
-            tessellator_buffer_vct(self, X_MAX, Y_MAX, Z_MAX, br, br, br, u_max, v_max);
+            tessellator_buffer_vct(self, X_MIN, Y_MIN, Z_MAX, br[0], br[1], br[2], u_min, v_max);
+            tessellator_buffer_vct(self, X_MAX, Y_MAX, Z_MIN, br[0], br[1], br[2], u_max, v_min);
+            tessellator_buffer_vct(self, X_MIN, Y_MIN, Z_MIN, br[0], br[1], br[2], u_min, v_min);
+            tessellator_buffer_vct(self, X_MAX, Y_MAX, Z_MIN, br[0], br[1], br[2], u_max, v_min);
+            tessellator_buffer_vct(self, X_MIN, Y_MIN, Z_MAX, br[0], br[1], br[2], u_min, v_max);
+            tessellator_buffer_vct(self, X_MAX, Y_MAX, Z_MAX, br[0], br[1], br[2], u_max, v_max);
         } else if (i == SIDE__WEST) {
-            tessellator_buffer_vct(self, X_MAX, Y_MAX, Z_MIN, br, br, br, u_min, v_min);
-            tessellator_buffer_vct(self, X_MAX, Y_MIN, Z_MIN, br, br, br, u_min, v_max);
-            tessellator_buffer_vct(self, X_MIN, Y_MIN, Z_MIN, br, br, br, u_max, v_max);
+            tessellator_buffer_vct(self, X_MAX, Y_MAX, Z_MIN, br[0], br[1], br[2], u_min, v_min);
+            tessellator_buffer_vct(self, X_MAX, Y_MIN, Z_MIN, br[0], br[1], br[2], u_min, v_max);
+            tessellator_buffer_vct(self, X_MIN, Y_MIN, Z_MIN, br[0], br[1], br[2], u_max, v_max);
         } else if (i == SIDE__EAST) {
-            tessellator_buffer_vct(self, X_MIN, Y_MIN, Z_MAX, br, br, br, u_min, v_max);
-            tessellator_buffer_vct(self, X_MAX, Y_MIN, Z_MAX, br, br, br, u_max, v_max);
-            tessellator_buffer_vct(self, X_MAX, Y_MAX, Z_MAX, br, br, br, u_max, v_min);
+            tessellator_buffer_vct(self, X_MIN, Y_MIN, Z_MAX, br[0], br[1], br[2], u_min, v_max);
+            tessellator_buffer_vct(self, X_MAX, Y_MIN, Z_MAX, br[0], br[1], br[2], u_max, v_max);
+            tessellator_buffer_vct(self, X_MAX, Y_MAX, Z_MAX, br[0], br[1], br[2], u_max, v_min);
         } else if (i == SIDE__NORTH) {
             // Do nothing
         } else {
-            SIDE_RENDERERS[i](self, x, y, z, &tex, br, br, br);
+            SIDE_RENDERERS[i](self, pos, &tex, br);
         }
     }
 }
 
-static void render_shape_ramp_west(tessellator_t* const self, float const x, float const y, float const z, tile_t const* const tile, bool is_side_occluded[NUM_SIDES]) {
+static void render_shape_ramp_west(tessellator_t* const self, float const pos[NUM_AXES], tile_t const* const tile, bool is_side_occluded[NUM_SIDES]) {
     for (size_t i = 0; i < NUM_SIDES; i++) {
         if (is_side_occluded[i]) {
             continue;
@@ -218,34 +222,36 @@ static void render_shape_ramp_west(tessellator_t* const self, float const x, flo
         tile_texture_dispatcher_get_tile_texture_coords(tile, i, &tex);
         INIT_UV(tex.x, tex.y);
 
-        float br = BRIGHTNESSES[i];
+        float br[3] = { BRIGHTNESSES[i][0], BRIGHTNESSES[i][1], BRIGHTNESSES[i][2] };
 
         if (i == SIDE__TOP) {
-            br = BRIGHTNESSES[SIDE__EAST] + ((BRIGHTNESSES[SIDE__TOP] - BRIGHTNESSES[SIDE__EAST]) / 2);
+            for (size_t j = 0; j < 3; j++) {
+                br[j] = BRIGHTNESSES[SIDE__EAST][j] + ((BRIGHTNESSES[SIDE__TOP][j] - BRIGHTNESSES[SIDE__EAST][j]) / 2);
+            }
 
-            tessellator_buffer_vct(self, X_MIN, Y_MIN, Z_MAX, br, br, br, u_min, v_max);
-            tessellator_buffer_vct(self, X_MAX, Y_MIN, Z_MAX, br, br, br, u_max, v_max);
-            tessellator_buffer_vct(self, X_MIN, Y_MAX, Z_MIN, br, br, br, u_min, v_min);
-            tessellator_buffer_vct(self, X_MAX, Y_MIN, Z_MAX, br, br, br, u_max, v_max);
-            tessellator_buffer_vct(self, X_MAX, Y_MAX, Z_MIN, br, br, br, u_max, v_min);
-            tessellator_buffer_vct(self, X_MIN, Y_MAX, Z_MIN, br, br, br, u_min, v_min);
+            tessellator_buffer_vct(self, X_MIN, Y_MIN, Z_MAX, br[0], br[1], br[2], u_min, v_max);
+            tessellator_buffer_vct(self, X_MAX, Y_MIN, Z_MAX, br[0], br[1], br[2], u_max, v_max);
+            tessellator_buffer_vct(self, X_MIN, Y_MAX, Z_MIN, br[0], br[1], br[2], u_min, v_min);
+            tessellator_buffer_vct(self, X_MAX, Y_MIN, Z_MAX, br[0], br[1], br[2], u_max, v_max);
+            tessellator_buffer_vct(self, X_MAX, Y_MAX, Z_MIN, br[0], br[1], br[2], u_max, v_min);
+            tessellator_buffer_vct(self, X_MIN, Y_MAX, Z_MIN, br[0], br[1], br[2], u_min, v_min);
         } else if (i == SIDE__NORTH) {
-            tessellator_buffer_vct(self, X_MIN, Y_MIN, Z_MAX, br, br, br, u_max, v_max);
-            tessellator_buffer_vct(self, X_MIN, Y_MAX, Z_MIN, br, br, br, u_min, v_min);
-            tessellator_buffer_vct(self, X_MIN, Y_MIN, Z_MIN, br, br, br, u_min, v_max);
+            tessellator_buffer_vct(self, X_MIN, Y_MIN, Z_MAX, br[0], br[1], br[2], u_max, v_max);
+            tessellator_buffer_vct(self, X_MIN, Y_MAX, Z_MIN, br[0], br[1], br[2], u_min, v_min);
+            tessellator_buffer_vct(self, X_MIN, Y_MIN, Z_MIN, br[0], br[1], br[2], u_min, v_max);
         } else if (i == SIDE__SOUTH) {
-            tessellator_buffer_vct(self, X_MAX, Y_MIN, Z_MIN, br, br, br, u_max, v_max);
-            tessellator_buffer_vct(self, X_MAX, Y_MAX, Z_MIN, br, br, br, u_max, v_min);
-            tessellator_buffer_vct(self, X_MAX, Y_MIN, Z_MAX, br, br, br, u_min, v_max);
+            tessellator_buffer_vct(self, X_MAX, Y_MIN, Z_MIN, br[0], br[1], br[2], u_max, v_max);
+            tessellator_buffer_vct(self, X_MAX, Y_MAX, Z_MIN, br[0], br[1], br[2], u_max, v_min);
+            tessellator_buffer_vct(self, X_MAX, Y_MIN, Z_MAX, br[0], br[1], br[2], u_min, v_max);
         } else if (i == SIDE__EAST) {
             // Do nothing
         } else {
-            SIDE_RENDERERS[i](self, x, y, z, &tex, br, br, br);
+            SIDE_RENDERERS[i](self, pos, &tex, br);
         }
     }
 }
 
-static void render_shape_ramp_east(tessellator_t* const self, float const x, float const y, float const z, tile_t const* const tile, bool is_side_occluded[NUM_SIDES]) {
+static void render_shape_ramp_east(tessellator_t* const self, float const pos[NUM_AXES], tile_t const* const tile, bool is_side_occluded[NUM_SIDES]) {
     for (size_t i = 0; i < NUM_SIDES; i++) {
         if (is_side_occluded[i]) {
             continue;
@@ -255,34 +261,36 @@ static void render_shape_ramp_east(tessellator_t* const self, float const x, flo
         tile_texture_dispatcher_get_tile_texture_coords(tile, i, &tex);
         INIT_UV(tex.x, tex.y);
 
-        float br = BRIGHTNESSES[i];
+        float br[3] = { BRIGHTNESSES[i][0], BRIGHTNESSES[i][1], BRIGHTNESSES[i][2] };
 
         if (i == SIDE__TOP) {
-            br = BRIGHTNESSES[SIDE__WEST] + ((BRIGHTNESSES[SIDE__TOP] - BRIGHTNESSES[SIDE__WEST]) / 2);
+            for (size_t j = 0; j < 3; j++) {
+                br[j] = BRIGHTNESSES[SIDE__WEST][j] + ((BRIGHTNESSES[SIDE__TOP][j] - BRIGHTNESSES[SIDE__WEST][j]) / 2);
+            }
 
-            tessellator_buffer_vct(self, X_MIN, Y_MIN, Z_MIN, br, br, br, u_min, v_min);
-            tessellator_buffer_vct(self, X_MIN, Y_MAX, Z_MAX, br, br, br, u_min, v_max);
-            tessellator_buffer_vct(self, X_MAX, Y_MIN, Z_MIN, br, br, br, u_max, v_min);
-            tessellator_buffer_vct(self, X_MAX, Y_MAX, Z_MAX, br, br, br, u_max, v_max);
-            tessellator_buffer_vct(self, X_MAX, Y_MIN, Z_MIN, br, br, br, u_max, v_min);
-            tessellator_buffer_vct(self, X_MIN, Y_MAX, Z_MAX, br, br, br, u_min, v_max);
+            tessellator_buffer_vct(self, X_MIN, Y_MIN, Z_MIN, br[0], br[1], br[2], u_min, v_min);
+            tessellator_buffer_vct(self, X_MIN, Y_MAX, Z_MAX, br[0], br[1], br[2], u_min, v_max);
+            tessellator_buffer_vct(self, X_MAX, Y_MIN, Z_MIN, br[0], br[1], br[2], u_max, v_min);
+            tessellator_buffer_vct(self, X_MAX, Y_MAX, Z_MAX, br[0], br[1], br[2], u_max, v_max);
+            tessellator_buffer_vct(self, X_MAX, Y_MIN, Z_MIN, br[0], br[1], br[2], u_max, v_min);
+            tessellator_buffer_vct(self, X_MIN, Y_MAX, Z_MAX, br[0], br[1], br[2], u_min, v_max);
         } else if (i == SIDE__NORTH) {
-            tessellator_buffer_vct(self, X_MIN, Y_MIN, Z_MAX, br, br, br, u_max, v_max);
-            tessellator_buffer_vct(self, X_MIN, Y_MAX, Z_MAX, br, br, br, u_max, v_min);
-            tessellator_buffer_vct(self, X_MIN, Y_MIN, Z_MIN, br, br, br, u_min, v_max);
+            tessellator_buffer_vct(self, X_MIN, Y_MIN, Z_MAX, br[0], br[1], br[2], u_max, v_max);
+            tessellator_buffer_vct(self, X_MIN, Y_MAX, Z_MAX, br[0], br[1], br[2], u_max, v_min);
+            tessellator_buffer_vct(self, X_MIN, Y_MIN, Z_MIN, br[0], br[1], br[2], u_min, v_max);
         } else if (i == SIDE__SOUTH) {
-            tessellator_buffer_vct(self, X_MAX, Y_MIN, Z_MIN, br, br, br, u_max, v_max);
-            tessellator_buffer_vct(self, X_MAX, Y_MAX, Z_MAX, br, br, br, u_min, v_min);
-            tessellator_buffer_vct(self, X_MAX, Y_MIN, Z_MAX, br, br, br, u_min, v_max);
+            tessellator_buffer_vct(self, X_MAX, Y_MIN, Z_MIN, br[0], br[1], br[2], u_max, v_max);
+            tessellator_buffer_vct(self, X_MAX, Y_MAX, Z_MAX, br[0], br[1], br[2], u_min, v_min);
+            tessellator_buffer_vct(self, X_MAX, Y_MIN, Z_MAX, br[0], br[1], br[2], u_min, v_max);
         } else if (i == SIDE__WEST) {
             // Do nothing
         } else {
-            SIDE_RENDERERS[i](self, x, y, z, &tex, br, br, br);
+            SIDE_RENDERERS[i](self, pos, &tex, br);
         }
     }
 }
 
-static void render_shape_corner_a_north_west(tessellator_t* const self, float const x, float const y, float const z, tile_t const* const tile, bool is_side_occluded[NUM_SIDES]) {
+static void render_shape_corner_a_north_west(tessellator_t* const self, float const pos[NUM_AXES], tile_t const* const tile, bool is_side_occluded[NUM_SIDES]) {
     for (size_t i = 0; i < NUM_SIDES; i++) {
         if (is_side_occluded[i]) {
             continue;
@@ -292,32 +300,34 @@ static void render_shape_corner_a_north_west(tessellator_t* const self, float co
         tile_texture_dispatcher_get_tile_texture_coords(tile, i, &tex);
         INIT_UV(tex.x, tex.y);
 
-        float br = BRIGHTNESSES[i];
+        float br[3] = { BRIGHTNESSES[i][0], BRIGHTNESSES[i][1], BRIGHTNESSES[i][2] };
 
         if (i == SIDE__TOP) {
-            br = (BRIGHTNESSES[SIDE__EAST] + BRIGHTNESSES[SIDE__SOUTH]) / 2;
-            br = br + ((BRIGHTNESSES[SIDE__TOP] - br) / 2);
+            for (size_t j = 0; j < 3; j++) {
+                br[j] = (BRIGHTNESSES[SIDE__SOUTH][j] + BRIGHTNESSES[SIDE__EAST][j]) / 2;
+                br[j] += ((BRIGHTNESSES[SIDE__TOP][j] - br[j]) / 2);
+            }
 
-            tessellator_buffer_vct(self, X_MIN, Y_MIN, Z_MAX, br, br, br, u_min, v_max);
-            tessellator_buffer_vct(self, X_MAX, Y_MIN, Z_MIN, br, br, br, u_max, v_min);
-            tessellator_buffer_vct(self, X_MIN, Y_MAX, Z_MIN, br, br, br, u_min, v_min);
+            tessellator_buffer_vct(self, X_MIN, Y_MIN, Z_MAX, br[0], br[1], br[2], u_min, v_max);
+            tessellator_buffer_vct(self, X_MAX, Y_MIN, Z_MIN, br[0], br[1], br[2], u_max, v_min);
+            tessellator_buffer_vct(self, X_MIN, Y_MAX, Z_MIN, br[0], br[1], br[2], u_min, v_min);
         } else if (i == SIDE__NORTH) {
-            tessellator_buffer_vct(self, X_MIN, Y_MIN, Z_MAX, br, br, br, u_max, v_max);
-            tessellator_buffer_vct(self, X_MIN, Y_MAX, Z_MIN, br, br, br, u_min, v_min);
-            tessellator_buffer_vct(self, X_MIN, Y_MIN, Z_MIN, br, br, br, u_min, v_max);
+            tessellator_buffer_vct(self, X_MIN, Y_MIN, Z_MAX, br[0], br[1], br[2], u_max, v_max);
+            tessellator_buffer_vct(self, X_MIN, Y_MAX, Z_MIN, br[0], br[1], br[2], u_min, v_min);
+            tessellator_buffer_vct(self, X_MIN, Y_MIN, Z_MIN, br[0], br[1], br[2], u_min, v_max);
         } else if (i == SIDE__WEST) {
-            tessellator_buffer_vct(self, X_MIN, Y_MIN, Z_MIN, br, br, br, u_max, v_max);
-            tessellator_buffer_vct(self, X_MIN, Y_MAX, Z_MIN, br, br, br, u_max, v_min);
-            tessellator_buffer_vct(self, X_MAX, Y_MIN, Z_MIN, br, br, br, u_min, v_max);
+            tessellator_buffer_vct(self, X_MIN, Y_MIN, Z_MIN, br[0], br[1], br[2], u_max, v_max);
+            tessellator_buffer_vct(self, X_MIN, Y_MAX, Z_MIN, br[0], br[1], br[2], u_max, v_min);
+            tessellator_buffer_vct(self, X_MAX, Y_MIN, Z_MIN, br[0], br[1], br[2], u_min, v_max);
         } else if (i == SIDE__SOUTH || i == SIDE__EAST || i == SIDE__BOTTOM) {
             // Do nothing
         } else {
-            SIDE_RENDERERS[i](self, x, y, z, &tex, br, br, br);
+            SIDE_RENDERERS[i](self, pos, &tex, br);
         }
     }
 }
 
-static void render_shape_corner_a_south_west(tessellator_t* const self, float const x, float const y, float const z, tile_t const* const tile, bool is_side_occluded[NUM_SIDES]) {
+static void render_shape_corner_a_south_west(tessellator_t* const self, float const pos[NUM_AXES], tile_t const* const tile, bool is_side_occluded[NUM_SIDES]) {
     for (size_t i = 0; i < NUM_SIDES; i++) {
         if (is_side_occluded[i]) {
             continue;
@@ -327,32 +337,34 @@ static void render_shape_corner_a_south_west(tessellator_t* const self, float co
         tile_texture_dispatcher_get_tile_texture_coords(tile, i, &tex);
         INIT_UV(tex.x, tex.y);
 
-        float br = BRIGHTNESSES[i];
+        float br[3] = { BRIGHTNESSES[i][0], BRIGHTNESSES[i][1], BRIGHTNESSES[i][2] };
 
         if (i == SIDE__TOP) {
-            br = (BRIGHTNESSES[SIDE__EAST] + BRIGHTNESSES[SIDE__NORTH]) / 2;
-            br = br + ((BRIGHTNESSES[SIDE__TOP] - br) / 2);
+            for (size_t j = 0; j < 3; j++) {
+                br[j] = (BRIGHTNESSES[SIDE__NORTH][j] + BRIGHTNESSES[SIDE__EAST][j]) / 2;
+                br[j] += ((BRIGHTNESSES[SIDE__TOP][j] - br[j]) / 2);
+            }
 
-            tessellator_buffer_vct(self, X_MAX, Y_MIN, Z_MAX, br, br, br, u_max, v_max);
-            tessellator_buffer_vct(self, X_MAX, Y_MAX, Z_MIN, br, br, br, u_max, v_min);
-            tessellator_buffer_vct(self, X_MIN, Y_MIN, Z_MIN, br, br, br, u_min, v_min);
+            tessellator_buffer_vct(self, X_MAX, Y_MIN, Z_MAX, br[0], br[1], br[2], u_max, v_max);
+            tessellator_buffer_vct(self, X_MAX, Y_MAX, Z_MIN, br[0], br[1], br[2], u_max, v_min);
+            tessellator_buffer_vct(self, X_MIN, Y_MIN, Z_MIN, br[0], br[1], br[2], u_min, v_min);
         } else if (i == SIDE__SOUTH) {
-            tessellator_buffer_vct(self, X_MAX, Y_MIN, Z_MIN, br, br, br, u_max, v_max);
-            tessellator_buffer_vct(self, X_MAX, Y_MAX, Z_MIN, br, br, br, u_max, v_min);
-            tessellator_buffer_vct(self, X_MAX, Y_MIN, Z_MAX, br, br, br, u_min, v_max);
+            tessellator_buffer_vct(self, X_MAX, Y_MIN, Z_MIN, br[0], br[1], br[2], u_max, v_max);
+            tessellator_buffer_vct(self, X_MAX, Y_MAX, Z_MIN, br[0], br[1], br[2], u_max, v_min);
+            tessellator_buffer_vct(self, X_MAX, Y_MIN, Z_MAX, br[0], br[1], br[2], u_min, v_max);
         } else if (i == SIDE__WEST) {
-            tessellator_buffer_vct(self, X_MAX, Y_MAX, Z_MIN, br, br, br, u_min, v_min);
-            tessellator_buffer_vct(self, X_MAX, Y_MIN, Z_MIN, br, br, br, u_min, v_max);
-            tessellator_buffer_vct(self, X_MIN, Y_MIN, Z_MIN, br, br, br, u_max, v_max);
+            tessellator_buffer_vct(self, X_MAX, Y_MAX, Z_MIN, br[0], br[1], br[2], u_min, v_min);
+            tessellator_buffer_vct(self, X_MAX, Y_MIN, Z_MIN, br[0], br[1], br[2], u_min, v_max);
+            tessellator_buffer_vct(self, X_MIN, Y_MIN, Z_MIN, br[0], br[1], br[2], u_max, v_max);
         } else if (i == SIDE__NORTH || i == SIDE__EAST || i == SIDE__BOTTOM) {
             // Do nothing
         } else {
-            SIDE_RENDERERS[i](self, x, y, z, &tex, br, br, br);
+            SIDE_RENDERERS[i](self, pos, &tex, br);
         }
     }
 }
 
-static void render_shape_corner_a_north_east(tessellator_t* const self, float const x, float const y, float const z, tile_t const* const tile, bool is_side_occluded[NUM_SIDES]) {
+static void render_shape_corner_a_north_east(tessellator_t* const self, float const pos[NUM_AXES], tile_t const* const tile, bool is_side_occluded[NUM_SIDES]) {
     for (size_t i = 0; i < NUM_SIDES; i++) {
         if (is_side_occluded[i]) {
             continue;
@@ -362,32 +374,34 @@ static void render_shape_corner_a_north_east(tessellator_t* const self, float co
         tile_texture_dispatcher_get_tile_texture_coords(tile, i, &tex);
         INIT_UV(tex.x, tex.y);
 
-        float br = BRIGHTNESSES[i];
+        float br[3] = { BRIGHTNESSES[i][0], BRIGHTNESSES[i][1], BRIGHTNESSES[i][2] };
 
         if (i == SIDE__TOP) {
-            br = (BRIGHTNESSES[SIDE__WEST] + BRIGHTNESSES[SIDE__SOUTH]) / 2;
-            br = br + ((BRIGHTNESSES[SIDE__TOP] - br) / 2);
+            for (size_t j = 0; j < 3; j++) {
+                br[j] = (BRIGHTNESSES[SIDE__SOUTH][j] + BRIGHTNESSES[SIDE__WEST][j]) / 2;
+                br[j] += ((BRIGHTNESSES[SIDE__TOP][j] - br[j]) / 2);
+            }
 
-            tessellator_buffer_vct(self, X_MIN, Y_MIN, Z_MIN, br, br, br, u_min, v_min);
-            tessellator_buffer_vct(self, X_MIN, Y_MAX, Z_MAX, br, br, br, u_min, v_max);
-            tessellator_buffer_vct(self, X_MAX, Y_MIN, Z_MAX, br, br, br, u_max, v_max);
+            tessellator_buffer_vct(self, X_MIN, Y_MIN, Z_MIN, br[0], br[1], br[2], u_min, v_min);
+            tessellator_buffer_vct(self, X_MIN, Y_MAX, Z_MAX, br[0], br[1], br[2], u_min, v_max);
+            tessellator_buffer_vct(self, X_MAX, Y_MIN, Z_MAX, br[0], br[1], br[2], u_max, v_max);
         } else if (i == SIDE__NORTH) {
-            tessellator_buffer_vct(self, X_MIN, Y_MIN, Z_MAX, br, br, br, u_max, v_max);
-            tessellator_buffer_vct(self, X_MIN, Y_MAX, Z_MAX, br, br, br, u_max, v_min);
-            tessellator_buffer_vct(self, X_MIN, Y_MIN, Z_MIN, br, br, br, u_min, v_max);
+            tessellator_buffer_vct(self, X_MIN, Y_MIN, Z_MAX, br[0], br[1], br[2], u_max, v_max);
+            tessellator_buffer_vct(self, X_MIN, Y_MAX, Z_MAX, br[0], br[1], br[2], u_max, v_min);
+            tessellator_buffer_vct(self, X_MIN, Y_MIN, Z_MIN, br[0], br[1], br[2], u_min, v_max);
         } else if (i == SIDE__EAST) {
-            tessellator_buffer_vct(self, X_MIN, Y_MAX, Z_MAX, br, br, br, u_min, v_min);
-            tessellator_buffer_vct(self, X_MIN, Y_MIN, Z_MAX, br, br, br, u_min, v_max);
-            tessellator_buffer_vct(self, X_MAX, Y_MIN, Z_MAX, br, br, br, u_max, v_max);
+            tessellator_buffer_vct(self, X_MIN, Y_MAX, Z_MAX, br[0], br[1], br[2], u_min, v_min);
+            tessellator_buffer_vct(self, X_MIN, Y_MIN, Z_MAX, br[0], br[1], br[2], u_min, v_max);
+            tessellator_buffer_vct(self, X_MAX, Y_MIN, Z_MAX, br[0], br[1], br[2], u_max, v_max);
         } else if (i == SIDE__SOUTH || i == SIDE__WEST || i == SIDE__BOTTOM) {
             // Do nothing
         } else {
-            SIDE_RENDERERS[i](self, x, y, z, &tex, br, br, br);
+            SIDE_RENDERERS[i](self, pos, &tex, br);
         }
     }
 }
 
-static void render_shape_corner_a_south_east(tessellator_t* const self, float const x, float const y, float const z, tile_t const* const tile, bool is_side_occluded[NUM_SIDES]) {
+static void render_shape_corner_a_south_east(tessellator_t* const self, float const pos[NUM_AXES], tile_t const* const tile, bool is_side_occluded[NUM_SIDES]) {
     for (size_t i = 0; i < NUM_SIDES; i++) {
         if (is_side_occluded[i]) {
             continue;
@@ -397,32 +411,34 @@ static void render_shape_corner_a_south_east(tessellator_t* const self, float co
         tile_texture_dispatcher_get_tile_texture_coords(tile, i, &tex);
         INIT_UV(tex.x, tex.y);
 
-        float br = BRIGHTNESSES[i];
+        float br[3] = { BRIGHTNESSES[i][0], BRIGHTNESSES[i][1], BRIGHTNESSES[i][2] };
 
         if (i == SIDE__TOP) {
-            br = (BRIGHTNESSES[SIDE__WEST] + BRIGHTNESSES[SIDE__NORTH]) / 2;
-            br = br + ((BRIGHTNESSES[SIDE__TOP] - br) / 2);
+            for (size_t j = 0; j < 3; j++) {
+                br[j] = (BRIGHTNESSES[SIDE__NORTH][j] + BRIGHTNESSES[SIDE__WEST][j]) / 2;
+                br[j] += ((BRIGHTNESSES[SIDE__TOP][j] - br[j]) / 2);
+            }
 
-            tessellator_buffer_vct(self, X_MAX, Y_MAX, Z_MAX, br, br, br, u_max, v_max);
-            tessellator_buffer_vct(self, X_MAX, Y_MIN, Z_MIN, br, br, br, u_max, v_min);
-            tessellator_buffer_vct(self, X_MIN, Y_MIN, Z_MAX, br, br, br, u_min, v_max);
+            tessellator_buffer_vct(self, X_MAX, Y_MAX, Z_MAX, br[0], br[1], br[2], u_max, v_max);
+            tessellator_buffer_vct(self, X_MAX, Y_MIN, Z_MIN, br[0], br[1], br[2], u_max, v_min);
+            tessellator_buffer_vct(self, X_MIN, Y_MIN, Z_MAX, br[0], br[1], br[2], u_min, v_max);
         } else if (i == SIDE__SOUTH) {
-            tessellator_buffer_vct(self, X_MAX, Y_MIN, Z_MIN, br, br, br, u_max, v_max);
-            tessellator_buffer_vct(self, X_MAX, Y_MAX, Z_MAX, br, br, br, u_min, v_min);
-            tessellator_buffer_vct(self, X_MAX, Y_MIN, Z_MAX, br, br, br, u_min, v_max);
+            tessellator_buffer_vct(self, X_MAX, Y_MIN, Z_MIN, br[0], br[1], br[2], u_max, v_max);
+            tessellator_buffer_vct(self, X_MAX, Y_MAX, Z_MAX, br[0], br[1], br[2], u_min, v_min);
+            tessellator_buffer_vct(self, X_MAX, Y_MIN, Z_MAX, br[0], br[1], br[2], u_min, v_max);
         } else if (i == SIDE__EAST) {
-            tessellator_buffer_vct(self, X_MIN, Y_MIN, Z_MAX, br, br, br, u_min, v_max);
-            tessellator_buffer_vct(self, X_MAX, Y_MIN, Z_MAX, br, br, br, u_max, v_max);
-            tessellator_buffer_vct(self, X_MAX, Y_MAX, Z_MAX, br, br, br, u_max, v_min);
+            tessellator_buffer_vct(self, X_MIN, Y_MIN, Z_MAX, br[0], br[1], br[2], u_min, v_max);
+            tessellator_buffer_vct(self, X_MAX, Y_MIN, Z_MAX, br[0], br[1], br[2], u_max, v_max);
+            tessellator_buffer_vct(self, X_MAX, Y_MAX, Z_MAX, br[0], br[1], br[2], u_max, v_min);
         } else if (i == SIDE__NORTH || i == SIDE__WEST || i == SIDE__BOTTOM) {
             // Do nothing
         } else {
-            SIDE_RENDERERS[i](self, x, y, z, &tex, br, br, br);
+            SIDE_RENDERERS[i](self, pos, &tex, br);
         }
     }
 }
 
-static void render_shape_corner_b_north_west(tessellator_t* const self, float const x, float const y, float const z, tile_t const* const tile, bool is_side_occluded[NUM_SIDES]) {
+static void render_shape_corner_b_north_west(tessellator_t* const self, float const pos[NUM_AXES], tile_t const* const tile, bool is_side_occluded[NUM_SIDES]) {
     for (size_t i = 0; i < NUM_SIDES; i++) {
         if (is_side_occluded[i]) {
             continue;
@@ -432,36 +448,40 @@ static void render_shape_corner_b_north_west(tessellator_t* const self, float co
         tile_texture_dispatcher_get_tile_texture_coords(tile, i, &tex);
         INIT_UV(tex.x, tex.y);
 
-        float br = BRIGHTNESSES[i];
+        float br[3] = { BRIGHTNESSES[i][0], BRIGHTNESSES[i][1], BRIGHTNESSES[i][2] };
 
         if (i == SIDE__TOP) {
-            br = (BRIGHTNESSES[SIDE__EAST] + BRIGHTNESSES[SIDE__SOUTH]) / 2;
-            br = br + ((BRIGHTNESSES[SIDE__TOP] - br) / 2);
+            for (size_t j = 0; j < 3; j++) {
+                br[j] = (BRIGHTNESSES[SIDE__SOUTH][j] + BRIGHTNESSES[SIDE__EAST][j]) / 2;
+                br[j] += ((BRIGHTNESSES[SIDE__TOP][j] - br[j]) / 2);
+            }
 
-            tessellator_buffer_vct(self, X_MAX, Y_MIN, Z_MAX, br, br, br, u_max, v_max);
-            tessellator_buffer_vct(self, X_MAX, Y_MAX, Z_MIN, br, br, br, u_max, v_min);
-            tessellator_buffer_vct(self, X_MIN, Y_MAX, Z_MAX, br, br, br, u_min, v_max);
+            tessellator_buffer_vct(self, X_MAX, Y_MIN, Z_MAX, br[0], br[1], br[2], u_max, v_max);
+            tessellator_buffer_vct(self, X_MAX, Y_MAX, Z_MIN, br[0], br[1], br[2], u_max, v_min);
+            tessellator_buffer_vct(self, X_MIN, Y_MAX, Z_MAX, br[0], br[1], br[2], u_min, v_max);
 
-            br = BRIGHTNESSES[SIDE__TOP];
+            for (size_t j = 0; j < 3; j++) {
+                br[j] = BRIGHTNESSES[SIDE__TOP][j];
+            }
 
-            tessellator_buffer_vct(self, X_MIN, Y_MAX, Z_MAX, br, br, br, u_min, v_max);
-            tessellator_buffer_vct(self, X_MAX, Y_MAX, Z_MIN, br, br, br, u_max, v_min);
-            tessellator_buffer_vct(self, X_MIN, Y_MAX, Z_MIN, br, br, br, u_min, v_min);
+            tessellator_buffer_vct(self, X_MIN, Y_MAX, Z_MAX, br[0], br[1], br[2], u_min, v_max);
+            tessellator_buffer_vct(self, X_MAX, Y_MAX, Z_MIN, br[0], br[1], br[2], u_max, v_min);
+            tessellator_buffer_vct(self, X_MIN, Y_MAX, Z_MIN, br[0], br[1], br[2], u_min, v_min);
         } else if (i == SIDE__SOUTH) {
-            tessellator_buffer_vct(self, X_MAX, Y_MIN, Z_MIN, br, br, br, u_max, v_max);
-            tessellator_buffer_vct(self, X_MAX, Y_MAX, Z_MIN, br, br, br, u_max, v_min);
-            tessellator_buffer_vct(self, X_MAX, Y_MIN, Z_MAX, br, br, br, u_min, v_max);
+            tessellator_buffer_vct(self, X_MAX, Y_MIN, Z_MIN, br[0], br[1], br[2], u_max, v_max);
+            tessellator_buffer_vct(self, X_MAX, Y_MAX, Z_MIN, br[0], br[1], br[2], u_max, v_min);
+            tessellator_buffer_vct(self, X_MAX, Y_MIN, Z_MAX, br[0], br[1], br[2], u_min, v_max);
         } else if (i == SIDE__EAST) {
-            tessellator_buffer_vct(self, X_MIN, Y_MIN, Z_MAX, br, br, br, u_min, v_max);
-            tessellator_buffer_vct(self, X_MAX, Y_MIN, Z_MAX, br, br, br, u_max, v_max);
-            tessellator_buffer_vct(self, X_MIN, Y_MAX, Z_MAX, br, br, br, u_min, v_min);
+            tessellator_buffer_vct(self, X_MIN, Y_MIN, Z_MAX, br[0], br[1], br[2], u_min, v_max);
+            tessellator_buffer_vct(self, X_MAX, Y_MIN, Z_MAX, br[0], br[1], br[2], u_max, v_max);
+            tessellator_buffer_vct(self, X_MIN, Y_MAX, Z_MAX, br[0], br[1], br[2], u_min, v_min);
         } else {
-            SIDE_RENDERERS[i](self, x, y, z, &tex, br, br, br);
+            SIDE_RENDERERS[i](self, pos, &tex, br);
         }
     }
 }
 
-static void render_shape_corner_b_south_west(tessellator_t* const self, float const x, float const y, float const z, tile_t const* const tile, bool is_side_occluded[NUM_SIDES]) {
+static void render_shape_corner_b_south_west(tessellator_t* const self, float const pos[NUM_AXES], tile_t const* const tile, bool is_side_occluded[NUM_SIDES]) {
     for (size_t i = 0; i < NUM_SIDES; i++) {
         if (is_side_occluded[i]) {
             continue;
@@ -471,36 +491,40 @@ static void render_shape_corner_b_south_west(tessellator_t* const self, float co
         tile_texture_dispatcher_get_tile_texture_coords(tile, i, &tex);
         INIT_UV(tex.x, tex.y);
 
-        float br = BRIGHTNESSES[i];
+        float br[3] = { BRIGHTNESSES[i][0], BRIGHTNESSES[i][1], BRIGHTNESSES[i][2] };
 
         if (i == SIDE__TOP) {
-            br = (BRIGHTNESSES[SIDE__EAST] + BRIGHTNESSES[SIDE__NORTH]) / 2;
-            br = br + ((BRIGHTNESSES[SIDE__TOP] - br) / 2);
+            for (size_t j = 0; j < 3; j++) {
+                br[j] = (BRIGHTNESSES[SIDE__NORTH][j] + BRIGHTNESSES[SIDE__WEST][j]) / 2;
+                br[j] += ((BRIGHTNESSES[SIDE__TOP][j] - br[j]) / 2);
+            }
 
-            tessellator_buffer_vct(self, X_MIN, Y_MAX, Z_MIN, br, br, br, u_min, v_min);
-            tessellator_buffer_vct(self, X_MIN, Y_MIN, Z_MAX, br, br, br, u_min, v_max);
-            tessellator_buffer_vct(self, X_MAX, Y_MAX, Z_MAX, br, br, br, u_max, v_max);
+            tessellator_buffer_vct(self, X_MIN, Y_MAX, Z_MIN, br[0], br[1], br[2], u_min, v_min);
+            tessellator_buffer_vct(self, X_MIN, Y_MIN, Z_MAX, br[0], br[1], br[2], u_min, v_max);
+            tessellator_buffer_vct(self, X_MAX, Y_MAX, Z_MAX, br[0], br[1], br[2], u_max, v_max);
 
-            br = BRIGHTNESSES[SIDE__TOP];
+            for (size_t j = 0; j < 3; j++) {
+                br[j] = BRIGHTNESSES[SIDE__TOP][j];
+            }
 
-            tessellator_buffer_vct(self, X_MIN, Y_MAX, Z_MIN, br, br, br, u_min, v_min);
-            tessellator_buffer_vct(self, X_MAX, Y_MAX, Z_MAX, br, br, br, u_max, v_max);
-            tessellator_buffer_vct(self, X_MAX, Y_MAX, Z_MIN, br, br, br, u_max, v_min);
+            tessellator_buffer_vct(self, X_MIN, Y_MAX, Z_MIN, br[0], br[1], br[2], u_min, v_min);
+            tessellator_buffer_vct(self, X_MAX, Y_MAX, Z_MAX, br[0], br[1], br[2], u_max, v_max);
+            tessellator_buffer_vct(self, X_MAX, Y_MAX, Z_MIN, br[0], br[1], br[2], u_max, v_min);
         } else if (i == SIDE__NORTH) {
-            tessellator_buffer_vct(self, X_MIN, Y_MIN, Z_MAX, br, br, br, u_max, v_max);
-            tessellator_buffer_vct(self, X_MIN, Y_MAX, Z_MIN, br, br, br, u_min, v_min);
-            tessellator_buffer_vct(self, X_MIN, Y_MIN, Z_MIN, br, br, br, u_min, v_max);
+            tessellator_buffer_vct(self, X_MIN, Y_MIN, Z_MAX, br[0], br[1], br[2], u_max, v_max);
+            tessellator_buffer_vct(self, X_MIN, Y_MAX, Z_MIN, br[0], br[1], br[2], u_min, v_min);
+            tessellator_buffer_vct(self, X_MIN, Y_MIN, Z_MIN, br[0], br[1], br[2], u_min, v_max);
         } else if (i == SIDE__EAST) {
-            tessellator_buffer_vct(self, X_MIN, Y_MIN, Z_MAX, br, br, br, u_min, v_max);
-            tessellator_buffer_vct(self, X_MAX, Y_MIN, Z_MAX, br, br, br, u_max, v_max);
-            tessellator_buffer_vct(self, X_MAX, Y_MAX, Z_MAX, br, br, br, u_max, v_min);
+            tessellator_buffer_vct(self, X_MIN, Y_MIN, Z_MAX, br[0], br[1], br[2], u_min, v_max);
+            tessellator_buffer_vct(self, X_MAX, Y_MIN, Z_MAX, br[0], br[1], br[2], u_max, v_max);
+            tessellator_buffer_vct(self, X_MAX, Y_MAX, Z_MAX, br[0], br[1], br[2], u_max, v_min);
         } else {
-            SIDE_RENDERERS[i](self, x, y, z, &tex, br, br, br);
+            SIDE_RENDERERS[i](self, pos, &tex, br);
         }
     }
 }
 
-static void render_shape_corner_b_north_east(tessellator_t* const self, float const x, float const y, float const z, tile_t const* const tile, bool is_side_occluded[NUM_SIDES]) {
+static void render_shape_corner_b_north_east(tessellator_t* const self, float const pos[NUM_AXES], tile_t const* const tile, bool is_side_occluded[NUM_SIDES]) {
     for (size_t i = 0; i < NUM_SIDES; i++) {
         if (is_side_occluded[i]) {
             continue;
@@ -510,36 +534,40 @@ static void render_shape_corner_b_north_east(tessellator_t* const self, float co
         tile_texture_dispatcher_get_tile_texture_coords(tile, i, &tex);
         INIT_UV(tex.x, tex.y);
 
-        float br = BRIGHTNESSES[i];
+        float br[3] = { BRIGHTNESSES[i][0], BRIGHTNESSES[i][1], BRIGHTNESSES[i][2] };
 
         if (i == SIDE__TOP) {
-            br = (BRIGHTNESSES[SIDE__WEST] + BRIGHTNESSES[SIDE__SOUTH]) / 2;
-            br = br + ((BRIGHTNESSES[SIDE__TOP] - br) / 2);
+            for (size_t j = 0; j < 3; j++) {
+                br[j] = (BRIGHTNESSES[SIDE__SOUTH][j] + BRIGHTNESSES[SIDE__WEST][j]) / 2;
+                br[j] += ((BRIGHTNESSES[SIDE__TOP][j] - br[j]) / 2);
+            }
 
-            tessellator_buffer_vct(self, X_MIN, Y_MAX, Z_MIN, br, br, br, u_min, v_min);
-            tessellator_buffer_vct(self, X_MAX, Y_MAX, Z_MAX, br, br, br, u_max, v_max);
-            tessellator_buffer_vct(self, X_MAX, Y_MIN, Z_MIN, br, br, br, u_max, v_min);
+            tessellator_buffer_vct(self, X_MIN, Y_MAX, Z_MIN, br[0], br[1], br[2], u_min, v_min);
+            tessellator_buffer_vct(self, X_MAX, Y_MAX, Z_MAX, br[0], br[1], br[2], u_max, v_max);
+            tessellator_buffer_vct(self, X_MAX, Y_MIN, Z_MIN, br[0], br[1], br[2], u_max, v_min);
 
-            br = BRIGHTNESSES[SIDE__TOP];
+            for (size_t j = 0; j < 3; j++) {
+                br[j] = BRIGHTNESSES[SIDE__TOP][j];
+            }
 
-            tessellator_buffer_vct(self, X_MIN, Y_MAX, Z_MIN, br, br, br, u_min, v_min);
-            tessellator_buffer_vct(self, X_MIN, Y_MAX, Z_MAX, br, br, br, u_min, v_max);
-            tessellator_buffer_vct(self, X_MAX, Y_MAX, Z_MAX, br, br, br, u_max, v_max);
+            tessellator_buffer_vct(self, X_MIN, Y_MAX, Z_MIN, br[0], br[1], br[2], u_min, v_min);
+            tessellator_buffer_vct(self, X_MIN, Y_MAX, Z_MAX, br[0], br[1], br[2], u_min, v_max);
+            tessellator_buffer_vct(self, X_MAX, Y_MAX, Z_MAX, br[0], br[1], br[2], u_max, v_max);
         } else if (i == SIDE__SOUTH) {
-            tessellator_buffer_vct(self, X_MAX, Y_MIN, Z_MIN, br, br, br, u_max, v_max);
-            tessellator_buffer_vct(self, X_MAX, Y_MAX, Z_MAX, br, br, br, u_min, v_min);
-            tessellator_buffer_vct(self, X_MAX, Y_MIN, Z_MAX, br, br, br, u_min, v_max);
+            tessellator_buffer_vct(self, X_MAX, Y_MIN, Z_MIN, br[0], br[1], br[2], u_max, v_max);
+            tessellator_buffer_vct(self, X_MAX, Y_MAX, Z_MAX, br[0], br[1], br[2], u_min, v_min);
+            tessellator_buffer_vct(self, X_MAX, Y_MIN, Z_MAX, br[0], br[1], br[2], u_min, v_max);
         } else if (i == SIDE__WEST) {
-            tessellator_buffer_vct(self, X_MIN, Y_MIN, Z_MIN, br, br, br, u_max, v_max);
-            tessellator_buffer_vct(self, X_MIN, Y_MAX, Z_MIN, br, br, br, u_max, v_min);
-            tessellator_buffer_vct(self, X_MAX, Y_MIN, Z_MIN, br, br, br, u_min, v_max);
+            tessellator_buffer_vct(self, X_MIN, Y_MIN, Z_MIN, br[0], br[1], br[2], u_max, v_max);
+            tessellator_buffer_vct(self, X_MIN, Y_MAX, Z_MIN, br[0], br[1], br[2], u_max, v_min);
+            tessellator_buffer_vct(self, X_MAX, Y_MIN, Z_MIN, br[0], br[1], br[2], u_min, v_max);
         } else {
-            SIDE_RENDERERS[i](self, x, y, z, &tex, br, br, br);
+            SIDE_RENDERERS[i](self, pos, &tex, br);
         }
     }
 }
 
-static void render_shape_corner_b_south_east(tessellator_t* const self, float const x, float const y, float const z, tile_t const* const tile, bool is_side_occluded[NUM_SIDES]) {
+static void render_shape_corner_b_south_east(tessellator_t* const self, float const pos[NUM_AXES], tile_t const* const tile, bool is_side_occluded[NUM_SIDES]) {
     for (size_t i = 0; i < NUM_SIDES; i++) {
         if (is_side_occluded[i]) {
             continue;
@@ -549,98 +577,102 @@ static void render_shape_corner_b_south_east(tessellator_t* const self, float co
         tile_texture_dispatcher_get_tile_texture_coords(tile, i, &tex);
         INIT_UV(tex.x, tex.y);
 
-        float br = BRIGHTNESSES[i];
+        float br[3] = { BRIGHTNESSES[i][0], BRIGHTNESSES[i][1], BRIGHTNESSES[i][2] };
 
         if (i == SIDE__TOP) {
-            br = (BRIGHTNESSES[SIDE__WEST] + BRIGHTNESSES[SIDE__NORTH]) / 2;
-            br = br + ((BRIGHTNESSES[SIDE__TOP] - br) / 2);
+            for (size_t j = 0; j < 3; j++) {
+                br[j] = (BRIGHTNESSES[SIDE__NORTH][j] + BRIGHTNESSES[SIDE__WEST][j]) / 2;
+                br[j] += ((BRIGHTNESSES[SIDE__TOP][j] - br[j]) / 2);
+            }
 
-            tessellator_buffer_vct(self, X_MIN, Y_MAX, Z_MAX, br, br, br, u_min, v_max);
-            tessellator_buffer_vct(self, X_MAX, Y_MAX, Z_MIN, br, br, br, u_max, v_min);
-            tessellator_buffer_vct(self, X_MIN, Y_MIN, Z_MIN, br, br, br, u_min, v_min);
+            tessellator_buffer_vct(self, X_MIN, Y_MAX, Z_MAX, br[0], br[1], br[2], u_min, v_max);
+            tessellator_buffer_vct(self, X_MAX, Y_MAX, Z_MIN, br[0], br[1], br[2], u_max, v_min);
+            tessellator_buffer_vct(self, X_MIN, Y_MIN, Z_MIN, br[0], br[1], br[2], u_min, v_min);
 
-            br = BRIGHTNESSES[SIDE__TOP];
+            for (size_t j = 0; j < 3; j++) {
+                br[j] = BRIGHTNESSES[SIDE__TOP][j];
+            }
 
-            tessellator_buffer_vct(self, X_MAX, Y_MAX, Z_MAX, br, br, br, u_max, v_max);
-            tessellator_buffer_vct(self, X_MAX, Y_MAX, Z_MIN, br, br, br, u_max, v_min);
-            tessellator_buffer_vct(self, X_MIN, Y_MAX, Z_MAX, br, br, br, u_min, v_max);
+            tessellator_buffer_vct(self, X_MAX, Y_MAX, Z_MAX, br[0], br[1], br[2], u_max, v_max);
+            tessellator_buffer_vct(self, X_MAX, Y_MAX, Z_MIN, br[0], br[1], br[2], u_max, v_min);
+            tessellator_buffer_vct(self, X_MIN, Y_MAX, Z_MAX, br[0], br[1], br[2], u_min, v_max);
 
         } else if (i == SIDE__NORTH) {
-            tessellator_buffer_vct(self, X_MIN, Y_MIN, Z_MAX, br, br, br, u_max, v_max);
-            tessellator_buffer_vct(self, X_MIN, Y_MAX, Z_MAX, br, br, br, u_max, v_min);
-            tessellator_buffer_vct(self, X_MIN, Y_MIN, Z_MIN, br, br, br, u_min, v_max);
+            tessellator_buffer_vct(self, X_MIN, Y_MIN, Z_MAX, br[0], br[1], br[2], u_max, v_max);
+            tessellator_buffer_vct(self, X_MIN, Y_MAX, Z_MAX, br[0], br[1], br[2], u_max, v_min);
+            tessellator_buffer_vct(self, X_MIN, Y_MIN, Z_MIN, br[0], br[1], br[2], u_min, v_max);
         } else if (i == SIDE__WEST) {
-            tessellator_buffer_vct(self, X_MAX, Y_MAX, Z_MIN, br, br, br, u_min, v_min);
-            tessellator_buffer_vct(self, X_MAX, Y_MIN, Z_MIN, br, br, br, u_min, v_max);
-            tessellator_buffer_vct(self, X_MIN, Y_MIN, Z_MIN, br, br, br, u_max, v_max);
+            tessellator_buffer_vct(self, X_MAX, Y_MAX, Z_MIN, br[0], br[1], br[2], u_min, v_min);
+            tessellator_buffer_vct(self, X_MAX, Y_MIN, Z_MIN, br[0], br[1], br[2], u_min, v_max);
+            tessellator_buffer_vct(self, X_MIN, Y_MIN, Z_MIN, br[0], br[1], br[2], u_max, v_max);
         } else {
-            SIDE_RENDERERS[i](self, x, y, z, &tex, br, br, br);
+            SIDE_RENDERERS[i](self, pos, &tex, br);
         }
     }
 }
 
-static void render_side_north(tessellator_t* const self, float const x, float const y, float const z, tile_texture_coords_t const* const tex, float const r, float const g, float const b) {
+static void render_side_north(tessellator_t* const self, float const pos[NUM_AXES], tile_texture_coords_t const* const tex, float const color[3]) {
     INIT_UV(tex->x, tex->y);
 
-    tessellator_buffer_vct(self, X_MIN, Y_MIN, Z_MAX, r, g, b, u_max, v_max);
-    tessellator_buffer_vct(self, X_MIN, Y_MAX, Z_MIN, r, g, b, u_min, v_min);
-    tessellator_buffer_vct(self, X_MIN, Y_MIN, Z_MIN, r, g, b, u_min, v_max);
-    tessellator_buffer_vct(self, X_MIN, Y_MAX, Z_MIN, r, g, b, u_min, v_min);
-    tessellator_buffer_vct(self, X_MIN, Y_MIN, Z_MAX, r, g, b, u_max, v_max);
-    tessellator_buffer_vct(self, X_MIN, Y_MAX, Z_MAX, r, g, b, u_max, v_min);
+    tessellator_buffer_vct(self, X_MIN, Y_MIN, Z_MAX, color[0], color[1], color[2], u_max, v_max);
+    tessellator_buffer_vct(self, X_MIN, Y_MAX, Z_MIN, color[0], color[1], color[2], u_min, v_min);
+    tessellator_buffer_vct(self, X_MIN, Y_MIN, Z_MIN, color[0], color[1], color[2], u_min, v_max);
+    tessellator_buffer_vct(self, X_MIN, Y_MAX, Z_MIN, color[0], color[1], color[2], u_min, v_min);
+    tessellator_buffer_vct(self, X_MIN, Y_MIN, Z_MAX, color[0], color[1], color[2], u_max, v_max);
+    tessellator_buffer_vct(self, X_MIN, Y_MAX, Z_MAX, color[0], color[1], color[2], u_max, v_min);
 }
 
-static void render_side_south(tessellator_t* const self, float const x, float const y, float const z, tile_texture_coords_t const* const tex, float const r, float const g, float const b) {
+static void render_side_south(tessellator_t* const self, float const pos[NUM_AXES], tile_texture_coords_t const* const tex, float const color[3]) {
     INIT_UV(tex->x, tex->y);
 
-    tessellator_buffer_vct(self, X_MAX, Y_MIN, Z_MIN, r, g, b, u_max, v_max);
-    tessellator_buffer_vct(self, X_MAX, Y_MAX, Z_MIN, r, g, b, u_max, v_min);
-    tessellator_buffer_vct(self, X_MAX, Y_MIN, Z_MAX, r, g, b, u_min, v_max);
-    tessellator_buffer_vct(self, X_MAX, Y_MAX, Z_MAX, r, g, b, u_min, v_min);
-    tessellator_buffer_vct(self, X_MAX, Y_MIN, Z_MAX, r, g, b, u_min, v_max);
-    tessellator_buffer_vct(self, X_MAX, Y_MAX, Z_MIN, r, g, b, u_max, v_min);
+    tessellator_buffer_vct(self, X_MAX, Y_MIN, Z_MIN, color[0], color[1], color[2], u_max, v_max);
+    tessellator_buffer_vct(self, X_MAX, Y_MAX, Z_MIN, color[0], color[1], color[2], u_max, v_min);
+    tessellator_buffer_vct(self, X_MAX, Y_MIN, Z_MAX, color[0], color[1], color[2], u_min, v_max);
+    tessellator_buffer_vct(self, X_MAX, Y_MAX, Z_MAX, color[0], color[1], color[2], u_min, v_min);
+    tessellator_buffer_vct(self, X_MAX, Y_MIN, Z_MAX, color[0], color[1], color[2], u_min, v_max);
+    tessellator_buffer_vct(self, X_MAX, Y_MAX, Z_MIN, color[0], color[1], color[2], u_max, v_min);
 }
 
-static void render_side_bottom(tessellator_t* const self, float const x, float const y, float const z, tile_texture_coords_t const* const tex, float const r, float const g, float const b) {
+static void render_side_bottom(tessellator_t* const self, float const pos[NUM_AXES], tile_texture_coords_t const* const tex, float const color[3]) {
     INIT_UV(tex->x, tex->y);
 
-    tessellator_buffer_vct(self, X_MIN, Y_MIN, Z_MIN, r, g, b, u_max, v_min);
-    tessellator_buffer_vct(self, X_MAX, Y_MIN, Z_MIN, r, g, b, u_min, v_min);
-    tessellator_buffer_vct(self, X_MIN, Y_MIN, Z_MAX, r, g, b, u_max, v_max);
-    tessellator_buffer_vct(self, X_MAX, Y_MIN, Z_MIN, r, g, b, u_min, v_min);
-    tessellator_buffer_vct(self, X_MAX, Y_MIN, Z_MAX, r, g, b, u_min, v_max);
-    tessellator_buffer_vct(self, X_MIN, Y_MIN, Z_MAX, r, g, b, u_max, v_max);
+    tessellator_buffer_vct(self, X_MIN, Y_MIN, Z_MIN, color[0], color[1], color[2], u_max, v_min);
+    tessellator_buffer_vct(self, X_MAX, Y_MIN, Z_MIN, color[0], color[1], color[2], u_min, v_min);
+    tessellator_buffer_vct(self, X_MIN, Y_MIN, Z_MAX, color[0], color[1], color[2], u_max, v_max);
+    tessellator_buffer_vct(self, X_MAX, Y_MIN, Z_MIN, color[0], color[1], color[2], u_min, v_min);
+    tessellator_buffer_vct(self, X_MAX, Y_MIN, Z_MAX, color[0], color[1], color[2], u_min, v_max);
+    tessellator_buffer_vct(self, X_MIN, Y_MIN, Z_MAX, color[0], color[1], color[2], u_max, v_max);
 }
 
-static void render_side_top(tessellator_t* const self, float const x, float const y, float const z, tile_texture_coords_t const* const tex, float const r, float const g, float const b) {
+static void render_side_top(tessellator_t* const self, float const pos[NUM_AXES], tile_texture_coords_t const* const tex, float const color[3]) {
     INIT_UV(tex->x, tex->y);
 
-    tessellator_buffer_vct(self, X_MIN, Y_MAX, Z_MAX, r, g, b, u_min, v_max);
-    tessellator_buffer_vct(self, X_MAX, Y_MAX, Z_MAX, r, g, b, u_max, v_max);
-    tessellator_buffer_vct(self, X_MIN, Y_MAX, Z_MIN, r, g, b, u_min, v_min);
-    tessellator_buffer_vct(self, X_MAX, Y_MAX, Z_MAX, r, g, b, u_max, v_max);
-    tessellator_buffer_vct(self, X_MAX, Y_MAX, Z_MIN, r, g, b, u_max, v_min);
-    tessellator_buffer_vct(self, X_MIN, Y_MAX, Z_MIN, r, g, b, u_min, v_min);
+    tessellator_buffer_vct(self, X_MIN, Y_MAX, Z_MAX, color[0], color[1], color[2], u_min, v_max);
+    tessellator_buffer_vct(self, X_MAX, Y_MAX, Z_MAX, color[0], color[1], color[2], u_max, v_max);
+    tessellator_buffer_vct(self, X_MIN, Y_MAX, Z_MIN, color[0], color[1], color[2], u_min, v_min);
+    tessellator_buffer_vct(self, X_MAX, Y_MAX, Z_MAX, color[0], color[1], color[2], u_max, v_max);
+    tessellator_buffer_vct(self, X_MAX, Y_MAX, Z_MIN, color[0], color[1], color[2], u_max, v_min);
+    tessellator_buffer_vct(self, X_MIN, Y_MAX, Z_MIN, color[0], color[1], color[2], u_min, v_min);
 }
 
-static void render_side_west(tessellator_t* const self, float const x, float const y, float const z, tile_texture_coords_t const* const tex, float const r, float const g, float const b) {
+static void render_side_west(tessellator_t* const self, float const pos[NUM_AXES], tile_texture_coords_t const* const tex, float const color[3]) {
     INIT_UV(tex->x, tex->y);
 
-    tessellator_buffer_vct(self, X_MIN, Y_MIN, Z_MIN, r, g, b, u_max, v_max);
-    tessellator_buffer_vct(self, X_MIN, Y_MAX, Z_MIN, r, g, b, u_max, v_min);
-    tessellator_buffer_vct(self, X_MAX, Y_MIN, Z_MIN, r, g, b, u_min, v_max);
-    tessellator_buffer_vct(self, X_MAX, Y_MAX, Z_MIN, r, g, b, u_min, v_min);
-    tessellator_buffer_vct(self, X_MAX, Y_MIN, Z_MIN, r, g, b, u_min, v_max);
-    tessellator_buffer_vct(self, X_MIN, Y_MAX, Z_MIN, r, g, b, u_max, v_min);
+    tessellator_buffer_vct(self, X_MIN, Y_MIN, Z_MIN, color[0], color[1], color[2], u_max, v_max);
+    tessellator_buffer_vct(self, X_MIN, Y_MAX, Z_MIN, color[0], color[1], color[2], u_max, v_min);
+    tessellator_buffer_vct(self, X_MAX, Y_MIN, Z_MIN, color[0], color[1], color[2], u_min, v_max);
+    tessellator_buffer_vct(self, X_MAX, Y_MAX, Z_MIN, color[0], color[1], color[2], u_min, v_min);
+    tessellator_buffer_vct(self, X_MAX, Y_MIN, Z_MIN, color[0], color[1], color[2], u_min, v_max);
+    tessellator_buffer_vct(self, X_MIN, Y_MAX, Z_MIN, color[0], color[1], color[2], u_max, v_min);
 }
 
-static void render_side_east(tessellator_t* const self, float const x, float const y, float const z, tile_texture_coords_t const* const tex, float const r, float const g, float const b) {
+static void render_side_east(tessellator_t* const self, float const pos[NUM_AXES], tile_texture_coords_t const* const tex, float const color[3]) {
     INIT_UV(tex->x, tex->y);
 
-    tessellator_buffer_vct(self, X_MIN, Y_MIN, Z_MAX, r, g, b, u_min, v_max);
-    tessellator_buffer_vct(self, X_MAX, Y_MIN, Z_MAX, r, g, b, u_max, v_max);
-    tessellator_buffer_vct(self, X_MIN, Y_MAX, Z_MAX, r, g, b, u_min, v_min);
-    tessellator_buffer_vct(self, X_MAX, Y_MIN, Z_MAX, r, g, b, u_max, v_max);
-    tessellator_buffer_vct(self, X_MAX, Y_MAX, Z_MAX, r, g, b, u_max, v_min);
-    tessellator_buffer_vct(self, X_MIN, Y_MAX, Z_MAX, r, g, b, u_min, v_min);
+    tessellator_buffer_vct(self, X_MIN, Y_MIN, Z_MAX, color[0], color[1], color[2], u_min, v_max);
+    tessellator_buffer_vct(self, X_MAX, Y_MIN, Z_MAX, color[0], color[1], color[2], u_max, v_max);
+    tessellator_buffer_vct(self, X_MIN, Y_MAX, Z_MAX, color[0], color[1], color[2], u_min, v_min);
+    tessellator_buffer_vct(self, X_MAX, Y_MIN, Z_MAX, color[0], color[1], color[2], u_max, v_max);
+    tessellator_buffer_vct(self, X_MAX, Y_MAX, Z_MAX, color[0], color[1], color[2], u_max, v_min);
+    tessellator_buffer_vct(self, X_MIN, Y_MAX, Z_MAX, color[0], color[1], color[2], u_min, v_min);
 }

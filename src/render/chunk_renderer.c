@@ -86,18 +86,20 @@ void chunk_renderer_build(chunk_renderer_t* const self, tessellator_t* const tes
         for (size_t y = 0; y < CHUNK_SIZE; y++) {
             for (size_t z = 0; z < CHUNK_SIZE; z++) {
                 for (side_t side = 0; side < NUM_SIDES; side++) {
-                    size_t pos[NUM_SIDES] = {
+                    size_t pos[NUM_AXES] = {
                         [AXIS__X] = chunk_pos[AXIS__X] * CHUNK_SIZE + x,
                         [AXIS__Y] = chunk_pos[AXIS__Y] * CHUNK_SIZE + y,
                         [AXIS__Z] = chunk_pos[AXIS__Z] * CHUNK_SIZE + z
                     };
                     occlusion[side] = level_renderer_is_tile_side_occluded(self->level_renderer, pos, side);
                 }
+                size_t pos[NUM_AXES] = { x, y, z };
 
-                tile_t const* const tile = chunk_get_tile(self->chunk, x, y, z);
-                tile_shape_t const tile_shape = chunk_get_tile_shape(self->chunk, x, y, z);
+                tile_t const* const tile = chunk_get_tile(self->chunk, pos);
+                tile_shape_t const tile_shape = chunk_get_tile_shape(self->chunk, pos);
 
-                tile_renderer_render_tile(tessellator, x, y, z, tile, tile_shape, occlusion);
+                int const pos_i[NUM_AXES] = { x, y, z };
+                tile_renderer_render_tile(tessellator, pos_i, tile, tile_shape, occlusion);
             }
         }
     }
@@ -108,7 +110,7 @@ void chunk_renderer_build(chunk_renderer_t* const self, tessellator_t* const tes
     // uint64_t end = SDL_GetTicks64();
     // size_chunks_t pos[NUM_AXES];
     // chunk_get_pos(self->chunk, pos);
-    // printf("Drew chunk at {%lu, %lu, %lu} - took %lums\n", pos[AXIS__X], pos[AXIS__Y], pos[AXIS__Z], end - start);
+    // printf("Drew chunk at {%lu, %lu, %lu} - took %lums\n", chunk_pos[AXIS__X], chunk_pos[AXIS__Y], chunk_pos[AXIS__Z], end - start);
 }
 
 void chunk_renderer_draw(chunk_renderer_t const* const self) {

@@ -186,9 +186,9 @@ static entry_t const SHAPE_LOOKUP[NUM_TILE_SHAPES] = {
     }
 };
 
-static void look_up_sides(level_t const* const level, size_chunks_t const level_size_tiles[3], size_t const x, size_t const y, size_t const z, bool sides[NUM_SIDES]);
+static void look_up_sides(level_t const* const level, size_chunks_t const level_size_tiles[NUM_AXES], size_t const pos[NUM_AXES], bool sides[NUM_SIDES]);
 
-static bool tile_matches_pattern(level_t const* const level, tile_shape_t const tile_shape, bool const sides[NUM_SIDES], size_t const x, size_t const y, size_t const z);
+static bool tile_matches_pattern(level_t const* const level, tile_shape_t const tile_shape, bool const sides[NUM_SIDES], size_t const pos[NUM_AXES]);
 
 level_gen_t* const level_gen_new(unsigned int seed) {
     level_gen_t* const self = malloc(sizeof(level_gen_t));
@@ -250,14 +250,14 @@ void level_gen_generate(level_gen_t* const self, chunk_t* const chunk) {
             size_t height = 64 + yo;
             for (size_t y = 0; y < CHUNK_SIZE && (chunk_pos[1] * CHUNK_SIZE + y) < height; y++) {
                 size_t wy = chunk_pos[1] * CHUNK_SIZE + y;
-                chunk_set_tile(chunk, x, y, z, tile_get(TILE_ID__STONE));
+                chunk_set_tile(chunk, (size_t[NUM_AXES]) { x, y, z }, tile_get(TILE_ID__STONE));
             }
             if (height >= chunk_pos[1] * CHUNK_SIZE && height < chunk_pos[1] * CHUNK_SIZE + CHUNK_SIZE) {
                 tile_t const* top_tile = tile_get(TILE_ID__GRASS);
                 if (height <= 75) {
                     top_tile = tile_get(TILE_ID__SAND);
                 }
-                chunk_set_tile(chunk, x, height - (chunk_pos[1] * CHUNK_SIZE), z, top_tile);
+                chunk_set_tile(chunk, (size_t[NUM_AXES]) { x, height - (chunk_pos[1] * CHUNK_SIZE), z }, top_tile);
             }
         }
     }
@@ -278,45 +278,48 @@ void level_gen_smooth(level_gen_t const* const self, level_t* const level) {
 
     for (size_t z = 0; z < level_size_tiles[2]; z++) {
         for (size_t x = 0; x < level_size_tiles[0]; x++) {
-            size_t y = level_size_tiles[1] - 1;
+            size_t pos[NUM_AXES] = { x, level_size_tiles[1] - 1, z };
+
             tile_t const* tile;
-            while ((tile = level_get_tile(level, x, y, z)) == air_tile) {
-                y--;
+            while ((tile = level_get_tile(level, pos)) == air_tile) {
+                pos[AXIS__Y]--;
             }
 
             bool sides_present[NUM_SIDES];
-            look_up_sides(level, level_size_tiles, x, y, z, sides_present);
+            look_up_sides(level, level_size_tiles, pos, sides_present);
 
             if (sides_present[SIDE__NORTH] + sides_present[SIDE__SOUTH] + sides_present[SIDE__WEST] + sides_present[SIDE__EAST] < 2) {
-                level_set_tile(level, x, y, z, air_tile);
-                y--;
+                level_set_tile(level, pos, air_tile);
+                pos[AXIS__Y]--;
                 tile_t const* top_tile = tile_get(TILE_ID__GRASS);
-                if (y <= 75) {
+                if (pos[AXIS__Y] <= 75) {
                     top_tile = tile_get(TILE_ID__SAND);
                 }
-                level_set_tile(level, x, y, z, top_tile);
+                level_set_tile(level, pos, top_tile);
             }
+
+            size_t const pos_below[NUM_AXES] = { pos[AXIS__X], pos[AXIS__Y] - 1, pos[AXIS__Z] };
 
             for (tile_shape_t i = 0; i < NUM_TILE_SHAPES; i++) {
                 if (SHAPE_LOOKUP[i].defined) {
-                    if (tile_matches_pattern(level, i, sides_present, x, y, z)) {
-                        level_set_tile_shape(level, x, y, z, i);
+                    if (tile_matches_pattern(level, i, sides_present, pos)) {
+                        level_set_tile_shape(level, pos, i);
                         if (i == TILE_SHAPE__CORNER_A_NORTH_WEST || i == TILE_SHAPE__CORNER_A_SOUTH_WEST || i == TILE_SHAPE__CORNER_A_NORTH_EAST || i == TILE_SHAPE__CORNER_A_SOUTH_EAST) {
                             tile_t const* top_tile = tile_get(TILE_ID__GRASS);
-                            if (y - 1 <= 75) {
+                            if (pos[AXIS__Y] - 1 <= 75) {
                                 top_tile = tile_get(TILE_ID__SAND);
                             }
-                            level_set_tile(level, x, y - 1, z, top_tile);
+                            level_set_tile(level, pos_below, top_tile);
 
                             tile_shape_t below_shape_candidate = i + 4;
                             if (SHAPE_LOOKUP[below_shape_candidate].defined) {
                                 bool below_sides_present[NUM_SIDES];
-                                look_up_sides(level, level_size_tiles, x, y - 1, z, below_sides_present);
+                                look_up_sides(level, level_size_tiles, pos_below, below_sides_present);
                                 below_sides_present[SIDE__TOP] = false;
-                                if (tile_matches_pattern(level, below_shape_candidate, below_sides_present, x, y - 1, z) ||
+                                if (tile_matches_pattern(level, below_shape_candidate, below_sides_present, pos_below) ||
                                     (!below_sides_present[SIDE__NORTH] || !below_sides_present[SIDE__SOUTH] || !below_sides_present[SIDE__WEST] || !below_sides_present[SIDE__EAST])
                                 ) {
-                                    level_set_tile_shape(level, x, y - 1, z, below_shape_candidate);
+                                    level_set_tile_shape(level, pos_below, below_shape_candidate);
                                 }
                             }
                         }
@@ -329,30 +332,33 @@ void level_gen_smooth(level_gen_t const* const self, level_t* const level) {
     }
 }
 
-static void look_up_sides(level_t const* const level, size_chunks_t const level_size_tiles[3], size_t const x, size_t const y, size_t const z, bool sides[NUM_SIDES]) {
+static void look_up_sides(level_t const* const level, size_chunks_t const level_size_tiles[NUM_AXES], size_t const pos[NUM_AXES], bool sides[NUM_SIDES]) {
     assert(level != nullptr);
 
     tile_t const* const air_tile = tile_get(TILE_ID__AIR);
 
     for (side_t i = 0; i < NUM_SIDES; i++) {
-        int offsets[3];
+        int offsets[NUM_AXES];
         side_get_offsets(i, offsets);
-        int tx = x + offsets[0];
-        int ty = y + offsets[1];
-        int tz = z + offsets[2];
-        if (tx < 0 || tx >= level_size_tiles[0] ||
-            ty < 0 || ty >= level_size_tiles[1] ||
-            tz < 0 || tz >= level_size_tiles[2]
-        ) {
-            sides[i] = false;
-        } else {
-            tile_t const* const offset_tile = level_get_tile(level, tx, ty, tz);
+        int pos_t[NUM_AXES] = { pos[AXIS__X] + offsets[AXIS__X], pos[AXIS__Y] + offsets[AXIS__Y], pos[AXIS__Z] + offsets[AXIS__Z] };
+
+        sides[i] = true;
+
+        for (axis_t a = 0; a < NUM_AXES; a++) {
+            if (pos_t[a] < 0 || pos_t[a] >= level_size_tiles[a]) {
+                sides[i] = false;
+                break;
+            }
+        }
+        if (sides[i]) {
+            size_t const pos_t_u[NUM_AXES] = { pos_t[AXIS__X], pos_t[AXIS__Y], pos_t[AXIS__Z] };
+            tile_t const* const offset_tile = level_get_tile(level, pos_t_u);
             sides[i] = offset_tile != air_tile;
         }
     }
 }
 
-static bool tile_matches_pattern(level_t const* const level, tile_shape_t const tile_shape, bool const sides[NUM_SIDES], size_t const x, size_t const y, size_t const z) {
+static bool tile_matches_pattern(level_t const* const level, tile_shape_t const tile_shape, bool const sides[NUM_SIDES], size_t const pos[NUM_AXES]) {
     assert(level != nullptr);
     assert(tile_shape >= 0 && tile_shape < NUM_TILE_SHAPES);
 
@@ -360,16 +366,21 @@ static bool tile_matches_pattern(level_t const* const level, tile_shape_t const 
 
     if (memcmp(sides, SHAPE_LOOKUP[tile_shape].sides_present, sizeof(bool) * NUM_SIDES) == 0) {
         if (SHAPE_LOOKUP[tile_shape].has_extra) {
+            size_t const pos_north_west[NUM_AXES] = { pos[AXIS__X] - 1, pos[AXIS__Y], pos[AXIS__Z] - 1 };
+            size_t const pos_south_west[NUM_AXES] = { pos[AXIS__X] + 1, pos[AXIS__Y], pos[AXIS__Z] - 1 };
+            size_t const pos_north_east[NUM_AXES] = { pos[AXIS__X] - 1, pos[AXIS__Y], pos[AXIS__Z] + 1 };
+            size_t const pos_south_east[NUM_AXES] = { pos[AXIS__X] + 1, pos[AXIS__Y], pos[AXIS__Z] + 1 };
+
             struct {
                 bool north_west;
                 bool south_west;
                 bool north_east;
                 bool south_east;
             } extra = {
-                .north_west = level_get_tile(level, x - 1, y, z - 1) != air_tile,
-                .south_west = level_get_tile(level, x + 1, y, z - 1) != air_tile,
-                .north_east = level_get_tile(level, x - 1, y, z + 1) != air_tile,
-                .south_east = level_get_tile(level, x + 1, y, z + 1) != air_tile
+                .north_west = level_get_tile(level, pos_north_west) != air_tile,
+                .south_west = level_get_tile(level, pos_south_west) != air_tile,
+                .north_east = level_get_tile(level, pos_north_east) != air_tile,
+                .south_east = level_get_tile(level, pos_south_east) != air_tile
             };
             if (memcmp(&extra, &(SHAPE_LOOKUP[tile_shape].extra), sizeof(extra)) != 0) {
                 return false;
