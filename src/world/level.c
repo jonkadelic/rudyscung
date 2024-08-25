@@ -1,10 +1,14 @@
 #include "./level.h"
 
 #include <assert.h>
+#include <math.h>
 #include <stdlib.h>
 #include <sys/time.h>
 
 #include "chunk.h"
+#include "entity/ecs.h"
+#include "entity/ecs_components.h"
+#include "entity/ecs_systems.h"
 #include "tile_shape.h"
 #include "gen/level_gen.h"
 
@@ -18,6 +22,8 @@ struct level {
     size_chunks_t size_z;
     chunk_t** chunks;
     level_gen_t* level_gen;
+    ecs_t* ecs;
+    entity_t player;
 };
 
 level_t* const level_new(size_chunks_t const size_x, size_chunks_t const size_y, size_chunks_t const size_z) {
@@ -50,6 +56,18 @@ level_t* const level_new(size_chunks_t const size_x, size_chunks_t const size_y,
 
     level_gen_smooth(self->level_gen, self);
 
+    self->ecs = ecs_new();
+    ecs_attach_system(self->ecs, ECS_COMPONENT__VEL, ecs_system_velocity);
+    ecs_attach_system(self->ecs, ECS_COMPONENT__VEL, ecs_system_friction);
+
+    self->player = ecs_new_entity(self->ecs);
+    ecs_component_pos_t* const player_pos = ecs_attach_component(self->ecs, self->player, ECS_COMPONENT__POS);
+    ecs_attach_component(self->ecs, self->player, ECS_COMPONENT__VEL);
+    ecs_component_rot_t* const player_rot = ecs_attach_component(self->ecs, self->player, ECS_COMPONENT__ROT);
+    
+    player_pos->y = 100.0f;
+    player_rot->y_rot = M_PI / 4 * 3;
+
     return self;
 }
 
@@ -65,6 +83,11 @@ void level_delete(level_t* const self) {
         }
     }
     free(self->chunks);
+
+    level_gen_delete(self->level_gen);
+
+    ecs_delete(self->ecs);
+
     free(self);
 }
 
@@ -127,4 +150,22 @@ void level_set_tile_shape(level_t* const self, size_t const x, size_t const y, s
     chunk_t* const chunk = level_get_chunk(self, TO_CHUNK_SPACE(x), TO_CHUNK_SPACE(y), TO_CHUNK_SPACE(z));
 
     chunk_set_tile_shape(chunk, x % CHUNK_SIZE, y % CHUNK_SIZE, z % CHUNK_SIZE, shape);
+}
+
+void level_tick(level_t* const self) {
+    assert(self != nullptr);
+
+    ecs_tick(self->ecs, self);
+}
+
+ecs_t* const level_get_ecs(level_t* const self) {
+    assert(self != nullptr);
+
+    return self->ecs;
+}
+
+entity_t const level_get_player(level_t const* const self) {
+    assert(self != nullptr);
+
+    return self->player;
 }

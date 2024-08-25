@@ -20,6 +20,8 @@ set(SOURCES
     src/render/textures.c
     src/render/tile_renderer.c
     src/render/tile_texture_dispatcher.c
+    src/world/entity/ecs_systems.c
+    src/world/entity/ecs.c
     src/world/gen/level_gen.c
     src/world/gen/perlin.c
     src/world/chunk.c

@@ -9,6 +9,7 @@ typedef enum ecs_component {
 
 typedef struct ecs_component_pos {
     float x, y, z;
+    float ox, oy, oz;
 } ecs_component_pos_t;
 
 typedef struct ecs_component_vel {

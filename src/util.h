@@ -7,4 +7,4 @@
 
 char* const strcata(char const* const a, char const* const b);
 
-
+float const lerp(float const a, float const b, float const t);

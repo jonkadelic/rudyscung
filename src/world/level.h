@@ -3,6 +3,7 @@
 #include <stddef.h>
 
 #include "chunk.h"
+#include "entity/ecs.h"
 
 typedef struct level level_t;
 
@@ -21,3 +22,9 @@ void level_set_tile(level_t* const self, size_t const x, size_t const y, size_t 
 tile_shape_t const level_get_tile_shape(level_t const* const self, size_t const x, size_t const y, size_t const z);
 
 void level_set_tile_shape(level_t* const self, size_t const x, size_t const y, size_t const z, tile_shape_t const shape);
+
+void level_tick(level_t* const self);
+
+ecs_t* const level_get_ecs(level_t* const self);
+
+entity_t const level_get_player(level_t const* const self);

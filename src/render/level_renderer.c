@@ -199,6 +199,7 @@ void level_renderer_tick(level_renderer_t* const self) {
 
 void level_renderer_draw(level_renderer_t const* const self, camera_t const* const camera) {
     assert(self != nullptr);
+    assert(self->chunk_renderers != nullptr);
 
     shaders_t* const shaders = rudyscung_get_shaders(self->rudyscung);
     shader_t* const shader = shaders_get(shaders, "main");

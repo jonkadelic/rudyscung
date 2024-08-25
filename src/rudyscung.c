@@ -5,6 +5,7 @@
 #include <SDL_mouse.h>
 #include <SDL_video.h>
 #include <assert.h>
+#include <math.h>
 #include <stdlib.h>
 #include <stdio.h>
 
@@ -20,9 +21,9 @@
 #include "render/renderer.h"
 #include "window.h"
 #include "world/chunk.h"
+#include "world/entity/ecs.h"
+#include "world/entity/ecs_components.h"
 #include "world/level.h"
-#include "world/tile.h"
-#include "world/tile_shape.h"
 
 #define WINDOW_TITLE "rudyscung"
 #define WINDOW_INITIAL_WIDTH 800
@@ -30,7 +31,6 @@
 
 #define TICKS_PER_SECOND 20
 #define MS_PER_TICK (1000 / (TICKS_PER_SECOND))
-
 
 struct rudyscung {
     window_t* window;
@@ -54,8 +54,8 @@ static struct {
     bool shift;
 } keys;
 
-static void tick(rudyscung_t* const self, level_t* const level, camera_t* const camera);
-static void update_slice(rudyscung_t* const self, level_t* const level, camera_t* const camera);
+static void tick(rudyscung_t* const self, level_t* const level);
+static void update_slice(rudyscung_t* const self, level_t* const level, bool const force);
 
 rudyscung_t* const rudyscung_new(char const* const resources_path) {
     assert(resources_path != nullptr);
@@ -90,18 +90,32 @@ void rudyscung_run(rudyscung_t* const self) {
 #define LEVEL_SIZE 32
 #define LEVEL_HEIGHT 8
     level_t* level = level_new(LEVEL_SIZE, LEVEL_HEIGHT, LEVEL_SIZE);
+    ecs_t* ecs = level_get_ecs(level);
+    entity_t player = level_get_player(level);
 
     renderer_set_level(self->renderer, level);
 
-    camera_t* camera = camera_new(0, 100.0f, 0);
-    camera_set_rot(camera, M_PI / 4 * 3, 0);
+    camera_t* camera = camera_new(0, 0, 0);
 
-    update_slice(self, level, camera);
+    update_slice(self, level, true);
 
     bool running = true;
     uint64_t last_game_tick = SDL_GetTicks64();
     while (running) {
-        uint64_t tick_start = SDL_GetTicks64();
+        uint64_t const current_tick = SDL_GetTicks64();
+        uint64_t const delta_tick = current_tick - last_game_tick;
+        float const partial_tick = (delta_tick / (float) MS_PER_TICK) - floor((delta_tick / (float) MS_PER_TICK));
+
+        ecs_component_pos_t* player_pos = ecs_get_component_data(ecs, player, ECS_COMPONENT__POS);
+        ecs_component_rot_t* player_rot = ecs_get_component_data(ecs, player, ECS_COMPONENT__ROT);
+        if (player_rot->x_rot > M_PI / 2) {
+            player_rot->x_rot = M_PI / 2;
+        }
+        if (player_rot->x_rot < -M_PI / 2) {
+            player_rot->x_rot = -M_PI / 2;
+        }
+        camera_set_pos(camera, lerp(player_pos->ox, player_pos->x, partial_tick), lerp(player_pos->oy, player_pos->y, partial_tick), lerp(player_pos->oz, player_pos->z, partial_tick));
+        camera_set_rot(camera, player_rot->y_rot, player_rot->x_rot);
 
         // Handle events
         SDL_Event event;
@@ -121,11 +135,8 @@ void rudyscung_run(rudyscung_t* const self) {
             }
             if (event.type == SDL_MOUSEMOTION) {
                 if (SDL_GetRelativeMouseMode()) {
-                    float camera_rot[2];
-                    camera_get_rot(camera, camera_rot);
-                    camera_rot[0] += event.motion.xrel / 125.0f;
-                    camera_rot[1] += event.motion.yrel / 125.0f;
-                    camera_set_rot(camera, camera_rot[0], camera_rot[1]);
+                    player_rot->y_rot += event.motion.xrel / 125.0f;
+                    player_rot->x_rot += event.motion.yrel / 125.0f;
                 }
             }
             if (event.type == SDL_KEYDOWN || event.type == SDL_KEYUP) {
@@ -166,10 +177,15 @@ void rudyscung_run(rudyscung_t* const self) {
                         keys.shift = is_pressed;
                         break;
                     case SDLK_r:
-                        level_delete(level);
-                        level = level_new(LEVEL_SIZE, LEVEL_HEIGHT, LEVEL_SIZE);
-                        renderer_set_level(self->renderer, level);
-                        update_slice(self, level, camera);
+                        if (is_pressed && event.key.repeat == SDL_FALSE) {
+                            level_delete(level);
+                            level = level_new(LEVEL_SIZE, LEVEL_HEIGHT, LEVEL_SIZE);
+                            ecs = level_get_ecs(level);
+                            player = level_get_player(level);
+                            renderer_set_level(self->renderer, level);
+                            update_slice(self, level, true);
+                        }
+                        break;
                 }
             }
         }
@@ -177,12 +193,9 @@ void rudyscung_run(rudyscung_t* const self) {
         renderer_render(self->renderer, camera);
 
         // Game tick
-        uint64_t current_tick = SDL_GetTicks64();
-        uint64_t delta_tick = current_tick - last_game_tick;
         size_t ticks = (size_t)(delta_tick / MS_PER_TICK);
         for (uint64_t t = 0; t < ticks; t++) {
-            tick(self, level, camera);
-            renderer_tick(self->renderer);
+            tick(self, level);
         }
         last_game_tick = current_tick - (delta_tick % MS_PER_TICK);
     }
@@ -215,93 +228,119 @@ font_t* const rudyscung_get_font(rudyscung_t* const self) {
     return self->font;
 }
 
-static void tick(rudyscung_t* const self, level_t* const level, camera_t* const camera) {
+static void tick(rudyscung_t* const self, level_t* const level) {
     assert(self != nullptr);
-    assert(camera != nullptr);
+    assert(level != nullptr);
 
-    float left = 0;
-    float up = 0;
-    float forward = 0;
-    float rot_dy = 0;
-    float rot_dx = 0;
+    renderer_tick(self->renderer);
+    level_tick(level);
 
-    if (keys.w) {
-        forward++;
-    }
-    if (keys.s) {
-        forward--;
-    }
-    if (keys.a) {
-        left++;
-    }
-    if (keys.d) {
-        left--;
-    }
-    if (keys.left) {
-        rot_dy -= 0.05;
-    }
-    if (keys.right) {
-        rot_dy += 0.05;
-    }
-    if (keys.up) {
-        rot_dx -= 0.05;
-    }
-    if (keys.down) {
-        rot_dx += 0.05;
-    }
-    if (keys.space) {
-        up++;
-    }
-    if (keys.shift) {
-        up--;
+    ecs_t* ecs = level_get_ecs(level);
+    entity_t player = level_get_player(level);
+
+    bool any_movement_input = keys.w || keys.s || keys.a || keys.d;
+    bool any_vertical_movement_input = keys.shift || keys.space;
+    bool any_look_input = keys.left || keys.right || keys.up || keys.down;
+
+    if (any_movement_input) {
+        float left = 0;
+        float forward = 0;
+
+        if (keys.w) {
+            forward++;
+        }
+        if (keys.s) {
+            forward--;
+        }
+        if (keys.a) {
+            left++;
+        }
+        if (keys.d) {
+            left--;
+        }
+
+        ecs_component_vel_t* player_vel = ecs_get_component_data(ecs, player, ECS_COMPONENT__VEL);
+        ecs_component_rot_t* player_rot = ecs_get_component_data(ecs, player, ECS_COMPONENT__ROT);
+
+        float cos_rot_dy = cos(player_rot->y_rot);
+        float sin_rot_dy = sin(player_rot->y_rot);
+
+        float vel_x = - left * cos_rot_dy + forward * sin_rot_dy;
+        float vel_z = - left * sin_rot_dy - forward * cos_rot_dy;
+
+        player_vel->vx = vel_x;
+        player_vel->vz = vel_z;
     }
 
-    float camera_pos[3];
-    camera_get_pos(camera, camera_pos);
-    float camera_rot[2];
-    camera_get_rot(camera, camera_rot);
+    if (any_vertical_movement_input) {
+        float up = 0;
 
-    float cos_rot_dy = cos(camera_rot[0]);
-    float sin_rot_dy = sin(camera_rot[0]);
+        if (keys.space) {
+            up++;
+        }
+        if (keys.shift) {
+            up--;
+        }
 
-    float new_x = camera_pos[0] - left * cos_rot_dy + forward * sin_rot_dy;
-    float new_y = camera_pos[1] + up;
-    float new_z = camera_pos[2] - left * sin_rot_dy - forward * cos_rot_dy;
-    float new_rot_y = camera_rot[0] + rot_dy;
-    float new_rot_x = camera_rot[1] + rot_dx;
+        ecs_component_vel_t* player_vel = ecs_get_component_data(ecs, player, ECS_COMPONENT__VEL);
 
-    size_chunks_t const x_camera = floor(camera_pos[0] / CHUNK_SIZE);
-    size_chunks_t const y_camera = floor(camera_pos[1] / CHUNK_SIZE);
-    size_chunks_t const z_camera = floor(camera_pos[2] / CHUNK_SIZE);
+        float vel_y = up;
 
-    camera_set_pos(camera, new_x, new_y, new_z);
-    camera_set_rot(camera, new_rot_y, new_rot_x);
-
-    size_chunks_t const new_x_camera = floor(new_x / CHUNK_SIZE);
-    size_chunks_t const new_y_camera = floor(new_y / CHUNK_SIZE);
-    size_chunks_t const new_z_camera = floor(new_z / CHUNK_SIZE);
-
-    if (x_camera != new_x_camera || y_camera != new_y_camera || z_camera != new_z_camera) {
-        update_slice(self, level, camera);
+        player_vel->vy = vel_y;
     }
+
+    if (any_look_input) {
+        float rot_dy = 0;
+        float rot_dx = 0;
+
+        if (keys.left) {
+            rot_dy -= 0.05;
+        }
+        if (keys.right) {
+            rot_dy += 0.05;
+        }
+        if (keys.up) {
+            rot_dx -= 0.05;
+        }
+        if (keys.down) {
+            rot_dx += 0.05;
+        }
+
+        ecs_component_rot_t* player_rot = ecs_get_component_data(ecs, player, ECS_COMPONENT__ROT);
+
+        float new_rot_y = player_rot->y_rot + rot_dy;
+        float new_rot_x = player_rot->x_rot + rot_dx;
+
+        player_rot->y_rot = new_rot_y;
+        player_rot->x_rot = new_rot_x;
+    }
+
+    update_slice(self, level, false);
 }
 
-static void update_slice(rudyscung_t* const self, level_t* const level, camera_t* const camera) {
+static void update_slice(rudyscung_t* const self, level_t* const level, bool const force) {
     assert(self != nullptr);
-    assert(camera != nullptr);
+
+    static int last_chunk_x, last_chunk_y, last_chunk_z;
+
+    ecs_t* ecs = level_get_ecs(level);
+    entity_t player = level_get_player(level);
+
+    ecs_component_pos_t* player_pos = ecs_get_component_data(ecs, player, ECS_COMPONENT__POS);
 
     size_t const slice_diameter = 13;
     size_t const slice_radius = (slice_diameter - 1) / 2;
 
-    float camera_pos[3];
-    camera_get_pos(camera, camera_pos);
-
     size_chunks_t level_size[3];
     level_get_size(level, level_size);
 
-    int const x_camera = floor(camera_pos[0] / CHUNK_SIZE);
-    int const y_camera = floor(camera_pos[1] / CHUNK_SIZE);
-    int const z_camera = floor(camera_pos[2] / CHUNK_SIZE);
+    int const x_camera = floor(player_pos->x / CHUNK_SIZE);
+    int const y_camera = floor(player_pos->y / CHUNK_SIZE);
+    int const z_camera = floor(player_pos->z / CHUNK_SIZE);
+
+    if (x_camera == last_chunk_x && y_camera == last_chunk_y && z_camera == last_chunk_z && !force) {
+        return;
+    }
 
     int slice_x = x_camera - slice_radius;
     int slice_y = y_camera - slice_radius;
@@ -335,4 +374,8 @@ static void update_slice(rudyscung_t* const self, level_t* const level, camera_t
     };
     level_renderer_t* const level_renderer = renderer_get_level_renderer(self->renderer);
     level_renderer_slice(level_renderer, &level_slice);
+
+    last_chunk_x = x_camera;
+    last_chunk_y = y_camera;
+    last_chunk_z = z_camera;
 }

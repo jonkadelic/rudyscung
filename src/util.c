@@ -11,3 +11,7 @@ char* const strcata(char const* const a, char const* const b) {
     strcat(result, b);
     return result;
 }
+
+float const lerp(float const a, float const b, float const t) {
+    return a + (b - a) * t;
+}

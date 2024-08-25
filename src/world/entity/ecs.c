@@ -17,7 +17,6 @@ typedef struct system_storage {
 } system_storage_t;
 
 struct ecs {
-    level_t* level;
     entity_storage_t* entities[MAX_ENTITIES];
     size_t systems_size;
     system_storage_t** systems;
@@ -29,13 +28,9 @@ static size_t const COMPONENT_SIZES[NUM_ECS_COMPONENTS] = {
     [ECS_COMPONENT__ROT] = sizeof(ecs_component_rot_t)
 };
 
-ecs_t* const ecs_new(level_t* const level) {
-    assert(level != nullptr);
-
+ecs_t* const ecs_new(void) {
     ecs_t* self = calloc(1, sizeof(ecs_t));
     assert(self != nullptr);
-
-    self->level = level;
 
     return self;
 }
@@ -59,15 +54,18 @@ void ecs_delete(ecs_t* const self) {
     free(self);
 }
 
-void ecs_tick(ecs_t* const self) {
+void ecs_tick(ecs_t* const self, level_t* const level) {
     assert(self != nullptr);
+    assert(level != nullptr);
 
     for (entity_t entity = 0; entity < MAX_ENTITIES; entity++) {
-        for (size_t i = 0; i < self->systems_size; i++) {
-            if (self->systems[i] != nullptr) {
-                system_storage_t const* const system_storage = self->systems[i];
-                if (ecs_has_component(self, entity, system_storage->target)) {
-                    system_storage->system(self, self->level, entity);
+        if (self->entities[entity] != nullptr) {
+            for (size_t i = 0; i < self->systems_size; i++) {
+                if (self->systems[i] != nullptr) {
+                    system_storage_t const* const system_storage = self->systems[i];
+                    if (ecs_has_component(self, entity, system_storage->target)) {
+                        system_storage->system(self, level, entity);
+                    }
                 }
             }
         }

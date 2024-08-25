@@ -1,7 +1,9 @@
 #pragma once
 
-#include "../level.h"
 #include "./ecs_components.h"
+
+// Predefines
+typedef struct level level_t;
 
 typedef struct ecs ecs_t;
 
@@ -9,11 +11,11 @@ typedef unsigned int entity_t;
 
 typedef void (*ecs_system_t)(ecs_t* const self, level_t* const level, entity_t const entity);
 
-ecs_t* const ecs_new(level_t* const level);
+ecs_t* const ecs_new(void);
 
 void ecs_delete(ecs_t* const self);
 
-void ecs_tick(ecs_t* const self);
+void ecs_tick(ecs_t* const self, level_t* const level);
 
 entity_t const ecs_new_entity(ecs_t* const self);
 
