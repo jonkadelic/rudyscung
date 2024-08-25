@@ -2,6 +2,7 @@
 
 #include <assert.h>
 #include <stdlib.h>
+#include <sys/time.h>
 
 #include "chunk.h"
 #include "tile_shape.h"
@@ -31,7 +32,9 @@ level_t* const level_new(size_chunks_t const size_x, size_chunks_t const size_y,
     self->size_y = size_y;
     self->size_z = size_z;
 
-    self->level_gen = level_gen_new(0);
+    struct timeval time;
+    gettimeofday(&time, nullptr);
+    self->level_gen = level_gen_new(time.tv_sec * 1000 + time.tv_usec / 1000);
 
     self->chunks = malloc(sizeof(chunk_t*) * size_y * size_z * size_x);
     assert(self->chunks != nullptr);

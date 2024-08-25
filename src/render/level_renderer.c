@@ -205,6 +205,9 @@ void level_renderer_draw(level_renderer_t const* const self, camera_t const* con
     float camera_rot[2];
     camera_get_rot(camera, camera_rot);
 
+    size_t window_size[2];
+    window_get_size(rudyscung_get_window(self->rudyscung), window_size);
+
     mat4x4 mat_view;
     mat4x4_identity(mat_view);
     mat4x4_rotate(mat_view, mat_view, 1.0f, 0.0f, 0.0f, camera_rot[1]);
@@ -215,7 +218,7 @@ void level_renderer_draw(level_renderer_t const* const self, camera_t const* con
     mat4x4 mat_proj;
     mat4x4_identity(mat_proj);
     // mat4x4_ortho(mat_proj, 0, 2.0f, 0, 2.0f, 0.1f, 100.0f);
-    mat4x4_perspective(mat_proj, TO_RADIANS(45.0f), 800.0f / 600.0f, 0.1f, 1000.0f);
+    mat4x4_perspective(mat_proj, TO_RADIANS(45.0f), (float) window_size[0] / window_size[1], 0.1f, 1000.0f);
     shader_put_uniform_mat4x4(shader, "projection", mat_proj);
 
     mat4x4 mat_model;

@@ -1,5 +1,6 @@
 #include "./rudyscung.h"
 
+#include <SDL_video.h>
 #include <assert.h>
 #include <stdlib.h>
 #include <stdio.h>
@@ -14,6 +15,7 @@
 #include "render/textures.h"
 #include "render/camera.h"
 #include "render/renderer.h"
+#include "window.h"
 #include "world/chunk.h"
 #include "world/level.h"
 #include "world/tile.h"
@@ -106,6 +108,11 @@ void rudyscung_run(rudyscung_t* const self) {
             if (event.type == SDL_QUIT) {
                 running = false;
             }
+            if (event.type == SDL_WINDOWEVENT) {
+                if (event.window.event == SDL_WINDOWEVENT_SIZE_CHANGED) {
+                    window_handle_resize(self->window);
+                }
+            }
             if (event.type == SDL_KEYDOWN || event.type == SDL_KEYUP) {
                 bool is_pressed = event.type == SDL_KEYDOWN;
                 switch (event.key.keysym.sym) {
@@ -140,6 +147,11 @@ void rudyscung_run(rudyscung_t* const self) {
                     case SDLK_RSHIFT:
                         keys.shift = is_pressed;
                         break;
+                    case SDLK_r:
+                        level_delete(level);
+                        level = level_new(LEVEL_SIZE, LEVEL_HEIGHT, LEVEL_SIZE);
+                        renderer_set_level(self->renderer, level);
+                        update_slice(self, level, camera);
                 }
             }
         }

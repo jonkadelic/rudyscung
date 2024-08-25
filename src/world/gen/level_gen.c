@@ -194,7 +194,7 @@ level_gen_t* const level_gen_new(unsigned int seed) {
     level_gen_t* const self = malloc(sizeof(level_gen_t));
     assert(self != nullptr);
 
-    self->perlin = perlin_new(0);
+    self->perlin = perlin_new(seed);
 
     return self;
 }
