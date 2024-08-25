@@ -14,6 +14,7 @@ static tile_t const* TILES[NUM_TILES];
 static tile_t const* tile_air;
 static tile_t const* tile_grass;
 static tile_t const* tile_stone;
+static tile_t const* tile_sand;
 
 void tiles_init(void) {
     for (size_t i = 0; i < NUM_TILES; i++) {
@@ -23,6 +24,7 @@ void tiles_init(void) {
     tile_air = tile_new(TILE_ID__AIR);
     tile_grass = tile_new(TILE_ID__GRASS);
     tile_stone = tile_new(TILE_ID__STONE);
+    tile_sand = tile_new(TILE_ID__SAND);
 }
 
 tile_t const* const tile_get(tile_id_t const id) {

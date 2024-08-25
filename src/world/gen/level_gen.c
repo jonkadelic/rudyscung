@@ -253,7 +253,11 @@ void level_gen_generate(level_gen_t* const self, chunk_t* const chunk) {
                 chunk_set_tile(chunk, x, y, z, tile_get(TILE_ID__STONE));
             }
             if (height >= chunk_pos[1] * CHUNK_SIZE && height < chunk_pos[1] * CHUNK_SIZE + CHUNK_SIZE) {
-                chunk_set_tile(chunk, x, height - (chunk_pos[1] * CHUNK_SIZE), z, tile_get(TILE_ID__GRASS));
+                tile_t const* top_tile = tile_get(TILE_ID__GRASS);
+                if (height <= 75) {
+                    top_tile = tile_get(TILE_ID__SAND);
+                }
+                chunk_set_tile(chunk, x, height - (chunk_pos[1] * CHUNK_SIZE), z, top_tile);
             }
         }
     }
@@ -283,12 +287,26 @@ void level_gen_smooth(level_gen_t const* const self, level_t* const level) {
             bool sides_present[NUM_SIDES];
             look_up_sides(level, level_size_tiles, x, y, z, sides_present);
 
+            if (sides_present[SIDE__NORTH] + sides_present[SIDE__SOUTH] + sides_present[SIDE__WEST] + sides_present[SIDE__EAST] < 2) {
+                level_set_tile(level, x, y, z, air_tile);
+                y--;
+                tile_t const* top_tile = tile_get(TILE_ID__GRASS);
+                if (y <= 75) {
+                    top_tile = tile_get(TILE_ID__SAND);
+                }
+                level_set_tile(level, x, y, z, top_tile);
+            }
+
             for (tile_shape_t i = 0; i < NUM_TILE_SHAPES; i++) {
                 if (SHAPE_LOOKUP[i].defined) {
                     if (tile_matches_pattern(level, i, sides_present, x, y, z)) {
                         level_set_tile_shape(level, x, y, z, i);
                         if (i == TILE_SHAPE__CORNER_A_NORTH_WEST || i == TILE_SHAPE__CORNER_A_SOUTH_WEST || i == TILE_SHAPE__CORNER_A_NORTH_EAST || i == TILE_SHAPE__CORNER_A_SOUTH_EAST) {
-                            level_set_tile(level, x, y - 1, z, tile);
+                            tile_t const* top_tile = tile_get(TILE_ID__GRASS);
+                            if (y - 1 <= 75) {
+                                top_tile = tile_get(TILE_ID__SAND);
+                            }
+                            level_set_tile(level, x, y - 1, z, top_tile);
 
                             tile_shape_t below_shape_candidate = i + 4;
                             if (SHAPE_LOOKUP[below_shape_candidate].defined) {

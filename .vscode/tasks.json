@@ -25,7 +25,10 @@
             "presentation": {
                 "reveal": "always",
                 "panel": "shared"
-            }
+            },
+            "dependsOrder": "sequence",
+            "dependsOn": [ "Build" ],
+            "problemMatcher": []
         }
     ]
 }

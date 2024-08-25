@@ -87,7 +87,7 @@ void rudyscung_delete(rudyscung_t* const self) {
 void rudyscung_run(rudyscung_t* const self) {
     assert(self != nullptr);
 
-#define LEVEL_SIZE 32
+#define LEVEL_SIZE 64
 #define LEVEL_HEIGHT 8
     level_t* level = level_new(LEVEL_SIZE, LEVEL_HEIGHT, LEVEL_SIZE);
     ecs_t* ecs = level_get_ecs(level);
@@ -329,7 +329,7 @@ static void update_slice(rudyscung_t* const self, level_t* const level, bool con
 
     ecs_component_pos_t* player_pos = ecs_get_component_data(ecs, player, ECS_COMPONENT__POS);
 
-    size_t const slice_diameter = 13;
+    size_t const slice_diameter = 33;
     size_t const slice_radius = (slice_diameter - 1) / 2;
 
     size_chunks_t level_size[3];
@@ -367,10 +367,10 @@ static void update_slice(rudyscung_t* const self, level_t* const level, bool con
 
     level_slice_t level_slice = {
         .size_x = slice_diameter,
-        .size_y = slice_diameter,
+        .size_y = 8,
         .size_z = slice_diameter,
         .x = slice_x,
-        .y = slice_y,
+        .y = 0,
         .z = slice_z
     };
     level_renderer_t* const level_renderer = renderer_get_level_renderer(self->renderer);

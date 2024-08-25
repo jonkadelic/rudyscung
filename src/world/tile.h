@@ -10,7 +10,8 @@ typedef struct tile tile_t;
 typedef enum tile_id : uint8_t {
     TILE_ID__AIR = 0,
     TILE_ID__GRASS = 1,
-    TILE_ID__STONE = 2
+    TILE_ID__STONE = 2,
+    TILE_ID__SAND = 3
 } tile_id_t;
 
 void tiles_init(void);

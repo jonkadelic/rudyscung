@@ -35,6 +35,18 @@ static entry_t const ENTRIES[NUM_TILES] = {
             [SIDE__WEST] = { .x = 1, .y = 0 },
             [SIDE__EAST] = { .x = 1, .y = 0 },
         }
+    },
+    [TILE_ID__SAND] = {
+        .exists = true,
+        .is_callable = false,
+        .texture_coords = {
+            [SIDE__NORTH] = { .x = 1, .y = 0 },
+            [SIDE__SOUTH] = { .x = 1, .y = 0 },
+            [SIDE__BOTTOM] = { .x = 1, .y = 0 },
+            [SIDE__TOP] = { .x = 2, .y = 1 },
+            [SIDE__WEST] = { .x = 1, .y = 0 },
+            [SIDE__EAST] = { .x = 1, .y = 0 },
+        }
     }
 };
 

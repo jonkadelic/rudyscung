@@ -86,7 +86,7 @@ void level_renderer_slice(level_renderer_t* const self, level_slice_t const* con
     ) {
         return;
     }
-
+    
     level_slice_t old_slice;
     memcpy(&(old_slice), &(self->level_slice), sizeof(level_slice_t));
     aabb_t* const old_aabb = aabb_new(old_slice.x, old_slice.y, old_slice.z, old_slice.x + old_slice.size_x, old_slice.y + old_slice.size_y, old_slice.z + old_slice.size_z);
