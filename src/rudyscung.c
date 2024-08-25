@@ -24,6 +24,7 @@
 #include "world/entity/ecs.h"
 #include "world/entity/ecs_components.h"
 #include "world/level.h"
+#include "world/side.h"
 
 #define WINDOW_TITLE "rudyscung"
 #define WINDOW_INITIAL_WIDTH 800
@@ -87,7 +88,7 @@ void rudyscung_delete(rudyscung_t* const self) {
 void rudyscung_run(rudyscung_t* const self) {
     assert(self != nullptr);
 
-#define LEVEL_SIZE 64
+#define LEVEL_SIZE 16
 #define LEVEL_HEIGHT 8
     level_t* level = level_new(LEVEL_SIZE, LEVEL_HEIGHT, LEVEL_SIZE);
     ecs_t* ecs = level_get_ecs(level);
@@ -95,7 +96,7 @@ void rudyscung_run(rudyscung_t* const self) {
 
     renderer_set_level(self->renderer, level);
 
-    camera_t* camera = camera_new(0, 0, 0);
+    camera_t* camera = camera_new((float[NUM_AXES]) { 0.0f, 0.0f, 0.0f }, (float[NUM_ROT_AXES]) { 0.0f, 0.0f} );
 
     update_slice(self, level, true);
 
@@ -197,8 +198,8 @@ void rudyscung_run(rudyscung_t* const self) {
         }
         last_game_tick = current_tick - (delta_tick % MS_PER_TICK);
 
-        camera_set_pos(camera, lerp(player_pos->ox, player_pos->x, partial_tick), lerp(player_pos->oy, player_pos->y, partial_tick), lerp(player_pos->oz, player_pos->z, partial_tick));
-        camera_set_rot(camera, player_rot->y_rot, player_rot->x_rot);
+        camera_set_pos(camera, (float[NUM_AXES]) { lerp(player_pos->ox, player_pos->x, partial_tick), lerp(player_pos->oy, player_pos->y, partial_tick), lerp(player_pos->oz, player_pos->z, partial_tick) });
+        camera_set_rot(camera, (float[NUM_ROT_AXES]) { player_rot->y_rot, player_rot->x_rot });
     }
 
     camera_delete(camera);
@@ -329,10 +330,10 @@ static void update_slice(rudyscung_t* const self, level_t* const level, bool con
 
     ecs_component_pos_t* player_pos = ecs_get_component_data(ecs, player, ECS_COMPONENT__POS);
 
-    size_t const slice_diameter = 33;
+    size_t const slice_diameter = 13;
     size_t const slice_radius = (slice_diameter - 1) / 2;
 
-    size_chunks_t level_size[3];
+    size_chunks_t level_size[NUM_AXES];
     level_get_size(level, level_size);
 
     int const x_camera = floor(player_pos->x / CHUNK_SIZE);
@@ -366,12 +367,8 @@ static void update_slice(rudyscung_t* const self, level_t* const level, bool con
     }
 
     level_slice_t level_slice = {
-        .size_x = slice_diameter,
-        .size_y = 8,
-        .size_z = slice_diameter,
-        .x = slice_x,
-        .y = 0,
-        .z = slice_z
+        .size = { slice_diameter, 8, slice_radius },
+        .pos = { slice_x, 0, slice_z }
     };
     level_renderer_t* const level_renderer = renderer_get_level_renderer(self->renderer);
     level_renderer_slice(level_renderer, &level_slice);

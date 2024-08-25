@@ -98,7 +98,7 @@ void renderer_render(renderer_t* const self, camera_t const* const camera) {
         char line_buffer[64];
         snprintf(line_buffer, sizeof(line_buffer) / sizeof(line_buffer[0]), "FPS: %.2f", self->frames.fps);
         font_draw(font, line_buffer, 0, 0);
-        float camera_pos[3];
+        float camera_pos[NUM_AXES];
         camera_get_pos(camera, camera_pos);
         snprintf(line_buffer, sizeof(line_buffer) / sizeof(line_buffer[0]), "x: %.2f y: %.2f z: %.2f", camera_pos[0], camera_pos[1], camera_pos[2]);
         font_draw(font, line_buffer, 0, 12);

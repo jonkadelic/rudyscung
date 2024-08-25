@@ -2,24 +2,19 @@
 
 #include <assert.h>
 #include <stdlib.h>
+#include <string.h>
 
 struct camera {
-    float x;
-    float y;
-    float z;
-    float y_rot;
-    float x_rot;
+    float pos[NUM_AXES];
+    float rot[NUM_ROT_AXES];
 };
 
-camera_t* const camera_new(float const x, float const y, float const z) {
+camera_t* const camera_new(float const pos[NUM_AXES], float const rot[NUM_ROT_AXES]) {
     camera_t* const self = malloc(sizeof(camera_t));
     assert(self != nullptr);
 
-    self->x = x;
-    self->y = y;
-    self->z = z;
-    self->y_rot = 0.0f;
-    self->x_rot = 0.0f;
+    memcpy(self->pos, pos, sizeof(float) * NUM_AXES);
+    memcpy(self->rot, rot, sizeof(float) * NUM_ROT_AXES);
 
     return self;
 }
@@ -30,32 +25,26 @@ void camera_delete(camera_t* const self) {
     free(self);
 }
 
-void camera_get_pos(camera_t const* const self, float pos[3]) {
+void camera_get_pos(camera_t const* const self, float pos[NUM_AXES]) {
     assert(self != nullptr);
 
-    pos[0] = self->x;
-    pos[1] = self->y;
-    pos[2] = self->z;
+    memcpy(pos, self->pos, sizeof(float) * NUM_AXES);
 }
 
-void camera_set_pos(camera_t* const self, float const x, float const y, float const z) {
+void camera_set_pos(camera_t* const self, float const pos[NUM_AXES]) {
     assert(self != nullptr);
 
-    self->x = x;
-    self->y = y;
-    self->z = z;
+    memcpy(self->pos, pos, sizeof(float) * NUM_AXES);
 }
 
-void camera_get_rot(camera_t const* const self, float rot[2]) {
+void camera_get_rot(camera_t const* const self, float rot[NUM_ROT_AXES]) {
     assert(self != nullptr);
 
-    rot[0] = self->y_rot;
-    rot[1] = self->x_rot;
+    memcpy(rot, self->rot, sizeof(float) * NUM_ROT_AXES);
 }
 
-void camera_set_rot(camera_t* const self, float const y_rot, float const x_rot) {
+void camera_set_rot(camera_t* const self, float const rot[NUM_ROT_AXES]) {
     assert(self != nullptr);
 
-    self->y_rot = y_rot;
-    self->x_rot = x_rot;
+    memcpy(self->rot, rot, sizeof(float) * NUM_ROT_AXES);
 }

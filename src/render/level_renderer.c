@@ -22,7 +22,7 @@
 #include "./textures.h"
 #include "camera.h"
 
-#define CHUNK_INDEX(x, y, z) (((y) * self->level_slice.size_z * self->level_slice.size_x) + ((z) * self->level_slice.size_x) + (x))
+#define CHUNK_INDEX(x, y, z) (((y) * self->level_slice.size[AXIS__Z] * self->level_slice.size[AXIS__X]) + ((z) * self->level_slice.size[AXIS__X]) + (x))
 #define TO_CHUNK_SPACE(tile_coord) ((tile_coord) / CHUNK_SIZE)
 #define TO_TILE_SPACE(chunk_coord) ((chunk_coord) * CHUNK_SIZE)
 
@@ -47,14 +47,12 @@ level_renderer_t* const level_renderer_new(rudyscung_t* const rudyscung, level_t
     self->rudyscung = rudyscung;
     self->level = level;
 
-    size_chunks_t size[3];
+    size_chunks_t size[NUM_AXES];
     level_get_size(level, size);
-    self->level_slice.size_x = size[0];
-    self->level_slice.size_y = size[1];
-    self->level_slice.size_z = size[2];
-    self->level_slice.x = 0;
-    self->level_slice.y = 0;
-    self->level_slice.z = 0;
+    memcpy(self->level_slice.size, size, sizeof(size_chunks_t) * NUM_AXES);
+    for (axis_t a = 0; a < NUM_AXES; a++) {
+        self->level_slice.pos[a] = 0;
+    }
 
     self->tessellator = tessellator_new();
 
@@ -81,16 +79,24 @@ void level_renderer_slice(level_renderer_t* const self, level_slice_t const* con
         return;
     }
 
-    if (slice->size_x == self->level_slice.size_x && slice->size_y == self->level_slice.size_y && slice->size_z == self->level_slice.size_z &&
-        slice->x == self->level_slice.x && slice->y == self->level_slice.y && slice->z == self->level_slice.z
-    ) {
+    if (memcmp(slice, &(self->level_slice), sizeof(level_slice_t)) == 0) {
         return;
     }
     
     level_slice_t old_slice;
     memcpy(&(old_slice), &(self->level_slice), sizeof(level_slice_t));
-    aabb_t* const old_aabb = aabb_new(old_slice.x, old_slice.y, old_slice.z, old_slice.x + old_slice.size_x, old_slice.y + old_slice.size_y, old_slice.z + old_slice.size_z);
-    aabb_t* const new_aabb = aabb_new(slice->x, slice->y, slice->z, slice->x + slice->size_x, slice->y + slice->size_y, slice->z + slice->size_z);
+    float f_old_slice_pos[NUM_AXES];
+    float f_slice_pos[NUM_AXES];
+    float f_old_slice_pos_max[NUM_AXES];
+    float f_slice_pos_max[NUM_AXES];
+    for (axis_t a = 0; a < NUM_AXES; a++) {
+        f_old_slice_pos[a] = (float) old_slice.pos[a];
+        f_old_slice_pos_max[a] = (float) old_slice.pos[a] + (float) old_slice.size[a];
+        f_slice_pos[a] = (float) slice->pos[a];
+        f_slice_pos_max[a] = (float) slice->pos[a] + (float) slice->size[a];
+    }
+    aabb_t* const old_aabb = aabb_new(f_old_slice_pos, f_old_slice_pos_max);
+    aabb_t* const new_aabb = aabb_new(f_slice_pos, f_slice_pos_max);
 
     bool does_overlap = aabb_test_aabb_overlap(old_aabb, new_aabb);
 
@@ -105,57 +111,35 @@ void level_renderer_slice(level_renderer_t* const self, level_slice_t const* con
     }
 
     level_slice_t overlap;
-    if (slice->x < old_slice.x) {
-        overlap.x = old_slice.x;
-        overlap.size_x = ((old_slice.x + old_slice.size_x) - slice->x) - ((old_slice.x - slice->x) + ((old_slice.x + old_slice.size_x) - (slice->x + slice->size_x)));
-    } else {
-        overlap.x = slice->x;
-        overlap.size_x = ((slice->x + slice->size_x) - old_slice.x) - ((slice->x - old_slice.x) + ((slice->x + slice->size_x) - (old_slice.x + old_slice.size_x)));
-    }
-    if (slice->y < old_slice.y) {
-        overlap.y = old_slice.y;
-        overlap.size_y = ((old_slice.y + old_slice.size_y) - slice->y) - ((old_slice.y - slice->y) + ((old_slice.y + old_slice.size_y) - (slice->y + slice->size_y)));
-    } else {
-        overlap.y = slice->y;
-        overlap.size_y = ((slice->y + slice->size_y) - old_slice.y) - ((slice->y - old_slice.y) + ((slice->y + slice->size_y) - (old_slice.y + old_slice.size_y)));
-    }
-    if (slice->z < old_slice.z) {
-        overlap.z = old_slice.z;
-        overlap.size_z = ((old_slice.z + old_slice.size_z) - slice->z) - ((old_slice.z - slice->z) + ((old_slice.z + old_slice.size_z) - (slice->z + slice->size_z)));
-    } else {
-        overlap.z = slice->z;
-        overlap.size_z = ((slice->z + slice->size_z) - old_slice.z) - ((slice->z - old_slice.z) + ((slice->z + slice->size_z) - (old_slice.z + old_slice.size_z)));
-    }
-    if (overlap.size_x > slice->size_x) {
-        overlap.size_x = slice->size_x;
-    }
-    if (overlap.size_x > old_slice.size_x) {
-        overlap.size_x = old_slice.size_x;
-    }
-    if (overlap.size_y > slice->size_y) {
-        overlap.size_y = slice->size_y;
-    }
-    if (overlap.size_y > old_slice.size_y) {
-        overlap.size_y = old_slice.size_y;
-    }
-    if (overlap.size_z > slice->size_z) {
-        overlap.size_z = slice->size_z;
-    }
-    if (overlap.size_z > old_slice.size_z) {
-        overlap.size_z = old_slice.size_z;
+    for (axis_t a = 0; a < NUM_AXES; a++) {
+        if (slice->pos[a] < old_slice.pos[a]) {
+            overlap.pos[a] = old_slice.pos[a];
+            overlap.size[a] = ((old_slice.pos[a] + old_slice.size[a]) - slice->pos[a]) - ((old_slice.pos[a] - slice->pos[a]) + ((old_slice.pos[a] + old_slice.size[a]) - (slice->pos[a] + slice->size[a])));
+        } else {
+            overlap.pos[a] = slice->pos[a];
+            overlap.size[a] = ((slice->pos[a] + slice->size[a]) - old_slice.pos[a]) - ((slice->pos[a] - old_slice.pos[a]) + ((slice->pos[a] + slice->size[a]) - (old_slice.pos[a] + old_slice.size[a])));
+        }
+
+        if (overlap.size[a] > slice->size[a]) {
+            overlap.size[a] = slice->size[a];
+        }
+        if (overlap.size[a] > old_slice.size[a]) {
+            overlap.size[a] = old_slice.size[a];
+        }
     }
 
-    chunk_renderer_t** new_chunk_renderers = malloc(sizeof(chunk_renderer_t*) * slice->size_y * slice->size_z * slice->size_x);
+    size_t const chunks_area = slice->size[AXIS__Y] * slice->size[AXIS__Z] * slice->size[AXIS__X];
+    chunk_renderer_t** new_chunk_renderers = malloc(sizeof(chunk_renderer_t*) * chunks_area);
     assert(new_chunk_renderers != nullptr);
-    for (size_t i = 0; i < (slice->size_y * slice->size_z * slice->size_x); i++) {
+    for (size_t i = 0; i < chunks_area; i++) {
         new_chunk_renderers[i] = nullptr;
     }
 
-    for (size_chunks_t x = 0; x < overlap.size_x; x++) {
-        for (size_chunks_t y = 0; y < overlap.size_y; y++) {
-            for (size_chunks_t z = 0; z < overlap.size_z; z++) {
-                size_t old_index = ((((overlap.y - old_slice.y) + y) * old_slice.size_z * old_slice.size_x) + (((overlap.z - old_slice.z) + z) * old_slice.size_x) + ((overlap.x - old_slice.x) + x));
-                size_t new_index = ((((overlap.y - slice->y) + y) * slice->size_z * slice->size_x) + (((overlap.z - slice->z) + z) * slice->size_x) + ((overlap.x - slice->x) + x));
+    for (size_chunks_t x = 0; x < overlap.size[AXIS__X]; x++) {
+        for (size_chunks_t y = 0; y < overlap.size[AXIS__Y]; y++) {
+            for (size_chunks_t z = 0; z < overlap.size[AXIS__Z]; z++) {
+                size_t old_index = ((((overlap.pos[AXIS__Y] - old_slice.pos[AXIS__Y]) + y) * old_slice.size[AXIS__Z] * old_slice.size[AXIS__X]) + (((overlap.pos[AXIS__Z] - old_slice.pos[AXIS__Z]) + z) * old_slice.size[AXIS__X]) + ((overlap.pos[AXIS__X] - old_slice.pos[AXIS__X]) + x));
+                size_t new_index = ((((overlap.pos[AXIS__Y] - slice->pos[AXIS__Y]) + y) * slice->size[AXIS__Z] * slice->size[AXIS__X]) + (((overlap.pos[AXIS__Z] - slice->pos[AXIS__Z]) + z) * slice->size[AXIS__X]) + ((overlap.pos[AXIS__X] - slice->pos[AXIS__X]) + x));
 
                 new_chunk_renderers[new_index] = self->chunk_renderers[old_index];
                 self->chunk_renderers[old_index] = nullptr;
@@ -177,7 +161,8 @@ void level_renderer_tick(level_renderer_t* const self) {
 
     if (!self->all_ready) {
         size_t remaining = 20;
-        for (size_chunks_t i = 0; i < self->level_slice.size_x * self->level_slice.size_y * self->level_slice.size_z; i++) {
+        size_t const chunks_area = self->level_slice.size[AXIS__Y] * self->level_slice.size[AXIS__Z] * self->level_slice.size[AXIS__X];
+        for (size_chunks_t i = 0; i < chunks_area; i++) {
             if (remaining == 0) {
                 break;
             }
@@ -205,9 +190,9 @@ void level_renderer_draw(level_renderer_t const* const self, camera_t const* con
     shader_t* const shader = shaders_get(shaders, "main");
     shader_bind(shader);
 
-    float camera_pos[3];
+    float camera_pos[NUM_AXES];
     camera_get_pos(camera, camera_pos);
-    float camera_rot[2];
+    float camera_rot[NUM_ROT_AXES];
     camera_get_rot(camera, camera_rot);
 
     size_t window_size[2];
@@ -215,9 +200,9 @@ void level_renderer_draw(level_renderer_t const* const self, camera_t const* con
 
     mat4x4 mat_view;
     mat4x4_identity(mat_view);
-    mat4x4_rotate(mat_view, mat_view, 1.0f, 0.0f, 0.0f, camera_rot[1]);
-    mat4x4_rotate(mat_view, mat_view, 0.0f, 1.0f, 0.0f, camera_rot[0]);
-    mat4x4_translate_in_place(mat_view, -camera_pos[0], -camera_pos[1], -camera_pos[2]);
+    mat4x4_rotate(mat_view, mat_view, 1.0f, 0.0f, 0.0f, camera_rot[ROT_AXIS__X]);
+    mat4x4_rotate(mat_view, mat_view, 0.0f, 1.0f, 0.0f, camera_rot[ROT_AXIS__Y]);
+    mat4x4_translate_in_place(mat_view, -camera_pos[AXIS__X], -camera_pos[AXIS__Y], -camera_pos[AXIS__Z]);
     shader_put_uniform_mat4x4(shader, "view", mat_view);
 
     mat4x4 mat_proj;
@@ -238,15 +223,15 @@ void level_renderer_draw(level_renderer_t const* const self, camera_t const* con
     textures_t* const textures = rudyscung_get_textures(self->rudyscung);
     glBindTexture(GL_TEXTURE_2D, textures_get_texture(textures, TEXTURE_NAME__TERRAIN));
 
-    for (size_chunks_t x = 0; x < self->level_slice.size_x; x++) {
-        for (size_chunks_t y = 0; y < self->level_slice.size_y; y++) {
-            for (size_chunks_t z = 0; z < self->level_slice.size_z; z++) {
+    for (size_chunks_t x = 0; x < self->level_slice.size[AXIS__X]; x++) {
+        for (size_chunks_t y = 0; y < self->level_slice.size[AXIS__Y]; y++) {
+            for (size_chunks_t z = 0; z < self->level_slice.size[AXIS__Z]; z++) {
                 chunk_renderer_t const* const chunk_renderer = self->chunk_renderers[CHUNK_INDEX(x, y, z)];
 
                 if (chunk_renderer != nullptr) {
                     if (chunk_renderer_is_ready(chunk_renderer)) {
                         mat4x4_identity(mat_model);
-                        mat4x4_translate_in_place(mat_model, TO_TILE_SPACE(self->level_slice.x) + TO_TILE_SPACE(x), TO_TILE_SPACE(self->level_slice.y) + TO_TILE_SPACE(y), TO_TILE_SPACE(self->level_slice.z) + TO_TILE_SPACE(z));
+                        mat4x4_translate_in_place(mat_model, TO_TILE_SPACE(self->level_slice.pos[AXIS__X]) + TO_TILE_SPACE(x), TO_TILE_SPACE(self->level_slice.pos[AXIS__Y]) + TO_TILE_SPACE(y), TO_TILE_SPACE(self->level_slice.pos[AXIS__Z]) + TO_TILE_SPACE(z));
                         shader_put_uniform_mat4x4(shader, "model", mat_model);
 
                         chunk_renderer_draw(chunk_renderer);
@@ -260,38 +245,39 @@ void level_renderer_draw(level_renderer_t const* const self, camera_t const* con
     glDisable(GL_CULL_FACE);
 }
 
-bool level_renderer_is_tile_side_occluded(level_renderer_t const* const self, size_t const x, size_t const y, size_t const z, side_t const side) {
+bool level_renderer_is_tile_side_occluded(level_renderer_t const* const self, size_t const pos[NUM_AXES], side_t const side) {
     assert(self != nullptr);
     assert(side >= 0 && side < NUM_SIDES);
 
-    size_chunks_t level_size[3];
+    size_chunks_t level_size[NUM_AXES];
     level_get_size(self->level, level_size);
 
-    assert(x >= 0 && x < TO_TILE_SPACE(level_size[0]));
-    assert(y >= 0 && y < TO_TILE_SPACE(level_size[1]));
-    assert(z >= 0 && z < TO_TILE_SPACE(level_size[2]));
+    for (axis_t a = 0; a < NUM_AXES; a++) {
+        assert(pos[a] >= 0 && pos[a] < TO_TILE_SPACE(level_size[a]));
+    }
 
     if (
-        (x == 0 && side == SIDE__NORTH) ||
-        (x == TO_TILE_SPACE(level_size[0]) - 1 && side == SIDE__SOUTH) ||
-        (y == 0 && side == SIDE__BOTTOM) ||
-        (z == 0 && side == SIDE__WEST) ||
-        (z == TO_TILE_SPACE(level_size[2]) - 1 && side == SIDE__EAST)
+        (pos[AXIS__X] == 0 && side == SIDE__NORTH) ||
+        (pos[AXIS__X] == TO_TILE_SPACE(level_size[AXIS__X]) - 1 && side == SIDE__SOUTH) ||
+        (pos[AXIS__Y] == 0 && side == SIDE__BOTTOM) ||
+        (pos[AXIS__Z] == 0 && side == SIDE__WEST) ||
+        (pos[AXIS__Z] == TO_TILE_SPACE(level_size[AXIS__Z]) - 1 && side == SIDE__EAST)
     ) {
         return true;
     }
-    if (y == TO_TILE_SPACE(level_size[1]) - 1 && side == SIDE__TOP) {
+    if (pos[AXIS__Y] == TO_TILE_SPACE(level_size[AXIS__Y]) - 1 && side == SIDE__TOP) {
         return false;
     }
 
-    int offsets[3];
+    int offsets[NUM_AXES];
     side_get_offsets(side, offsets);
 
-    int tx = x + offsets[0];
-    int ty = y + offsets[1];
-    int tz = z + offsets[2];
+    int t_pos[NUM_AXES];
+    for (axis_t a = 0; a < NUM_AXES; a++) {
+        t_pos[a] = pos[a] + offsets[a];
+    }
 
-    tile_shape_t tshape = level_get_tile_shape(self->level, tx, ty, tz);
+    tile_shape_t tshape = level_get_tile_shape(self->level, t_pos[AXIS__X], t_pos[AXIS__Y], t_pos[AXIS__Z]);
     side_t tside = side_get_opposite(side);
 
     return tile_shape_can_side_occlude(tshape, tside);
@@ -300,8 +286,9 @@ bool level_renderer_is_tile_side_occluded(level_renderer_t const* const self, si
 static void delete_chunk_renderers(level_renderer_t* const self) {
     assert(self != nullptr);
 
+    size_t const chunks_area = self->level_slice.size[AXIS__Y] * self->level_slice.size[AXIS__Z] * self->level_slice.size[AXIS__X];
     if (self->chunk_renderers != nullptr) {
-        for (size_t i = 0; i < (self->level_slice.size_y * self->level_slice.size_z * self->level_slice.size_x); i++) {
+        for (size_t i = 0; i < chunks_area; i++) {
             if (self->chunk_renderers[i] != nullptr) {
                 chunk_renderer_delete(self->chunk_renderers[i]);
                 self->chunk_renderers[i] = nullptr;
@@ -316,23 +303,24 @@ static void delete_chunk_renderers(level_renderer_t* const self) {
 static void reload_chunk_renderers(level_renderer_t* const self) {
     assert(self != nullptr);
 
+    size_t const chunks_area = self->level_slice.size[AXIS__Y] * self->level_slice.size[AXIS__Z] * self->level_slice.size[AXIS__X];
     if (self->chunk_renderers == nullptr) {
-        self->chunk_renderers = malloc(sizeof(chunk_renderer_t*) * self->level_slice.size_y * self->level_slice.size_z * self->level_slice.size_x);
+        self->chunk_renderers = malloc(sizeof(chunk_renderer_t*) * chunks_area);
         assert(self->chunk_renderers != nullptr);
 
-        for (size_t i = 0; i < (self->level_slice.size_y * self->level_slice.size_z * self->level_slice.size_x); i++) {
+        for (size_t i = 0; i < chunks_area; i++) {
             self->chunk_renderers[i] = nullptr;
         }
     }
 
-    size_chunks_t level_size[3];
+    size_chunks_t level_size[NUM_AXES];
     level_get_size(self->level, level_size);
 
-    for (size_chunks_t x = 0; x < self->level_slice.size_x && (self->level_slice.x + x) < level_size[0]; x++) {
-        for (size_chunks_t y = 0; y < self->level_slice.size_y && (self->level_slice.y + y) < level_size[1]; y++) {
-            for (size_chunks_t z = 0; z < self->level_slice.size_z && (self->level_slice.z + z) < level_size[2]; z++) {
+    for (size_chunks_t x = 0; x < self->level_slice.size[AXIS__X] && (self->level_slice.pos[AXIS__X] + x) < level_size[AXIS__X]; x++) {
+        for (size_chunks_t y = 0; y < self->level_slice.size[AXIS__Y] && (self->level_slice.pos[AXIS__Y] + y) < level_size[AXIS__Y]; y++) {
+            for (size_chunks_t z = 0; z < self->level_slice.size[AXIS__Z] && (self->level_slice.pos[AXIS__Z] + z) < level_size[AXIS__Z]; z++) {
                 if (self->chunk_renderers[CHUNK_INDEX(x, y, z)] == nullptr) {
-                    chunk_t const* const chunk = level_get_chunk(self->level, self->level_slice.x + x, self->level_slice.y + y, self->level_slice.z + z);
+                    chunk_t const* const chunk = level_get_chunk(self->level, self->level_slice.pos[AXIS__X] + x, self->level_slice.pos[AXIS__Y] + y, self->level_slice.pos[AXIS__Z] + z);
                     self->chunk_renderers[CHUNK_INDEX(x, y, z)] = chunk_renderer_new(self, chunk);
                 }
             }

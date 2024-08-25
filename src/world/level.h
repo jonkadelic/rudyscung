@@ -4,6 +4,7 @@
 
 #include "chunk.h"
 #include "entity/ecs.h"
+#include "side.h"
 
 typedef struct level level_t;
 
@@ -28,3 +29,5 @@ void level_tick(level_t* const self);
 ecs_t* const level_get_ecs(level_t* const self);
 
 entity_t const level_get_player(level_t const* const self);
+
+float const level_get_distance_on_axis(level_t const* const self, float const x, float const y, float const z, side_t const side, float const max_range);

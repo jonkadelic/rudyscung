@@ -2,7 +2,7 @@
 
 #include <assert.h>
 
-static int const OFFSETS[NUM_SIDES][3] = {
+static int const OFFSETS[NUM_SIDES][NUM_AXES] = {
     [SIDE__NORTH] = { -1, 0, 0 },
     [SIDE__SOUTH] = { 1, 0, 0 },
     [SIDE__BOTTOM] = { 0, -1, 0 },
@@ -11,15 +11,32 @@ static int const OFFSETS[NUM_SIDES][3] = {
     [SIDE__EAST] = { 0, 0, 1 }
 };
 
-void side_get_offsets(side_t const self, int xyz[const 3]) {
+static axis_t const AXES[NUM_SIDES] = {
+    [SIDE__NORTH] = AXIS__X,
+    [SIDE__SOUTH] = AXIS__X,
+    [SIDE__BOTTOM] = AXIS__Y,
+    [SIDE__TOP] = AXIS__Y,
+    [SIDE__WEST] = AXIS__Z,
+    [SIDE__EAST] = AXIS__Z
+};
+
+void side_get_offsets(side_t const self, int xyz[const NUM_AXES]) {
     assert(self >= 0 && self < NUM_SIDES);
     assert(xyz != nullptr);
 
-    xyz[0] = OFFSETS[self][0];
-    xyz[1] = OFFSETS[self][1];
-    xyz[2] = OFFSETS[self][2];
+    for (axis_t a = 0; a < NUM_AXES; a++) {
+        xyz[a] = OFFSETS[self][a];
+    }
 }
 
-side_t side_get_opposite(side_t const self) {
+side_t const side_get_opposite(side_t const self) {
+    assert(self >= 0 && self < NUM_SIDES);
+
     return self + (1 - ((self % 2) * 2));
+}
+
+axis_t const side_get_axis(side_t const self) {
+    assert(self >= 0 && self < NUM_SIDES);
+
+    return AXES[self];
 }

@@ -25,8 +25,13 @@ struct ecs {
 static size_t const COMPONENT_SIZES[NUM_ECS_COMPONENTS] = {
     [ECS_COMPONENT__POS] = sizeof(ecs_component_pos_t),
     [ECS_COMPONENT__VEL] = sizeof(ecs_component_vel_t),
-    [ECS_COMPONENT__ROT] = sizeof(ecs_component_rot_t)
+    [ECS_COMPONENT__ROT] = sizeof(ecs_component_rot_t),
+    [ECS_COMPONENT__AABB] = sizeof(ecs_component_aabb_t)
 };
+
+static void* const new_component(ecs_component_t const component);
+
+static void delete_component(ecs_component_t const component, void* const data);
 
 ecs_t* const ecs_new(void) {
     ecs_t* self = calloc(1, sizeof(ecs_t));
@@ -100,9 +105,9 @@ void ecs_delete_entity(ecs_t* const self, entity_t const entity) {
 
     entity_storage_t* const entity_storage = self->entities[entity];
 
-    for (size_t i = 0; i < NUM_ECS_COMPONENTS; i++) {
+    for (ecs_component_t i = 0; i < NUM_ECS_COMPONENTS; i++) {
         if (entity_storage->component_data[i] != nullptr) {
-            free(entity_storage->component_data[i]);
+            delete_component(i, entity_storage->component_data[i]);
         }
     }
 
@@ -121,8 +126,7 @@ void* const ecs_attach_component(ecs_t* const self, entity_t const entity, ecs_c
 
     entity_storage_t* const entity_storage = self->entities[entity];
 
-    void* const component_storage = calloc(1, component_storage_size);
-    assert(component_storage != nullptr);
+    void* const component_storage = new_component(component);
 
     entity_storage->component_data[component] = component_storage;
 
@@ -137,7 +141,7 @@ void ecs_detach_component(ecs_t* const self, entity_t const entity, ecs_componen
 
     entity_storage_t* const entity_storage = self->entities[entity];
 
-    free(entity_storage->component_data[component]);
+    delete_component(component, entity_storage->component_data[component]);
     entity_storage->component_data[component] = nullptr;
 }
 
@@ -212,4 +216,40 @@ void ecs_detach_system(ecs_t* const self, ecs_component_t const component, ecs_s
     }
 
     assert(deleted_any);
+}
+
+static void* const new_component(ecs_component_t const component) {
+    assert(component >= 0 && component < NUM_ECS_COMPONENTS);
+
+    void* const data = calloc(1, sizeof(COMPONENT_SIZES[component]));
+    assert(data != nullptr);
+
+    switch (component) {
+        case ECS_COMPONENT__AABB: {
+            ecs_component_aabb_t* c_data = data;
+            c_data->aabb = aabb_new((float[NUM_AXES]) { 0.0f, 0.0f, 0.0f }, (float[NUM_AXES]) { 1.0f, 1.0f, 1.0f });
+            break;
+        }
+        default:
+            // Do nothing
+    }
+
+    return data;
+}
+
+static void delete_component(ecs_component_t const component, void* const data) {
+    assert(component >= 0 && component < NUM_ECS_COMPONENTS);
+    assert(data != nullptr);
+
+    switch (component) {
+        case ECS_COMPONENT__AABB: {
+            ecs_component_aabb_t* c_data = data;
+            aabb_delete(c_data->aabb);
+            break;
+        }
+        default:
+            // Do nothing
+    }
+
+    free(data);
 }
