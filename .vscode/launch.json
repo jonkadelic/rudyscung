@@ -2,17 +2,41 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "(lldb) Launch", // Here!!
+            "name": "Windows Launch",
             "type": "cppdbg",
             "request": "launch",
-            // Resolved by CMake Tools:
+            "program": "${workspaceRoot}/build-win/rudyscung.exe",
+            "args": [],
+            "stopAtEntry": true,
+            "cwd": "${workspaceRoot}/build-win/",
+            "environment": [],
+            "externalConsole": false,
+            "MIMode": "gdb",
+            "miDebuggerPath": "/mnt/c/msys64/usr/bin/gdb.exe",
+            "setupCommands": [
+                {
+                    "description": "Enable pretty-printing for gdb",
+                    "text": "-enable-pretty-printing",
+                    "ignoreFailures": true
+                },
+                {
+                    "description": "Set Disassembly Flavor to Intel",
+                    "text": "-gdb-set disassembly-flavor intel",
+                    "ignoreFailures": true
+                }
+            ]
+        },
+        {
+            "name": "(lldb) Launch",
+            "type": "cppdbg",
+            "request": "launch",
             "program": "${command:cmake.launchTargetPath}",
             "args": [],
             "stopAtEntry": true,
             "cwd": "${command:cmake.launchTargetDirectory}",
             "environment": [],
             "externalConsole": false,
-            "MIMode": "lldb", // also here!!
+            "MIMode": "lldb",
             "setupCommands": [
                 {
                     "description": "Enable pretty-printing for lldb",

@@ -114,8 +114,6 @@ void rudyscung_run(rudyscung_t* const self) {
         if (player_rot->x_rot < -M_PI / 2) {
             player_rot->x_rot = -M_PI / 2;
         }
-        camera_set_pos(camera, lerp(player_pos->ox, player_pos->x, partial_tick), lerp(player_pos->oy, player_pos->y, partial_tick), lerp(player_pos->oz, player_pos->z, partial_tick));
-        camera_set_rot(camera, player_rot->y_rot, player_rot->x_rot);
 
         // Handle events
         SDL_Event event;
@@ -198,6 +196,9 @@ void rudyscung_run(rudyscung_t* const self) {
             tick(self, level);
         }
         last_game_tick = current_tick - (delta_tick % MS_PER_TICK);
+
+        camera_set_pos(camera, lerp(player_pos->ox, player_pos->x, partial_tick), lerp(player_pos->oy, player_pos->y, partial_tick), lerp(player_pos->oz, player_pos->z, partial_tick));
+        camera_set_rot(camera, player_rot->y_rot, player_rot->x_rot);
     }
 
     camera_delete(camera);
