@@ -1,5 +1,7 @@
 #include "./rudyscung.h"
 
+#include <SDL_keycode.h>
+#include <SDL_mouse.h>
 #include <SDL_video.h>
 #include <assert.h>
 #include <stdlib.h>
@@ -84,7 +86,7 @@ void rudyscung_delete(rudyscung_t* const self) {
 void rudyscung_run(rudyscung_t* const self) {
     assert(self != nullptr);
 
-#define LEVEL_SIZE 16
+#define LEVEL_SIZE 32
 #define LEVEL_HEIGHT 8
     level_t* level = level_new(LEVEL_SIZE, LEVEL_HEIGHT, LEVEL_SIZE);
 
@@ -113,9 +115,26 @@ void rudyscung_run(rudyscung_t* const self) {
                     window_handle_resize(self->window);
                 }
             }
+            if (event.type == SDL_MOUSEBUTTONDOWN) {
+                if (event.button.button == SDL_BUTTON_LEFT) {
+                    SDL_SetRelativeMouseMode(true);
+                }
+            }
+            if (event.type == SDL_MOUSEMOTION) {
+                if (SDL_GetRelativeMouseMode()) {
+                    float camera_rot[2];
+                    camera_get_rot(camera, camera_rot);
+                    camera_rot[0] += event.motion.xrel / 125.0f;
+                    camera_rot[1] += event.motion.yrel / 125.0f;
+                    camera_set_rot(camera, camera_rot[0], camera_rot[1]);
+                }
+            }
             if (event.type == SDL_KEYDOWN || event.type == SDL_KEYUP) {
                 bool is_pressed = event.type == SDL_KEYDOWN;
                 switch (event.key.keysym.sym) {
+                    case SDLK_ESCAPE:
+                        SDL_SetRelativeMouseMode(false);
+                        break;
                     case SDLK_w:
                         keys.w = is_pressed;
                         break;
@@ -293,7 +312,7 @@ static void update_slice(rudyscung_t* const self, level_t* const level, camera_t
     assert(self != nullptr);
     assert(camera != nullptr);
 
-    size_t const slice_diameter = 7;
+    size_t const slice_diameter = 13;
     size_t const slice_radius = (slice_diameter - 1) / 2;
 
     float camera_pos[3];
