@@ -7,6 +7,7 @@
 #include <SDL_events.h>
 #include <SDL_timer.h>
 
+#include "util.h"
 #include "render/font.h"
 #include "render/level_renderer.h"
 #include "render/shaders.h"
@@ -15,6 +16,8 @@
 #include "render/renderer.h"
 #include "world/chunk.h"
 #include "world/level.h"
+#include "world/tile.h"
+#include "world/tile_shape.h"
 
 #define WINDOW_TITLE "rudyscung"
 #define WINDOW_INITIAL_WIDTH 800
@@ -79,30 +82,14 @@ void rudyscung_delete(rudyscung_t* const self) {
 void rudyscung_run(rudyscung_t* const self) {
     assert(self != nullptr);
 
-#define LEVEL_SIZE 32
+#define LEVEL_SIZE 16
 #define LEVEL_HEIGHT 8
     level_t* level = level_new(LEVEL_SIZE, LEVEL_HEIGHT, LEVEL_SIZE);
-    for (size_t x = 0; x < LEVEL_SIZE * CHUNK_SIZE; x++) {
-        for (size_t y = 0; y < LEVEL_HEIGHT * CHUNK_SIZE; y++) {
-            for (size_t z = 0; z < LEVEL_SIZE * CHUNK_SIZE; z++) {
-                if (y < 48) {
-                    tile_id_t tile = TILE_ID__STONE;
-                    if (y == 47) {
-                        tile = TILE_ID__GRASS;
-                    }
-                    float random = (float) rand() / RAND_MAX;
-                    if (random > 0.5f) {
-                        tile = TILE_ID__AIR;
-                    }
-                    level_set_tile(level, x, y, z, tile_get(tile));
-                }
-            }
-        }
-    }
 
     renderer_set_level(self->renderer, level);
 
-    camera_t* camera = camera_new(0, 70.0f, 0);
+    camera_t* camera = camera_new(0, 100.0f, 0);
+    camera_set_rot(camera, M_PI / 4 * 3, 0);
 
     update_slice(self, level, camera);
 
@@ -294,7 +281,7 @@ static void update_slice(rudyscung_t* const self, level_t* const level, camera_t
     assert(self != nullptr);
     assert(camera != nullptr);
 
-    size_t const slice_diameter = 5;
+    size_t const slice_diameter = 7;
     size_t const slice_radius = (slice_diameter - 1) / 2;
 
     float camera_pos[3];

@@ -24,32 +24,32 @@ static bool const CAN_OCCLUDE[NUM_TILE_SHAPES][NUM_SIDES] = {
     [TILE_SHAPE__RAMP_NORTH] = {
         [SIDE__NORTH] = true,
         [SIDE__SOUTH] = false,
-        [SIDE__BOTTOM] = false,
-        [SIDE__TOP] = true,
+        [SIDE__BOTTOM] = true,
+        [SIDE__TOP] = false,
         [SIDE__WEST] = false,
         [SIDE__EAST] = false
     },
     [TILE_SHAPE__RAMP_SOUTH] = {
         [SIDE__NORTH] = false,
         [SIDE__SOUTH] = true,
-        [SIDE__BOTTOM] = false,
-        [SIDE__TOP] = true,
+        [SIDE__BOTTOM] = true,
+        [SIDE__TOP] = false,
         [SIDE__WEST] = false,
         [SIDE__EAST] = false
     },
     [TILE_SHAPE__RAMP_WEST] = {
         [SIDE__NORTH] = false,
         [SIDE__SOUTH] = false,
-        [SIDE__BOTTOM] = false,
-        [SIDE__TOP] = true,
+        [SIDE__BOTTOM] = true,
+        [SIDE__TOP] = false,
         [SIDE__WEST] = true,
         [SIDE__EAST] = false
     },
     [TILE_SHAPE__RAMP_EAST] = {
         [SIDE__NORTH] = false,
         [SIDE__SOUTH] = false,
-        [SIDE__BOTTOM] = false,
-        [SIDE__TOP] = true,
+        [SIDE__BOTTOM] = true,
+        [SIDE__TOP] = false,
         [SIDE__WEST] = false,
         [SIDE__EAST] = true
     },
@@ -88,32 +88,32 @@ static bool const CAN_OCCLUDE[NUM_TILE_SHAPES][NUM_SIDES] = {
     [TILE_SHAPE__CORNER_B_NORTH_WEST] = {
         [SIDE__NORTH] = true,
         [SIDE__SOUTH] = false,
-        [SIDE__BOTTOM] = false,
-        [SIDE__TOP] = true,
+        [SIDE__BOTTOM] = true,
+        [SIDE__TOP] = false,
         [SIDE__WEST] = true,
         [SIDE__EAST] = false
     },
     [TILE_SHAPE__CORNER_B_SOUTH_WEST] = {
         [SIDE__NORTH] = false,
         [SIDE__SOUTH] = true,
-        [SIDE__BOTTOM] = false,
-        [SIDE__TOP] = true,
+        [SIDE__BOTTOM] = true,
+        [SIDE__TOP] = false,
         [SIDE__WEST] = true,
         [SIDE__EAST] = false
     },
     [TILE_SHAPE__CORNER_B_NORTH_EAST] = {
         [SIDE__NORTH] = true,
         [SIDE__SOUTH] = false,
-        [SIDE__BOTTOM] = false,
-        [SIDE__TOP] = true,
+        [SIDE__BOTTOM] = true,
+        [SIDE__TOP] = false,
         [SIDE__WEST] = false,
         [SIDE__EAST] = true
     },
     [TILE_SHAPE__CORNER_B_SOUTH_EAST] = {
         [SIDE__NORTH] = false,
         [SIDE__SOUTH] = true,
-        [SIDE__BOTTOM] = false,
-        [SIDE__TOP] = true,
+        [SIDE__BOTTOM] = true,
+        [SIDE__TOP] = false,
         [SIDE__WEST] = false,
         [SIDE__EAST] = true
     },

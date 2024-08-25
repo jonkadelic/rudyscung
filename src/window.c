@@ -31,7 +31,7 @@ window_t* const window_new(char const* const title, int const width, int const h
 
     self->gui_scale = 2.0f;
 
-    SDL_GL_SetSwapInterval(0);
+    // SDL_GL_SetSwapInterval(0);
 
     return self;
 }

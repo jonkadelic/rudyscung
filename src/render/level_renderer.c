@@ -1,7 +1,6 @@
 #include "./level_renderer.h"
 
 #include <assert.h>
-#include <stdio.h>
 #include <stdlib.h>
 
 #include <GL/glew.h>
@@ -173,7 +172,7 @@ void level_renderer_tick(level_renderer_t* const self) {
     assert(self != nullptr);
 
     if (!self->all_ready) {
-        size_t remaining = 10;
+        size_t remaining = 20;
         for (size_chunks_t i = 0; i < self->level_slice.size_x * self->level_slice.size_y * self->level_slice.size_z; i++) {
             if (remaining == 0) {
                 break;
@@ -188,7 +187,7 @@ void level_renderer_tick(level_renderer_t* const self) {
             }
         }
 
-        if (remaining == 10) {
+        if (remaining == 20) {
             self->all_ready = true;
         }
     }
@@ -309,8 +308,6 @@ static void delete_chunk_renderers(level_renderer_t* const self) {
 static void reload_chunk_renderers(level_renderer_t* const self) {
     assert(self != nullptr);
 
-    printf("Reloading chunk renderers...\n");
-
     if (self->chunk_renderers == nullptr) {
         self->chunk_renderers = malloc(sizeof(chunk_renderer_t*) * self->level_slice.size_y * self->level_slice.size_z * self->level_slice.size_x);
         assert(self->chunk_renderers != nullptr);
@@ -320,13 +317,15 @@ static void reload_chunk_renderers(level_renderer_t* const self) {
         }
     }
 
-    for (size_chunks_t x = 0; x < self->level_slice.size_x; x++) {
-        for (size_chunks_t y = 0; y < self->level_slice.size_y; y++) {
-            for (size_chunks_t z = 0; z < self->level_slice.size_z; z++) {
+    size_chunks_t level_size[3];
+    level_get_size(self->level, level_size);
+
+    for (size_chunks_t x = 0; x < self->level_slice.size_x && (self->level_slice.x + x) < level_size[0]; x++) {
+        for (size_chunks_t y = 0; y < self->level_slice.size_y && (self->level_slice.y + y) < level_size[1]; y++) {
+            for (size_chunks_t z = 0; z < self->level_slice.size_z && (self->level_slice.z + z) < level_size[2]; z++) {
                 if (self->chunk_renderers[CHUNK_INDEX(x, y, z)] == nullptr) {
                     chunk_t const* const chunk = level_get_chunk(self->level, self->level_slice.x + x, self->level_slice.y + y, self->level_slice.z + z);
                     self->chunk_renderers[CHUNK_INDEX(x, y, z)] = chunk_renderer_new(self, chunk);
-                    printf("Built chunk renderer at {%zu, %zu, %zu}\n", self->level_slice.x + x, self->level_slice.y + y, self->level_slice.z + z);
                 }
             }
         }

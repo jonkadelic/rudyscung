@@ -5,6 +5,7 @@
 
 #include "chunk.h"
 #include "tile_shape.h"
+#include "gen/level_gen.h"
 
 #define CHUNK_COORD(x, y, z) (((y) * self->size_z * self->size_x) + ((z) * self->size_x) + (x))
 #define TO_CHUNK_SPACE(coord) ((coord) / CHUNK_SIZE)
@@ -15,6 +16,7 @@ struct level {
     size_chunks_t size_y;
     size_chunks_t size_z;
     chunk_t** chunks;
+    level_gen_t* level_gen;
 };
 
 level_t* const level_new(size_chunks_t const size_x, size_chunks_t const size_y, size_chunks_t const size_z) {
@@ -29,6 +31,8 @@ level_t* const level_new(size_chunks_t const size_x, size_chunks_t const size_y,
     self->size_y = size_y;
     self->size_z = size_z;
 
+    self->level_gen = level_gen_new(0);
+
     self->chunks = malloc(sizeof(chunk_t*) * size_y * size_z * size_x);
     assert(self->chunks != nullptr);
 
@@ -36,10 +40,12 @@ level_t* const level_new(size_chunks_t const size_x, size_chunks_t const size_y,
         for (size_chunks_t y = 0; y < size_y; y++) {
             for (size_chunks_t z = 0; z < size_z; z++) {
                 self->chunks[CHUNK_COORD(x, y, z)] = chunk_new(x, y, z);
-                assert(self->chunks[CHUNK_COORD(x, y, z)] != nullptr);
+                level_gen_generate(self->level_gen, self->chunks[CHUNK_COORD(x, y, z)]);                
             }
         }
     }
+
+    level_gen_smooth(self->level_gen, self);
 
     return self;
 }
