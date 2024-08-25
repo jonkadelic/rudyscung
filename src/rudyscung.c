@@ -99,12 +99,7 @@ void rudyscung_run(rudyscung_t* const self) {
     update_slice(self, level, camera);
 
     bool running = true;
-    uint64_t last_tick = SDL_GetTicks64();
-    uint64_t last_fps_tick = SDL_GetTicks64();
-    uint64_t last_frame = SDL_GetTicks64();
-    size_t frames = 0;
-    size_t fps = 0;
-    size_t target_fps = 60;
+    uint64_t last_game_tick = SDL_GetTicks64();
     while (running) {
         uint64_t tick_start = SDL_GetTicks64();
 
@@ -179,44 +174,17 @@ void rudyscung_run(rudyscung_t* const self) {
             }
         }
         
-        // Render
-        if (target_fps == 0 || ((tick_start - last_frame) > (1000.0f / (target_fps + 3)))) {
-            glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
-            glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-            renderer_render(self->renderer, camera);
-            char line_buffer[64];
-            snprintf(line_buffer, sizeof(line_buffer) / sizeof(line_buffer[0]), "FPS: %zu", fps);
-            font_draw(self->font, line_buffer, 0, 0);
-            float camera_pos[3];
-            camera_get_pos(camera, camera_pos);
-            snprintf(line_buffer, sizeof(line_buffer) / sizeof(line_buffer[0]), "x: %.2f y: %.2f z: %.2f", camera_pos[0], camera_pos[1], camera_pos[2]);
-            font_draw(self->font, line_buffer, 0, 12);
-
-            window_swap(self->window);
-
-            last_frame = SDL_GetTicks64();
-
-            uint64_t tick_end = SDL_GetTicks64();
-            uint64_t frame_delta = tick_end - last_fps_tick;
-            if (frame_delta > 1000) {
-                fps = (size_t)(frames / (frame_delta / 1000.0f));
-                last_fps_tick = tick_end;
-                frames = 0;
-            } else {
-                frames++;
-            }
-        }
+        renderer_render(self->renderer, camera);
 
         // Game tick
         uint64_t current_tick = SDL_GetTicks64();
-        uint64_t delta_tick = current_tick - last_tick;
+        uint64_t delta_tick = current_tick - last_game_tick;
         size_t ticks = (size_t)(delta_tick / MS_PER_TICK);
         for (uint64_t t = 0; t < ticks; t++) {
             tick(self, level, camera);
             renderer_tick(self->renderer);
         }
-        last_tick = current_tick - (delta_tick % MS_PER_TICK);
+        last_game_tick = current_tick - (delta_tick % MS_PER_TICK);
     }
 
     camera_delete(camera);
