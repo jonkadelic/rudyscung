@@ -6,7 +6,11 @@
 #include <stdio.h>
 
 #include <GL/glew.h>
+#if defined(__APPLE__)
+#include <OpenGL/gl.h>
+#else
 #include <GL/gl.h>
+#endif
 
 struct shader {
     GLuint program;

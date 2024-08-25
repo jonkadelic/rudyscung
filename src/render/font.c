@@ -9,7 +9,11 @@
 #include <SDL2/SDL_image.h>
 #include <SDL2/SDL_surface.h>
 #include <GL/glew.h>
+#if defined(__APPLE__)
+#include <OpenGL/gl.h>
+#else
 #include <GL/gl.h>
+#endif
 
 #include "../rudyscung.h"
 #include "shader.h"

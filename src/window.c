@@ -17,6 +17,10 @@ window_t* const window_new(char const* const title, int const width, int const h
     window_t* const self = malloc(sizeof(window_t));
     assert(self != nullptr);
 
+    SDL_Init(SDL_INIT_VIDEO);
+    
+    SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE);
+
     self->window = SDL_CreateWindow(title, SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, width, height, SDL_WINDOW_OPENGL | SDL_WINDOW_SHOWN | SDL_WINDOW_RESIZABLE);
     assert(self->window != nullptr);
 

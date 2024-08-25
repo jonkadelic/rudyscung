@@ -7,7 +7,11 @@
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_surface.h>
 #include <SDL2/SDL_image.h>
+#if defined(__APPLE__)
+#include <OpenGL/gl.h>
+#else
 #include <GL/gl.h>
+#endif
 
 #include "../util.h"
 

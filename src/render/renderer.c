@@ -5,7 +5,11 @@
 
 #include <SDL2/SDL.h>
 #include <GL/glew.h>
+#if defined(__APPLE__)
+#include <OpenGL/gl.h>
+#else
 #include <GL/gl.h>
+#endif
 
 #include "./level_renderer.h"
 
@@ -62,9 +66,6 @@ void renderer_set_level(renderer_t* const self, level_t const *const level) {
 
 void renderer_render(renderer_t* const self, camera_t const* const camera) {
     assert(self != nullptr);
-
-    glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
     level_renderer_draw(self->level_renderer, camera);
 
