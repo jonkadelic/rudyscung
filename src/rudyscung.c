@@ -109,11 +109,11 @@ void rudyscung_run(rudyscung_t* const self) {
 
         ecs_component_pos_t* player_pos = ecs_get_component_data(ecs, player, ECS_COMPONENT__POS);
         ecs_component_rot_t* player_rot = ecs_get_component_data(ecs, player, ECS_COMPONENT__ROT);
-        if (player_rot->x_rot > M_PI / 2) {
-            player_rot->x_rot = M_PI / 2;
+        if (player_rot->rot[ROT_AXIS__X] > M_PI / 2) {
+            player_rot->rot[ROT_AXIS__X] = M_PI / 2;
         }
-        if (player_rot->x_rot < -M_PI / 2) {
-            player_rot->x_rot = -M_PI / 2;
+        if (player_rot->rot[ROT_AXIS__X] < -M_PI / 2) {
+            player_rot->rot[ROT_AXIS__X] = -M_PI / 2;
         }
 
         // Handle events
@@ -134,8 +134,8 @@ void rudyscung_run(rudyscung_t* const self) {
             }
             if (event.type == SDL_MOUSEMOTION) {
                 if (SDL_GetRelativeMouseMode()) {
-                    player_rot->y_rot += event.motion.xrel / 125.0f;
-                    player_rot->x_rot += event.motion.yrel / 125.0f;
+                    player_rot->rot[ROT_AXIS__Y] += event.motion.xrel / 125.0f;
+                    player_rot->rot[ROT_AXIS__X] += event.motion.yrel / 125.0f;
                 }
             }
             if (event.type == SDL_KEYDOWN || event.type == SDL_KEYUP) {
@@ -198,8 +198,8 @@ void rudyscung_run(rudyscung_t* const self) {
         }
         last_game_tick = current_tick - (delta_tick % MS_PER_TICK);
 
-        camera_set_pos(camera, (float[NUM_AXES]) { lerp(player_pos->ox, player_pos->x, partial_tick), lerp(player_pos->oy, player_pos->y, partial_tick), lerp(player_pos->oz, player_pos->z, partial_tick) });
-        camera_set_rot(camera, (float[NUM_ROT_AXES]) { player_rot->y_rot, player_rot->x_rot });
+        camera_set_pos(camera, (float[NUM_AXES]) { lerp(player_pos->pos_o[AXIS__X], player_pos->pos[AXIS__X], partial_tick), lerp(player_pos->pos_o[AXIS__Y], player_pos->pos[AXIS__Y], partial_tick), lerp(player_pos->pos_o[AXIS__Z], player_pos->pos[AXIS__Z], partial_tick) });
+        camera_set_rot(camera, player_rot->rot);
     }
 
     camera_delete(camera);
@@ -264,14 +264,14 @@ static void tick(rudyscung_t* const self, level_t* const level) {
         ecs_component_vel_t* player_vel = ecs_get_component_data(ecs, player, ECS_COMPONENT__VEL);
         ecs_component_rot_t* player_rot = ecs_get_component_data(ecs, player, ECS_COMPONENT__ROT);
 
-        float cos_rot_dy = cos(player_rot->y_rot);
-        float sin_rot_dy = sin(player_rot->y_rot);
+        float cos_rot_dy = cos(player_rot->rot[ROT_AXIS__Y]);
+        float sin_rot_dy = sin(player_rot->rot[ROT_AXIS__Y]);
 
         float vel_x = - left * cos_rot_dy + forward * sin_rot_dy;
         float vel_z = - left * sin_rot_dy - forward * cos_rot_dy;
 
-        player_vel->vx = vel_x;
-        player_vel->vz = vel_z;
+        player_vel->vel[AXIS__X] = vel_x;
+        player_vel->vel[AXIS__Z] = vel_z;
     }
 
     if (any_vertical_movement_input) {
@@ -288,7 +288,7 @@ static void tick(rudyscung_t* const self, level_t* const level) {
 
         float vel_y = up;
 
-        player_vel->vy = vel_y;
+        player_vel->vel[AXIS__Y] = vel_y;
     }
 
     if (any_look_input) {
@@ -310,11 +310,11 @@ static void tick(rudyscung_t* const self, level_t* const level) {
 
         ecs_component_rot_t* player_rot = ecs_get_component_data(ecs, player, ECS_COMPONENT__ROT);
 
-        float new_rot_y = player_rot->y_rot + rot_dy;
-        float new_rot_x = player_rot->x_rot + rot_dx;
+        float new_rot_y = player_rot->rot[ROT_AXIS__Y] + rot_dy;
+        float new_rot_x = player_rot->rot[ROT_AXIS__X] + rot_dx;
 
-        player_rot->y_rot = new_rot_y;
-        player_rot->x_rot = new_rot_x;
+        player_rot->rot[ROT_AXIS__Y] = new_rot_y;
+        player_rot->rot[ROT_AXIS__X] = new_rot_x;
     }
 
     update_slice(self, level, false);
@@ -323,7 +323,7 @@ static void tick(rudyscung_t* const self, level_t* const level) {
 static void update_slice(rudyscung_t* const self, level_t* const level, bool const force) {
     assert(self != nullptr);
 
-    static int last_chunk_x, last_chunk_y, last_chunk_z;
+    static int last_chunk_pos[NUM_AXES];
 
     ecs_t* ecs = level_get_ecs(level);
     entity_t player = level_get_player(level);
@@ -336,44 +336,36 @@ static void update_slice(rudyscung_t* const self, level_t* const level, bool con
     size_chunks_t level_size[NUM_AXES];
     level_get_size(level, level_size);
 
-    int const x_camera = floor(player_pos->x / CHUNK_SIZE);
-    int const y_camera = floor(player_pos->y / CHUNK_SIZE);
-    int const z_camera = floor(player_pos->z / CHUNK_SIZE);
+    int const camera_pos[NUM_AXES] = {
+        floor(player_pos->pos[AXIS__X] / CHUNK_SIZE),
+        floor(player_pos->pos[AXIS__Y] / CHUNK_SIZE),
+        floor(player_pos->pos[AXIS__Z] / CHUNK_SIZE)
+    };
 
-    if (x_camera == last_chunk_x && y_camera == last_chunk_y && z_camera == last_chunk_z && !force) {
+    if (memcmp(camera_pos, last_chunk_pos, sizeof(int) * NUM_AXES) == 0 && !force) {
         return;
     }
 
-    int slice_x = x_camera - slice_radius;
-    int slice_y = y_camera - slice_radius;
-    int slice_z = z_camera - slice_radius;
-    if (slice_x < 0) {
-        slice_x = 0;
-    }
-    if (slice_x >= level_size[0] - slice_diameter) {
-        slice_x = level_size[0] - slice_diameter - 1;
-    }
-    if (slice_y < 0) {
-        slice_y = 0;
-    }
-    if (slice_y >= level_size[1] - slice_diameter) {
-        slice_y = level_size[1] - slice_diameter - 1;
-    }
-    if (slice_z < 0) {
-        slice_z = 0;
-    }
-    if (slice_z >= level_size[2] - slice_diameter) {
-        slice_z = level_size[2] - slice_diameter - 1;
+    int slice_pos[NUM_AXES] = {
+        camera_pos[AXIS__X] - slice_radius,
+        camera_pos[AXIS__Y] - slice_radius,
+        camera_pos[AXIS__Z] - slice_radius
+    };
+    for (axis_t a = 0; a < NUM_AXES; a++) {
+        if (slice_pos[a] < 0) {
+            slice_pos[a] = 0;
+        }
+        if (slice_pos[a] >= level_size[a] - slice_diameter) {
+            slice_pos[a] = level_size[a] - slice_diameter - 1;
+        }
     }
 
     level_slice_t level_slice = {
         .size = { slice_diameter, 8, slice_diameter },
-        .pos = { slice_x, 0, slice_z }
+        .pos = { slice_pos[AXIS__X], 0, slice_pos[AXIS__Z] }
     };
     level_renderer_t* const level_renderer = renderer_get_level_renderer(self->renderer);
     level_renderer_slice(level_renderer, &level_slice);
 
-    last_chunk_x = x_camera;
-    last_chunk_y = y_camera;
-    last_chunk_z = z_camera;
+    memcpy(last_chunk_pos, camera_pos, sizeof(int) * NUM_AXES);
 }

@@ -73,10 +73,10 @@ level_t* const level_new(size_chunks_t const size[NUM_AXES]) {
     float const player_aabb_max[NUM_AXES] = { 0.5f, 0.2f, 0.5f };
     aabb_set_bounds(player_aabb->aabb, player_aabb_min, player_aabb_max);
     
-    player_pos->x = 24.0f;
-    player_pos->y = 100.0f;
-    player_pos->z = 24.0f;
-    player_rot->y_rot = M_PI / 4 * 3;
+    player_pos->pos[AXIS__X] = 24.0f;
+    player_pos->pos[AXIS__Y] = 100.0f;
+    player_pos->pos[AXIS__Z] = 24.0f;
+    player_rot->rot[ROT_AXIS__Y] = M_PI / 4 * 3;
 
     return self;
 }

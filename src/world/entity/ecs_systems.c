@@ -16,20 +16,18 @@ void ecs_system_velocity(ecs_t* const self, level_t* const level, entity_t const
     ecs_component_pos_t* const pos = ecs_get_component_data(self, entity, ECS_COMPONENT__POS);
     ecs_component_vel_t* const vel = ecs_get_component_data(self, entity, ECS_COMPONENT__VEL);
 
-    pos->ox = pos->x;
-    pos->oy = pos->y;
-    pos->oz = pos->z;
+    memcpy(pos->pos_o, pos->pos, sizeof(float) * NUM_AXES);
 
-    pos->x += vel->vx;
-    pos->y += vel->vy;
-    pos->z += vel->vz;
+    for (axis_t a = 0; a < NUM_AXES; a++) {
+        pos->pos[a] += vel->vel[a];
+    }
 
     if (ecs_has_component(self, entity, ECS_COMPONENT__AABB)) {
         ecs_component_aabb_t const* const aabb = ecs_get_component_data(self, entity, ECS_COMPONENT__AABB);
 
-        if (aabb->colliding[0]) vel->vx = 0;
-        if (aabb->colliding[1]) vel->vy = 0;
-        if (aabb->colliding[2]) vel->vz = 0;
+        for (axis_t a = 0; a < NUM_AXES; a++) {
+            if (aabb->colliding[a]) vel->vel[a] = 0.0f;
+        }
     }
 }
 
@@ -40,17 +38,11 @@ void ecs_system_friction(ecs_t* const self, level_t* const level, entity_t const
 
     ecs_component_vel_t* const vel = ecs_get_component_data(self, entity, ECS_COMPONENT__VEL);
 
-    vel->vx *= 0.6f;
-    vel->vy *= 0.6f;
-    vel->vz *= 0.6f;
-    if (vel->vx < 0.01f && vel->vx > -0.01f) {
-        vel->vx = 0;
-    }
-    if (vel->vy < 0.01f && vel->vy > -0.01f) {
-        vel->vy = 0;
-    }
-    if (vel->vz < 0.01f && vel->vz > -0.01f) {
-        vel->vz = 0;
+    for (axis_t a = 0; a < NUM_AXES; a++) {
+        vel->vel[a] *= 0.6f;
+        if (vel->vel[a] < 0.01f && vel->vel[a] > -0.01f) {
+            vel->vel[a] = 0.0f;
+        }
     }
 }
 
@@ -65,54 +57,39 @@ void ecs_system_collision(ecs_t* const self, level_t* const level, entity_t cons
     ecs_component_vel_t* const vel = ecs_get_component_data(self, entity, ECS_COMPONENT__VEL);
     ecs_component_aabb_t* const aabb = ecs_get_component_data(self, entity, ECS_COMPONENT__AABB);
 
-    side_t vel_dir[3];
-    if (vel->vx < 0) {
-        vel_dir[0] = SIDE__NORTH;
-    } else if (vel->vx > 0) {
-        vel_dir[0] = SIDE__SOUTH;
-    } else {
-        vel_dir[0] = -1;
-    }
-    if (vel->vy < 0) {
-        vel_dir[1] = SIDE__BOTTOM;
-    } else if (vel->vy > 0) {
-        vel_dir[1] = SIDE__TOP;
-    } else {
-        vel_dir[1] = -1;
-    }
-    if (vel->vz < 0) {
-        vel_dir[2] = SIDE__WEST;
-    } else if (vel->vz > 0) {
-        vel_dir[2] = SIDE__EAST;
-    } else {
-        vel_dir[2] = -1;
-    }
+    side_t vel_dir[NUM_AXES];
+    for (axis_t a = 0; a < NUM_AXES; a++) {
+        if (vel->vel[a] < 0) {
+            vel_dir[a] = (side_t) (a * 2);
+        } else if (vel->vel[a] > 0) {
+            vel_dir[a] = (side_t) (a * 2) + 1;
+        } else {
+            vel_dir[a] = -1;
+        }
 
-    float vel_arr[3] = { vel->vx, vel->vy, vel->vz };
-
-    aabb->colliding[0] = false;
-    aabb->colliding[1] = false;
-    aabb->colliding[2] = false;
+        aabb->colliding[a] = false;
+    }
 
     for (side_t side_x = SIDE__NORTH; side_x <= SIDE__SOUTH; side_x++) {
         for (side_t side_y = SIDE__BOTTOM; side_y <= SIDE__TOP; side_y++) {
             for (side_t side_z = SIDE__WEST; side_z <= SIDE__EAST; side_z++) {
-                side_t sides[3] = { side_x, side_y, side_z };
-                if (vel_dir[0] == side_x || vel_dir[1] == side_y || vel_dir[2] == side_z) {
-                    for (size_t i = 0; i < 3; i++) {
-                        if (vel_dir[i] == sides[i]) {
-                            float corner_pos[3];
+                side_t sides[NUM_AXES] = { side_x, side_y, side_z };
+
+                if (vel_dir[AXIS__X] == side_x || vel_dir[AXIS__Y] == side_y || vel_dir[AXIS__Z] == side_z) {
+                    for (axis_t a = 0; a < NUM_AXES; a++) {
+                        if (vel_dir[a] == sides[a]) {
+                            float corner_pos[NUM_AXES];
                             aabb_get_point(aabb->aabb, sides, corner_pos);
-                            float d = level_get_distance_on_axis(level, (float[NUM_AXES]) { pos->x + corner_pos[0], pos->y + corner_pos[1], pos->z + corner_pos[2] }, sides[i], 1.0f);
+                            float d = level_get_distance_on_axis(level, (float[NUM_AXES]) { pos->pos[AXIS__X] + corner_pos[AXIS__X], pos->pos[AXIS__Y] + corner_pos[AXIS__Y], pos->pos[AXIS__Z] + corner_pos[AXIS__Z] }, sides[a], 1.0f);
                             if (!isnan(d)) {
                                 if (d > 0.01f) {
-                                    if (vel_arr[i] < 0) {
+                                    if (vel->vel[a] < 0) {
                                         d = -d;
                                     }
-                                    vel_arr[i] = d;
-                                    aabb->colliding[i] = true;
+                                    vel->vel[a] = d;
+                                    aabb->colliding[a] = true;
                                 } else {
-                                    vel_arr[i] = 0.0f;
+                                    vel->vel[a] = 0.0f;
                                 }
                             }
                             break;
@@ -122,8 +99,4 @@ void ecs_system_collision(ecs_t* const self, level_t* const level, entity_t cons
             }
         }
     }
-
-    vel->vx = vel_arr[0];
-    vel->vy = vel_arr[1];
-    vel->vz = vel_arr[2];
 }

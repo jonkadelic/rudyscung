@@ -100,7 +100,7 @@ void renderer_render(renderer_t* const self, camera_t const* const camera) {
         font_draw(font, line_buffer, 0, 0);
         float camera_pos[NUM_AXES];
         camera_get_pos(camera, camera_pos);
-        snprintf(line_buffer, sizeof(line_buffer) / sizeof(line_buffer[0]), "x: %.2f y: %.2f z: %.2f", camera_pos[0], camera_pos[1], camera_pos[2]);
+        snprintf(line_buffer, sizeof(line_buffer) / sizeof(line_buffer[0]), "x: %.2f y: %.2f z: %.2f", camera_pos[AXIS__X], camera_pos[AXIS__Y], camera_pos[AXIS__Z]);
         font_draw(font, line_buffer, 0, 12);
 
         window_swap(window);

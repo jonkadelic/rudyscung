@@ -11,19 +11,19 @@ typedef enum ecs_component {
 } ecs_component_t;
 
 typedef struct ecs_component_pos {
-    float x, y, z;
-    float ox, oy, oz;
+    float pos[NUM_AXES];
+    float pos_o[NUM_AXES];
 } ecs_component_pos_t;
 
 typedef struct ecs_component_vel {
-    float vx, vy, vz;
+    float vel[NUM_AXES];
 } ecs_component_vel_t;
 
 typedef struct ecs_component_rot {
-    float y_rot, x_rot;
+    float rot[NUM_ROT_AXES];
 } ecs_component_rot_t;
 
 typedef struct ecs_component_aabb {
     aabb_t* aabb;
-    bool colliding[3];
+    bool colliding[NUM_AXES];
 } ecs_component_aabb_t;
