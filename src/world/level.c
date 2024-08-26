@@ -183,7 +183,7 @@ entity_t const level_get_player(level_t const* const self) {
     return self->player;
 }
 
-float const level_get_distance_on_axis(level_t const* const self, float const pos[NUM_AXES], side_t const side, float const max_range) {
+float const level_get_nearest_face_on_axis(level_t const* const self, float const pos[NUM_AXES], side_t const side, float const max_range) {
     assert(self != nullptr);
     assert(side >= 0 && side < NUM_SIDES);
     assert(max_range > 0);
@@ -196,58 +196,48 @@ float const level_get_distance_on_axis(level_t const* const self, float const po
 
     tile_t const* const air_tile = tile_get(TILE_ID__AIR);
 
-    float i[NUM_AXES];
-    float d[NUM_AXES];
+    float i_pos[NUM_AXES];
     for (axis_t a = 0; a < NUM_AXES; a++) {
-        int rounded = 0;
-        // if (o[a] == 1) {
-        //     rounded = ceil(pos[a]);
-        // } else if (o[a] == -1) {
-        //     rounded = floor(pos[a]);
-        // } else {
-            rounded = (int) pos[a];
-        // }
-        if (pos[a] < 0 || pos[a] >= level_size[a] * CHUNK_SIZE) {
-            return 0.0f;
-        }
-        i[a] = pos[a];
-        d[a] = 1 - (pos[a] - rounded);
-        if (pos[a] < 0) d[a] = -d[a];
+        i_pos[a] = (int) pos[a] + 0.5f;
     }
 
     for (axis_t a = 0; a < NUM_AXES; a++) {
         if (o[a] != 0) {
-            tile_t const* tile;
+            float d = i_pos[a] - pos[a];
 
             while (true) {
-                if (absf(d[a]) > max_range) {
-                    return NAN;
-                }
-                if (i[a] < 0 || i[a] >= level_size[a] * CHUNK_SIZE) {
+                if (i_pos[a] < 0.0f || i_pos[a] >= level_size[a] * CHUNK_SIZE) {
                     break;
                 }
-                
-                tile = level_get_tile(self, VEC_CAST(size_t, i));
-                if (tile != air_tile) {
-                    tile_shape_t shape = level_get_tile_shape(self, VEC_CAST(size_t, i));
-                    if (shape != TILE_SHAPE__NO_RENDER) {
-                        float pos2[2];
-                        side_map_point(side, i, pos2);
-                        for (size_t p = 0; p < 2; p++) {
-                            pos2[p] = map_to_0_1(pos2[p]);
-                        }
-                        float inner = tile_shape_get_inner_distance(shape, side, pos2);
-                        if (inner != INFINITY) {
-                            d[a] += inner;
-                            break;
-                        }
+
+                for (axis_t a = 0; a < NUM_AXES; a++) {
+                    if (i_pos[a] < 0.0f || i_pos[a] >= level_size[a] * CHUNK_SIZE) {
+                        return NAN;
                     }
                 }
-                i[a] += o[a];
-                d[a] += o[a];
+                tile_t const* const tile = level_get_tile(self, VEC_CAST(size_t, i_pos));
+                if (tile != air_tile) {
+                    break;
+                }
+
+                if ((o[a] < 0 && d < -max_range) || (o[a] > 0 && d > max_range)) {
+                    return NAN;
+                }
+
+                if (max_range < 0.5f) {
+                    d += o[a] * max_range;
+                    i_pos[a] += o[a] * max_range;
+                } else {
+                    d += o[a];
+                    i_pos[a] += o[a];
+                }
             }
 
-            return absf(d[a]);
+            if (o[a] < 0) {
+                return ceil(i_pos[a]);
+            } else {
+                return floor(i_pos[a]);
+            }
         }
     }
 

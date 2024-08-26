@@ -34,7 +34,6 @@ void ecs_system_velocity(ecs_t* const self, level_t* const level, entity_t const
 
             aabb->colliding[a] = false;
         }
-        // printf("sides = { %d %d %d }\n", vel_dir[0], vel_dir[1], vel_dir[2]);
 
         for (side_t side_x = SIDE__NORTH; side_x <= SIDE__SOUTH; side_x++) {
             for (side_t side_y = SIDE__BOTTOM; side_y <= SIDE__TOP; side_y++) {
@@ -47,17 +46,15 @@ void ecs_system_velocity(ecs_t* const self, level_t* const level, entity_t const
                                 float corner_pos[NUM_AXES];
                                 aabb_get_point(aabb->aabb, sides, corner_pos);
                                 float real_corner_pos[NUM_AXES] = VEC_ADD_INIT(pos->pos, corner_pos);
-                                float d = level_get_distance_on_axis(level, real_corner_pos, sides[a], absf(vel->vel[a]));
-                                if (!isnan(d)) {
-                                    if (vel->vel[a] < 0) {
-                                        d = -d;
-                                    }
-
+                                float p = level_get_nearest_face_on_axis(level, real_corner_pos, sides[a], absf(vel->vel[a]));
+                                if (!isnan(p)) {
                                     int offsets[NUM_AXES];
                                     side_get_offsets(sides[a], offsets);
+                                    if (offsets[a] > 0) {
+                                        p -= 0.00001f;
+                                    }
 
-                                    pos->pos[a] += d;
-                                    // pos->pos[a] -= offsets[a] * 0.0001f;
+                                    pos->pos[a] = p - corner_pos[a];
                                     vel->vel[a] = 0.0f;
                                     aabb->colliding[a] = true;
                                 }
