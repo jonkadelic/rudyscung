@@ -258,7 +258,12 @@ void level_renderer_draw(level_renderer_t const* const self, camera_t const* con
         ecs_component_pos_t const* const tree_pos = ecs_get_component_data(ecs, tree, ECS_COMPONENT__POS);
         ecs_component_sprite_t const* const tree_sprite = ecs_get_component_data(ecs, tree, ECS_COMPONENT__SPRITE);
 
-        sprites_render(self->sprites, tree_sprite->sprite, camera, 10.0f, tree_pos->pos, (bool[NUM_ROT_AXES]) { true, false });
+        float distances[NUM_AXES] = VEC_SUB_INIT(tree_pos->pos, camera_pos);
+        float distance_sq = (distances[AXIS__X] * distances[AXIS__X]) + (distances[AXIS__Y] * distances[AXIS__Y]) + (distances[AXIS__Z] * distances[AXIS__Z]);
+
+        if (distance_sq < (24 * 24 * 24)) {
+            sprites_render(self->sprites, tree_sprite->sprite, camera, 10.0f, tree_pos->pos, (bool[NUM_ROT_AXES]) { true, false });
+        }
     }
 
 }

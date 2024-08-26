@@ -93,7 +93,7 @@ level_t* const level_new(size_chunks_t const size[NUM_AXES]) {
         };
         for (size_t y = (self->size[AXIS__Y] * CHUNK_SIZE) - 1; y >= 0; y--) {
             i_tree_pos[AXIS__Y] = y;
-            if (level_get_tile(self, i_tree_pos) != tile_get(TILE_ID__AIR)) {
+            if (level_get_tile(self, i_tree_pos) != TILE__AIR) {
                 i_tree_pos[AXIS__Y] = y + 1;
                 break;
             }
@@ -149,7 +149,7 @@ chunk_t* const level_get_chunk(level_t const* const self, size_chunks_t const po
     return self->chunks[CHUNK_INDEX(pos)];
 }
 
-tile_t const* const level_get_tile(level_t const* const self, size_t const pos[NUM_AXES]) {
+tile_t const level_get_tile(level_t const* const self, size_t const pos[NUM_AXES]) {
     assert(self != nullptr);
     for (axis_t a = 0; a < NUM_AXES; a++) {
         assert(pos[a] >= 0 && pos[a] < TO_TILE_SPACE(self->size[a]));
@@ -160,7 +160,7 @@ tile_t const* const level_get_tile(level_t const* const self, size_t const pos[N
     return chunk_get_tile(chunk, TO_POS_IN_CHUNK_ARR(pos));
 }
 
-void level_set_tile(level_t* const self, size_t const pos[NUM_AXES], tile_t const* const tile) {
+void level_set_tile(level_t* const self, size_t const pos[NUM_AXES], tile_t const tile) {
     assert(self != nullptr);
     for (axis_t a = 0; a < NUM_AXES; a++) {
         assert(pos[a] >= 0 && pos[a] < TO_TILE_SPACE(self->size[a]));
@@ -221,8 +221,6 @@ float const level_get_nearest_face_on_axis(level_t const* const self, float cons
     size_chunks_t level_size[NUM_AXES];
     level_get_size(self, level_size);
 
-    tile_t const* const air_tile = tile_get(TILE_ID__AIR);
-
     float i_pos[NUM_AXES];
     for (axis_t a = 0; a < NUM_AXES; a++) {
         i_pos[a] = (int) pos[a] + 0.5f;
@@ -246,8 +244,8 @@ float const level_get_nearest_face_on_axis(level_t const* const self, float cons
                         return NAN;
                     }
                 }
-                tile_t const* const tile = level_get_tile(self, VEC_CAST(size_t, i_pos));
-                if (tile != air_tile) {
+                tile_t const tile = level_get_tile(self, VEC_CAST(size_t, i_pos));
+                if (tile != TILE__AIR) {
                     break;
                 }
 

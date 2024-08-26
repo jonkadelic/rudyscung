@@ -11,21 +11,21 @@
 #define TO_PIXEL_SPACE(tile_coord) ((tile_coord) * TILE_SIZE_PIXELS)
 #define TO_TEXTURE_SPACE(pixel_coord) ((pixel_coord) / (float) TERRAIN_SIZE_PIXELS)
 
-typedef void (*tile_shape_renderer_t)(tessellator_t* const self, float const pos[NUM_AXES], tile_t const* const tile, bool is_side_occluded[NUM_SIDES]);
+typedef void (*tile_shape_renderer_t)(tessellator_t* const self, float const pos[NUM_AXES], tile_t const tile, bool is_side_occluded[NUM_SIDES]);
 
-static void render_shape_flat(tessellator_t* const self, float const pos[NUM_AXES], tile_t const* const tile, bool is_side_occluded[NUM_SIDES]);
-static void render_shape_ramp_north(tessellator_t* const self, float const pos[NUM_AXES], tile_t const* const tile, bool is_side_occluded[NUM_SIDES]);
-static void render_shape_ramp_south(tessellator_t* const self, float const pos[NUM_AXES], tile_t const* const tile, bool is_side_occluded[NUM_SIDES]);
-static void render_shape_ramp_west(tessellator_t* const self, float const pos[NUM_AXES], tile_t const* const tile, bool is_side_occluded[NUM_SIDES]);
-static void render_shape_ramp_east(tessellator_t* const self, float const pos[NUM_AXES], tile_t const* const tile, bool is_side_occluded[NUM_SIDES]);
-static void render_shape_corner_a_north_west(tessellator_t* const self, float const pos[NUM_AXES], tile_t const* const tile, bool is_side_occluded[NUM_SIDES]);
-static void render_shape_corner_a_south_west(tessellator_t* const self, float const pos[NUM_AXES], tile_t const* const tile, bool is_side_occluded[NUM_SIDES]);
-static void render_shape_corner_a_north_east(tessellator_t* const self, float const pos[NUM_AXES], tile_t const* const tile, bool is_side_occluded[NUM_SIDES]);
-static void render_shape_corner_a_south_east(tessellator_t* const self, float const pos[NUM_AXES], tile_t const* const tile, bool is_side_occluded[NUM_SIDES]);
-static void render_shape_corner_b_north_west(tessellator_t* const self, float const pos[NUM_AXES], tile_t const* const tile, bool is_side_occluded[NUM_SIDES]);
-static void render_shape_corner_b_south_west(tessellator_t* const self, float const pos[NUM_AXES], tile_t const* const tile, bool is_side_occluded[NUM_SIDES]);
-static void render_shape_corner_b_north_east(tessellator_t* const self, float const pos[NUM_AXES], tile_t const* const tile, bool is_side_occluded[NUM_SIDES]);
-static void render_shape_corner_b_south_east(tessellator_t* const self, float const pos[NUM_AXES], tile_t const* const tile, bool is_side_occluded[NUM_SIDES]);
+static void render_shape_flat(tessellator_t* const self, float const pos[NUM_AXES], tile_t const tile, bool is_side_occluded[NUM_SIDES]);
+static void render_shape_ramp_north(tessellator_t* const self, float const pos[NUM_AXES], tile_t const tile, bool is_side_occluded[NUM_SIDES]);
+static void render_shape_ramp_south(tessellator_t* const self, float const pos[NUM_AXES], tile_t const tile, bool is_side_occluded[NUM_SIDES]);
+static void render_shape_ramp_west(tessellator_t* const self, float const pos[NUM_AXES], tile_t const tile, bool is_side_occluded[NUM_SIDES]);
+static void render_shape_ramp_east(tessellator_t* const self, float const pos[NUM_AXES], tile_t const tile, bool is_side_occluded[NUM_SIDES]);
+static void render_shape_corner_a_north_west(tessellator_t* const self, float const pos[NUM_AXES], tile_t const tile, bool is_side_occluded[NUM_SIDES]);
+static void render_shape_corner_a_south_west(tessellator_t* const self, float const pos[NUM_AXES], tile_t const tile, bool is_side_occluded[NUM_SIDES]);
+static void render_shape_corner_a_north_east(tessellator_t* const self, float const pos[NUM_AXES], tile_t const tile, bool is_side_occluded[NUM_SIDES]);
+static void render_shape_corner_a_south_east(tessellator_t* const self, float const pos[NUM_AXES], tile_t const tile, bool is_side_occluded[NUM_SIDES]);
+static void render_shape_corner_b_north_west(tessellator_t* const self, float const pos[NUM_AXES], tile_t const tile, bool is_side_occluded[NUM_SIDES]);
+static void render_shape_corner_b_south_west(tessellator_t* const self, float const pos[NUM_AXES], tile_t const tile, bool is_side_occluded[NUM_SIDES]);
+static void render_shape_corner_b_north_east(tessellator_t* const self, float const pos[NUM_AXES], tile_t const tile, bool is_side_occluded[NUM_SIDES]);
+static void render_shape_corner_b_south_east(tessellator_t* const self, float const pos[NUM_AXES], tile_t const tile, bool is_side_occluded[NUM_SIDES]);
 
 static tile_shape_renderer_t const SHAPE_RENDERERS[NUM_TILE_SHAPES] = {
     [TILE_SHAPE__NO_RENDER] = nullptr,
@@ -62,13 +62,13 @@ static tile_side_renderer_t const SIDE_RENDERERS[NUM_SIDES] = {
     [SIDE__EAST] = render_side_east
 };
 
-void tile_renderer_render_tile(tessellator_t* const self, int const pos[NUM_AXES], tile_t const* const tile, tile_shape_t const tile_shape, bool is_side_occluded[NUM_SIDES]) {
+void tile_renderer_render_tile(tessellator_t* const self, int const pos[NUM_AXES], tile_t const tile, tile_shape_t const tile_shape, bool is_side_occluded[NUM_SIDES]) {
     tile_renderer_render_tile_f(self, (float[NUM_AXES]) { floor(pos[AXIS__X]), floor(pos[AXIS__Y]), floor(pos[AXIS__Z]) }, tile, tile_shape, is_side_occluded);
 }
 
-void tile_renderer_render_tile_f(tessellator_t* const self, float const pos[NUM_AXES], tile_t const* const tile, tile_shape_t const tile_shape, bool is_side_occluded[NUM_SIDES]) {
+void tile_renderer_render_tile_f(tessellator_t* const self, float const pos[NUM_AXES], tile_t const tile, tile_shape_t const tile_shape, bool is_side_occluded[NUM_SIDES]) {
     assert(self != nullptr);
-    assert(tile != nullptr);
+    assert(tile >= 0 && tile < NUM_TILES);
     assert(tile_shape >= 0 && tile_shape < NUM_TILE_SHAPES);
 
     bool all_occluded = true;
@@ -121,7 +121,7 @@ static float const BRIGHTNESSES[NUM_SIDES][NUM_AXES] = {
     [SIDE__EAST] = { 0.6f, 0.6f, 0.6f }
 };
 
-static void render_shape_flat(tessellator_t* const self, float const pos[NUM_AXES], tile_t const* const tile, bool is_side_occluded[NUM_SIDES]) {
+static void render_shape_flat(tessellator_t* const self, float const pos[NUM_AXES], tile_t const tile, bool is_side_occluded[NUM_SIDES]) {
     for (size_t i = 0; i < NUM_SIDES; i++) {
         if (is_side_occluded[i]) {
             continue;
@@ -134,7 +134,7 @@ static void render_shape_flat(tessellator_t* const self, float const pos[NUM_AXE
     }
 }
 
-static void render_shape_ramp_north(tessellator_t* const self, float const pos[NUM_AXES], tile_t const* const tile, bool is_side_occluded[NUM_SIDES]) {
+static void render_shape_ramp_north(tessellator_t* const self, float const pos[NUM_AXES], tile_t const tile, bool is_side_occluded[NUM_SIDES]) {
     for (size_t i = 0; i < NUM_SIDES; i++) {
         if (is_side_occluded[i]) {
             continue;
@@ -173,7 +173,7 @@ static void render_shape_ramp_north(tessellator_t* const self, float const pos[N
     }
 }
 
-static void render_shape_ramp_south(tessellator_t* const self, float const pos[NUM_AXES], tile_t const* const tile, bool is_side_occluded[NUM_SIDES]) {
+static void render_shape_ramp_south(tessellator_t* const self, float const pos[NUM_AXES], tile_t const tile, bool is_side_occluded[NUM_SIDES]) {
     for (size_t i = 0; i < NUM_SIDES; i++) {
         if (is_side_occluded[i]) {
             continue;
@@ -212,7 +212,7 @@ static void render_shape_ramp_south(tessellator_t* const self, float const pos[N
     }
 }
 
-static void render_shape_ramp_west(tessellator_t* const self, float const pos[NUM_AXES], tile_t const* const tile, bool is_side_occluded[NUM_SIDES]) {
+static void render_shape_ramp_west(tessellator_t* const self, float const pos[NUM_AXES], tile_t const tile, bool is_side_occluded[NUM_SIDES]) {
     for (size_t i = 0; i < NUM_SIDES; i++) {
         if (is_side_occluded[i]) {
             continue;
@@ -251,7 +251,7 @@ static void render_shape_ramp_west(tessellator_t* const self, float const pos[NU
     }
 }
 
-static void render_shape_ramp_east(tessellator_t* const self, float const pos[NUM_AXES], tile_t const* const tile, bool is_side_occluded[NUM_SIDES]) {
+static void render_shape_ramp_east(tessellator_t* const self, float const pos[NUM_AXES], tile_t const tile, bool is_side_occluded[NUM_SIDES]) {
     for (size_t i = 0; i < NUM_SIDES; i++) {
         if (is_side_occluded[i]) {
             continue;
@@ -290,7 +290,7 @@ static void render_shape_ramp_east(tessellator_t* const self, float const pos[NU
     }
 }
 
-static void render_shape_corner_a_north_west(tessellator_t* const self, float const pos[NUM_AXES], tile_t const* const tile, bool is_side_occluded[NUM_SIDES]) {
+static void render_shape_corner_a_north_west(tessellator_t* const self, float const pos[NUM_AXES], tile_t const tile, bool is_side_occluded[NUM_SIDES]) {
     for (size_t i = 0; i < NUM_SIDES; i++) {
         if (is_side_occluded[i]) {
             continue;
@@ -327,7 +327,7 @@ static void render_shape_corner_a_north_west(tessellator_t* const self, float co
     }
 }
 
-static void render_shape_corner_a_south_west(tessellator_t* const self, float const pos[NUM_AXES], tile_t const* const tile, bool is_side_occluded[NUM_SIDES]) {
+static void render_shape_corner_a_south_west(tessellator_t* const self, float const pos[NUM_AXES], tile_t const tile, bool is_side_occluded[NUM_SIDES]) {
     for (size_t i = 0; i < NUM_SIDES; i++) {
         if (is_side_occluded[i]) {
             continue;
@@ -364,7 +364,7 @@ static void render_shape_corner_a_south_west(tessellator_t* const self, float co
     }
 }
 
-static void render_shape_corner_a_north_east(tessellator_t* const self, float const pos[NUM_AXES], tile_t const* const tile, bool is_side_occluded[NUM_SIDES]) {
+static void render_shape_corner_a_north_east(tessellator_t* const self, float const pos[NUM_AXES], tile_t const tile, bool is_side_occluded[NUM_SIDES]) {
     for (size_t i = 0; i < NUM_SIDES; i++) {
         if (is_side_occluded[i]) {
             continue;
@@ -401,7 +401,7 @@ static void render_shape_corner_a_north_east(tessellator_t* const self, float co
     }
 }
 
-static void render_shape_corner_a_south_east(tessellator_t* const self, float const pos[NUM_AXES], tile_t const* const tile, bool is_side_occluded[NUM_SIDES]) {
+static void render_shape_corner_a_south_east(tessellator_t* const self, float const pos[NUM_AXES], tile_t const tile, bool is_side_occluded[NUM_SIDES]) {
     for (size_t i = 0; i < NUM_SIDES; i++) {
         if (is_side_occluded[i]) {
             continue;
@@ -438,7 +438,7 @@ static void render_shape_corner_a_south_east(tessellator_t* const self, float co
     }
 }
 
-static void render_shape_corner_b_north_west(tessellator_t* const self, float const pos[NUM_AXES], tile_t const* const tile, bool is_side_occluded[NUM_SIDES]) {
+static void render_shape_corner_b_north_west(tessellator_t* const self, float const pos[NUM_AXES], tile_t const tile, bool is_side_occluded[NUM_SIDES]) {
     for (size_t i = 0; i < NUM_SIDES; i++) {
         if (is_side_occluded[i]) {
             continue;
@@ -481,7 +481,7 @@ static void render_shape_corner_b_north_west(tessellator_t* const self, float co
     }
 }
 
-static void render_shape_corner_b_south_west(tessellator_t* const self, float const pos[NUM_AXES], tile_t const* const tile, bool is_side_occluded[NUM_SIDES]) {
+static void render_shape_corner_b_south_west(tessellator_t* const self, float const pos[NUM_AXES], tile_t const tile, bool is_side_occluded[NUM_SIDES]) {
     for (size_t i = 0; i < NUM_SIDES; i++) {
         if (is_side_occluded[i]) {
             continue;
@@ -524,7 +524,7 @@ static void render_shape_corner_b_south_west(tessellator_t* const self, float co
     }
 }
 
-static void render_shape_corner_b_north_east(tessellator_t* const self, float const pos[NUM_AXES], tile_t const* const tile, bool is_side_occluded[NUM_SIDES]) {
+static void render_shape_corner_b_north_east(tessellator_t* const self, float const pos[NUM_AXES], tile_t const tile, bool is_side_occluded[NUM_SIDES]) {
     for (size_t i = 0; i < NUM_SIDES; i++) {
         if (is_side_occluded[i]) {
             continue;
@@ -567,7 +567,7 @@ static void render_shape_corner_b_north_east(tessellator_t* const self, float co
     }
 }
 
-static void render_shape_corner_b_south_east(tessellator_t* const self, float const pos[NUM_AXES], tile_t const* const tile, bool is_side_occluded[NUM_SIDES]) {
+static void render_shape_corner_b_south_east(tessellator_t* const self, float const pos[NUM_AXES], tile_t const tile, bool is_side_occluded[NUM_SIDES]) {
     for (size_t i = 0; i < NUM_SIDES; i++) {
         if (is_side_occluded[i]) {
             continue;

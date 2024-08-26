@@ -12,7 +12,7 @@
 
 struct chunk {
     size_chunks_t pos[NUM_AXES];
-    tile_id_t tiles[CHUNK_SIZE * CHUNK_SIZE * CHUNK_SIZE];
+    tile_t tiles[CHUNK_SIZE * CHUNK_SIZE * CHUNK_SIZE];
     tile_shape_t tile_shapes[CHUNK_SIZE * CHUNK_SIZE * CHUNK_SIZE];
 };
 
@@ -25,7 +25,7 @@ chunk_t* const chunk_new(size_chunks_t const pos[NUM_AXES]) {
         for (size_t y = 0; y < CHUNK_SIZE; y++) {
             for (size_t z = 0; z < CHUNK_SIZE; z++) {
                 size_t const i_pos[NUM_AXES] = { x, y, z };
-                self->tiles[COORD(i_pos)] = TILE_ID__AIR;
+                self->tiles[COORD(i_pos)] = TILE__AIR;
                 self->tile_shapes[COORD(i_pos)] = TILE_SHAPE__NO_RENDER;
             }
         }
@@ -45,25 +45,24 @@ void chunk_get_pos(chunk_t const* const self, size_chunks_t pos[NUM_AXES]) {
     memcpy(pos, self->pos, sizeof(size_chunks_t) * NUM_AXES);
 }
 
-tile_t const* const chunk_get_tile(chunk_t const* const self, size_t const pos[NUM_AXES]) {
+tile_t const chunk_get_tile(chunk_t const* const self, size_t const pos[NUM_AXES]) {
     assert(self != nullptr); 
     for (axis_t a = 0; a < NUM_AXES; a++) {
         assert(pos[a] >= 0 && pos[a] < CHUNK_SIZE);
     }
 
-    return tile_get(self->tiles[COORD(pos)]);
+    return self->tiles[COORD(pos)];
 }
 
-void chunk_set_tile(chunk_t* const self, size_t const pos[NUM_AXES], tile_t const* const tile) {
+void chunk_set_tile(chunk_t* const self, size_t const pos[NUM_AXES], tile_t const tile) {
     assert(self != nullptr);
     for (axis_t a = 0; a < NUM_AXES; a++) {
         assert(pos[a] >= 0 && pos[a] < CHUNK_SIZE);
     }
-    assert(tile != nullptr);
+    assert(tile >= 0 && tile < NUM_TILES);
 
-    tile_id_t id = tile_get_id(tile);
-    self->tiles[COORD(pos)] = id;
-    if (id == TILE_ID__AIR) {
+    self->tiles[COORD(pos)] = tile;
+    if (tile == TILE__AIR) {
         chunk_set_tile_shape(self, pos, TILE_SHAPE__NO_RENDER);
     } else {
         chunk_set_tile_shape(self, pos, TILE_SHAPE__FLAT);
