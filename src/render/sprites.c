@@ -4,9 +4,6 @@
 #include <string.h>
 #include <stdlib.h>
 
-#include <GL/glew.h>
-#include <GL/gl.h>
-
 #include "tessellator.h"
 #include "textures.h"
 #include "../rudyscung.h"
@@ -159,13 +156,13 @@ static void sprite_new(sprites_t* const self, sprite_t const sprite, textures_t*
 
     tessellator_bind(tessellator, entry->vao, entry->vbo, 0);
 
-    tessellator_buffer_vct(tessellator, origin_xz - 0.0f, origin_y + 0.0f, origin_xz - 0.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f);
-    tessellator_buffer_vct(tessellator, origin_xz - 1.0f, origin_y + 0.0f, origin_xz - 0.0f, 1.0f, 1.0f, 1.0f, 0.0f, 1.0f);
-    tessellator_buffer_vct(tessellator, origin_xz - 0.0f, origin_y + 1.0f, origin_xz - 0.0f, 1.0f, 1.0f, 1.0f, 1.0f, 0.0f);
+    tessellator_buffer_vct(tessellator, origin_xz - 0.0f, origin_y + 0.0f, 0.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f);
+    tessellator_buffer_vct(tessellator, origin_xz - 1.0f, origin_y + 0.0f, 0.0f, 1.0f, 1.0f, 1.0f, 0.0f, 1.0f);
+    tessellator_buffer_vct(tessellator, origin_xz - 0.0f, origin_y + 1.0f, 0.0f, 1.0f, 1.0f, 1.0f, 1.0f, 0.0f);
 
-    tessellator_buffer_vct(tessellator, origin_xz - 0.0f, origin_y + 1.0f, origin_xz - 0.0f, 1.0f, 1.0f, 1.0f, 1.0f, 0.0f);
-    tessellator_buffer_vct(tessellator, origin_xz - 1.0f, origin_y + 1.0f, origin_xz - 0.0f, 1.0f, 1.0f, 1.0f, 0.0f, 0.0f);
-    tessellator_buffer_vct(tessellator, origin_xz - 1.0f, origin_y + 0.0f, origin_xz - 0.0f, 1.0f, 1.0f, 1.0f, 0.0f, 1.0f);
+    tessellator_buffer_vct(tessellator, origin_xz - 0.0f, origin_y + 1.0f, 0.0f, 1.0f, 1.0f, 1.0f, 1.0f, 0.0f);
+    tessellator_buffer_vct(tessellator, origin_xz - 1.0f, origin_y + 1.0f, 0.0f, 1.0f, 1.0f, 1.0f, 0.0f, 0.0f);
+    tessellator_buffer_vct(tessellator, origin_xz - 1.0f, origin_y + 0.0f, 0.0f, 1.0f, 1.0f, 1.0f, 0.0f, 1.0f);
 
     entry->num_elements = tessellator_draw(tessellator);
 
