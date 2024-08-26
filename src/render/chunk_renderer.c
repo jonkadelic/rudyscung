@@ -64,6 +64,12 @@ void chunk_renderer_delete(chunk_renderer_t* const self) {
     free(self);
 }
 
+chunk_t const* const chunk_renderer_get_chunk(chunk_renderer_t const* const self) {
+    assert(self != nullptr);
+
+    return self->chunk;
+}
+
 bool chunk_renderer_is_ready(chunk_renderer_t const* const self) {
     assert(self != nullptr);
 

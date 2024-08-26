@@ -1,5 +1,7 @@
 #include "./rudyscung.h"
 
+#include <SDL2/SDL_events.h>
+#include <SDL2/SDL_mouse.h>
 #include <SDL2/SDL_timer.h>
 #include <SDL_keycode.h>
 #include <SDL_mouse.h>
@@ -12,6 +14,7 @@
 #include <SDL_events.h>
 #include <SDL_timer.h>
 
+#include "phys/raycast.h"
 #include "util.h"
 #include "render/font.h"
 #include "render/level_renderer.h"
@@ -53,6 +56,8 @@ static struct {
     bool down;
     bool space;
     bool shift;
+    bool left_click;
+    bool right_click;
 } keys;
 
 static void tick(rudyscung_t* const self, level_t* const level);
@@ -129,7 +134,20 @@ void rudyscung_run(rudyscung_t* const self) {
             }
             if (event.type == SDL_MOUSEBUTTONDOWN) {
                 if (event.button.button == SDL_BUTTON_LEFT) {
-                    SDL_SetRelativeMouseMode(true);
+                    if (SDL_GetRelativeMouseMode()) {
+                        keys.left_click = true;
+                    } else {
+                        SDL_SetRelativeMouseMode(true);
+                    }
+                } else if (event.button.button == SDL_BUTTON_RIGHT) {
+                    keys.right_click = true;
+                }
+            }
+            if (event.type == SDL_MOUSEBUTTONUP) {
+                if (event.button.button == SDL_BUTTON_LEFT) {
+                    keys.left_click = false;
+                } else if (event.button.button == SDL_BUTTON_RIGHT) {
+                    keys.right_click = false;
                 }
             }
             if (event.type == SDL_MOUSEMOTION) {
@@ -237,12 +255,15 @@ static void tick(rudyscung_t* const self, level_t* const level) {
     renderer_tick(self->renderer);
     level_tick(level);
 
+    static uint64_t last_block_break = 0;
+
     ecs_t* ecs = level_get_ecs(level);
     entity_t player = level_get_player(level);
 
     bool any_movement_input = keys.w || keys.s || keys.a || keys.d;
     bool any_vertical_movement_input = keys.shift || keys.space;
     bool any_look_input = keys.left || keys.right || keys.up || keys.down;
+    bool any_click = keys.left_click || keys.right_click;
 
     if (any_movement_input) {
         float left = 0;
@@ -318,6 +339,30 @@ static void tick(rudyscung_t* const self, level_t* const level) {
 
         player_rot->rot[ROT_AXIS__Y] = new_rot_y;
         player_rot->rot[ROT_AXIS__X] = new_rot_x;
+    }
+
+    if (any_click) {
+        ecs_component_pos_t const* const player_pos = ecs_get_component_data(ecs, player, ECS_COMPONENT__POS);
+        ecs_component_rot_t const* const player_rot = ecs_get_component_data(ecs, player, ECS_COMPONENT__ROT);
+
+        uint64_t current_tick = SDL_GetTicks64();
+
+        if (current_tick - last_block_break > 500) {
+            last_block_break = current_tick;
+
+            raycast_t raycast;
+            raycast_cast_in_level(&raycast, level, player_pos->pos, player_rot->rot);
+
+            if (raycast.hit) {
+                if (keys.left_click) {
+                    level_set_tile(level, raycast.tile_pos, TILE__AIR);
+                } else if (keys.right_click) {
+                    int offset[NUM_AXES];
+                    side_get_offsets(raycast.side, offset);
+                    level_set_tile(level, VEC_ADD(raycast.tile_pos, offset), TILE__STONE);
+                }
+            }
+        }
     }
 
     update_slice(self, level, false);

@@ -10,6 +10,8 @@ chunk_renderer_t* const chunk_renderer_new(level_renderer_t const* const level_r
 
 void chunk_renderer_delete(chunk_renderer_t* const self);
 
+chunk_t const* const chunk_renderer_get_chunk(chunk_renderer_t const* const self);
+
 bool chunk_renderer_is_ready(chunk_renderer_t const* const self);
 
 void chunk_renderer_build(chunk_renderer_t* const self, tessellator_t* const tessellator);

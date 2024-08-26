@@ -16,6 +16,8 @@ void level_delete(level_t* const self);
 
 void level_get_size(level_t const* const self, size_chunks_t size[NUM_AXES]);
 
+bool const level_is_chunk_dirty(level_t const* const self, size_chunks_t const pos[NUM_AXES]);
+
 chunk_t* const level_get_chunk(level_t const* const self, size_chunks_t const pos[NUM_AXES]);
 
 tile_t const level_get_tile(level_t const* const self, size_t const pos[NUM_AXES]);
@@ -35,4 +37,3 @@ entity_t const level_get_player(level_t const* const self);
 float const level_get_nearest_face_on_axis(level_t const* const self, float const pos[NUM_AXES], side_t const side, float const max_range);
 
 entity_t const level_get_tree(level_t const* const self, size_t const index);
-

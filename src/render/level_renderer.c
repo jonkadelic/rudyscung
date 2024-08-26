@@ -22,6 +22,7 @@
 #include "./textures.h"
 #include "camera.h"
 #include "./sprites.h"
+#include "../phys/raycast.h"
 
 #define CHUNK_INDEX(x, y, z) (((y) * self->level_slice.size[AXIS__Z] * self->level_slice.size[AXIS__X]) + ((z) * self->level_slice.size[AXIS__X]) + (x))
 #define TO_CHUNK_SPACE(tile_coord) ((tile_coord) / CHUNK_SIZE)
@@ -34,7 +35,6 @@ struct level_renderer {
     sprites_t* sprites;
     chunk_renderer_t** chunk_renderers;
     level_slice_t level_slice;
-    bool all_ready;
 };
 
 static void delete_chunk_renderers(level_renderer_t* const self);
@@ -166,25 +166,23 @@ void level_renderer_slice(level_renderer_t* const self, level_slice_t const* con
 void level_renderer_tick(level_renderer_t* const self) {
     assert(self != nullptr);
 
-    if (!self->all_ready) {
-        size_t remaining = 20;
-        size_t const chunks_area = self->level_slice.size[AXIS__Y] * self->level_slice.size[AXIS__Z] * self->level_slice.size[AXIS__X];
-        for (size_chunks_t i = 0; i < chunks_area; i++) {
-            if (remaining == 0) {
-                break;
-            }
-
-            chunk_renderer_t* const chunk_renderer = self->chunk_renderers[i];
-            if (chunk_renderer != nullptr) {
-                if (!chunk_renderer_is_ready(chunk_renderer)) {
-                    chunk_renderer_build(chunk_renderer, self->tessellator);
-                    remaining--;
-                }
-            }
+    size_t remaining = 20;
+    size_t const chunks_area = self->level_slice.size[AXIS__Y] * self->level_slice.size[AXIS__Z] * self->level_slice.size[AXIS__X];
+    for (size_chunks_t i = 0; i < chunks_area; i++) {
+        if (remaining == 0) {
+            break;
         }
 
-        if (remaining == 20) {
-            self->all_ready = true;
+        chunk_renderer_t* const chunk_renderer = self->chunk_renderers[i];
+        if (chunk_renderer != nullptr) {
+            chunk_t const* const chunk = chunk_renderer_get_chunk(chunk_renderer);
+            size_chunks_t pos[NUM_AXES];
+            chunk_get_pos(chunk, pos);
+
+            if (!chunk_renderer_is_ready(chunk_renderer) || level_is_chunk_dirty(self->level, pos)) {
+                chunk_renderer_build(chunk_renderer, self->tessellator);
+                remaining--;
+            }
         }
     }
 }
@@ -264,6 +262,16 @@ void level_renderer_draw(level_renderer_t const* const self, camera_t const* con
         if (distance_sq < (24 * 24 * 24)) {
             sprites_render(self->sprites, tree_sprite->sprite, camera, 10.0f, tree_pos->pos, (bool[NUM_ROT_AXES]) { true, false });
         }
+    }
+
+    // Raycast and draw sprite
+    ecs_component_pos_t const* const player_pos = ecs_get_component_data(ecs, level_get_player(self->level), ECS_COMPONENT__POS);
+    ecs_component_rot_t const* const player_rot = ecs_get_component_data(ecs, level_get_player(self->level), ECS_COMPONENT__ROT);
+
+    raycast_t raycast;
+    raycast_cast_in_level(&raycast, self->level, player_pos->pos, player_rot->rot);
+    if (raycast.hit) {
+        sprites_render(self->sprites, SPRITE__TREE, camera, 1.0f, raycast.pos, (bool[NUM_ROT_AXES]) { true, true });
     }
 
 }
@@ -349,6 +357,4 @@ static void reload_chunk_renderers(level_renderer_t* const self) {
             }
         }
     }
-
-    self->all_ready = false;
 }

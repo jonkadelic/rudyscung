@@ -17,6 +17,7 @@
 #include "./level_renderer.h"
 #include "../window.h"
 #include "./font.h"
+#include "../phys/raycast.h"
 
 static void check_errors(void);
 
@@ -104,13 +105,25 @@ void renderer_render(renderer_t* const self, camera_t const* const camera) {
         font_draw(font, line_buffer, 0, 0);
 
         if (self->level != nullptr) {
-            ecs_component_pos_t const* const player_pos = ecs_get_component_data(level_get_ecs(self->level), level_get_player(self->level), ECS_COMPONENT__POS);
+            ecs_t* const ecs = level_get_ecs(self->level);
+            entity_t const player = level_get_player(self->level);
+
+            ecs_component_pos_t const* const player_pos = ecs_get_component_data(ecs, player, ECS_COMPONENT__POS);
+            ecs_component_vel_t const* const player_vel = ecs_get_component_data(ecs, player, ECS_COMPONENT__VEL);
+            ecs_component_rot_t const* const player_rot = ecs_get_component_data(ecs, player, ECS_COMPONENT__ROT);
+
             snprintf(line_buffer, sizeof(line_buffer) / sizeof(line_buffer[0]), "x: %.2f y: %.2f z: %.2f", player_pos->pos[AXIS__X], player_pos->pos[AXIS__Y], player_pos->pos[AXIS__Z]);
             font_draw(font, line_buffer, 0, 12);
 
-            ecs_component_vel_t const* const player_vel = ecs_get_component_data(level_get_ecs(self->level), level_get_player(self->level), ECS_COMPONENT__VEL);
             snprintf(line_buffer, sizeof(line_buffer) / sizeof(line_buffer[0]), "vx: %.2f vy: %.2f z: %.2f", player_vel->vel[AXIS__X], player_vel->vel[AXIS__Y], player_vel->vel[AXIS__Z]);
             font_draw(font, line_buffer, 0, 24);
+
+            raycast_t raycast;
+            raycast_cast_in_level(&raycast, self->level, player_pos->pos, player_rot->rot);
+            if (raycast.hit) {
+                snprintf(line_buffer, sizeof(line_buffer) / sizeof(line_buffer[0]), "hit: %zu %zu %zu, block: %d", raycast.tile_pos[AXIS__X], raycast.tile_pos[AXIS__Y], raycast.tile_pos[AXIS__Z], raycast.tile);
+                font_draw(font, line_buffer, 0, 36);
+            }
         }
 
         window_swap(window);
