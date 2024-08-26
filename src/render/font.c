@@ -188,8 +188,6 @@ void font_draw(font_t const* const self, char const* const text, int const x, in
 
     glEnable(GL_CULL_FACE);
     glCullFace(GL_BACK);
-    glEnable(GL_BLEND);
-    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
     glBindTexture(GL_TEXTURE_2D, self->tex);
 
@@ -197,7 +195,6 @@ void font_draw(font_t const* const self, char const* const text, int const x, in
     glDrawArrays(GL_TRIANGLES, 0, elements);
     glBindVertexArray(0);
 
-    glDisable(GL_BLEND);
     glDisable(GL_CULL_FACE);
 }
 

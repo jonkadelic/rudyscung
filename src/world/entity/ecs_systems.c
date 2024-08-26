@@ -48,15 +48,18 @@ void ecs_system_velocity(ecs_t* const self, level_t* const level, entity_t const
                                 float real_corner_pos[NUM_AXES] = VEC_ADD_INIT(pos->pos, corner_pos);
                                 float p = level_get_nearest_face_on_axis(level, real_corner_pos, sides[a], absf(vel->vel[a]));
                                 if (!isnan(p)) {
+                                    float next_real_corner_pos[NUM_AXES] = VEC_ADD_INIT(real_corner_pos, vel->vel);
                                     int offsets[NUM_AXES];
                                     side_get_offsets(sides[a], offsets);
                                     if (offsets[a] > 0) {
                                         p -= 0.00001f;
                                     }
 
-                                    pos->pos[a] = p - corner_pos[a];
-                                    vel->vel[a] = 0.0f;
-                                    aabb->colliding[a] = true;
+                                    if ((offsets[a] > 0 && next_real_corner_pos[a] > p) || (offsets[a] < 0 && next_real_corner_pos[a] < p)) {
+                                        pos->pos[a] = p - corner_pos[a];
+                                        vel->vel[a] = 0.0f;
+                                        aabb->colliding[a] = true;
+                                    }
                                 }
                             }
                         }
@@ -79,7 +82,7 @@ void ecs_system_friction(ecs_t* const self, level_t* const level, entity_t const
     ecs_component_vel_t* const vel = ecs_get_component_data(self, entity, ECS_COMPONENT__VEL);
 
     for (axis_t a = 0; a < NUM_AXES; a++) {
-        if (a == AXIS__Y) continue;
+        if (a == AXIS__Y && ecs_has_component(self, entity, ECS_COMPONENT__GRAVITY)) continue;
 
         vel->vel[a] *= 0.6f;
         if (vel->vel[a] < 0.01f && vel->vel[a] > -0.01f) {

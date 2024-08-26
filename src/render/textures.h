@@ -9,7 +9,6 @@
 
 typedef enum texture_name {
     TEXTURE_NAME__TERRAIN,
-    TEXTURE_NAME__FONT_DEFAULT,
     NUM_TEXTURE_NAMES
 } texture_name_t;
 

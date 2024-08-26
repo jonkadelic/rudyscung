@@ -21,6 +21,7 @@
 #include "./shader.h"
 #include "./textures.h"
 #include "camera.h"
+#include "./sprites.h"
 
 #define CHUNK_INDEX(x, y, z) (((y) * self->level_slice.size[AXIS__Z] * self->level_slice.size[AXIS__X]) + ((z) * self->level_slice.size[AXIS__X]) + (x))
 #define TO_CHUNK_SPACE(tile_coord) ((tile_coord) / CHUNK_SIZE)
@@ -28,8 +29,9 @@
 
 struct level_renderer {
     rudyscung_t* rudyscung;
-    level_t const* level;
+    level_t* level;
     tessellator_t* tessellator;
+    sprites_t* sprites;
     chunk_renderer_t** chunk_renderers;
     level_slice_t level_slice;
     bool all_ready;
@@ -38,7 +40,7 @@ struct level_renderer {
 static void delete_chunk_renderers(level_renderer_t* const self);
 static void reload_chunk_renderers(level_renderer_t* const self);
 
-level_renderer_t* const level_renderer_new(rudyscung_t* const rudyscung, level_t const* const level) {
+level_renderer_t* const level_renderer_new(rudyscung_t* const rudyscung, level_t* const level) {
     assert(level != nullptr);
 
     level_renderer_t* const self = malloc(sizeof(level_renderer_t));
@@ -55,6 +57,7 @@ level_renderer_t* const level_renderer_new(rudyscung_t* const rudyscung, level_t
     }
 
     self->tessellator = tessellator_new();
+    self->sprites = sprites_new(rudyscung);
 
     self->chunk_renderers = nullptr;
 
@@ -64,7 +67,11 @@ level_renderer_t* const level_renderer_new(rudyscung_t* const rudyscung, level_t
 void level_renderer_delete(level_renderer_t* const self) {
     assert(self != nullptr);
 
+    tessellator_delete(self->tessellator);
+
     delete_chunk_renderers(self);
+
+    sprites_delete(self->sprites);
     
     free(self);
 }
@@ -243,6 +250,17 @@ void level_renderer_draw(level_renderer_t const* const self, camera_t const* con
 
     glDisable(GL_DEPTH_TEST);
     glDisable(GL_CULL_FACE);
+
+    ecs_t* ecs = level_get_ecs(self->level);
+
+    for (size_t i = 0; i < NUM_TREES; i++) {
+        entity_t tree = level_get_tree(self->level, i);
+        ecs_component_pos_t const* const tree_pos = ecs_get_component_data(ecs, tree, ECS_COMPONENT__POS);
+        ecs_component_sprite_t const* const tree_sprite = ecs_get_component_data(ecs, tree, ECS_COMPONENT__SPRITE);
+
+        sprites_render(self->sprites, tree_sprite->sprite, camera, 10.0f, tree_pos->pos, (bool[NUM_ROT_AXES]) { true, false });
+    }
+
 }
 
 bool level_renderer_is_tile_side_occluded(level_renderer_t const* const self, size_t const pos[NUM_AXES], side_t const side) {

@@ -23,7 +23,7 @@ float const absf(float const x) {
 
 float const map_to_0_1(float const x) {
     if (x >= 1.0f) {
-        return x -  floor(x);
+        return x - floor(x);
     } else if (x < 0.0f) {
         return 1 - (x - ceil(x));
     }

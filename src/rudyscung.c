@@ -277,12 +277,13 @@ static void tick(rudyscung_t* const self, level_t* const level) {
 
     if (any_vertical_movement_input) {
         float up = 0;
+        float const speed = 0.5f;
 
         if (keys.space) {
-            up++;
+            up += speed;
         }
         if (keys.shift) {
-            up--;
+            up -= speed;
         }
 
         ecs_component_vel_t* player_vel = ecs_get_component_data(ecs, player, ECS_COMPONENT__VEL);
@@ -295,7 +296,7 @@ static void tick(rudyscung_t* const self, level_t* const level) {
     if (any_look_input) {
         float rot_dy = 0;
         float rot_dx = 0;
-        float const speed = 0.1f;
+        float const speed = 0.25f;
 
         if (keys.left) {
             rot_dy -= speed;

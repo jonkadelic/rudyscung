@@ -27,7 +27,8 @@ static size_t const COMPONENT_SIZES[NUM_ECS_COMPONENTS] = {
     [ECS_COMPONENT__VEL] = sizeof(ecs_component_vel_t),
     [ECS_COMPONENT__ROT] = sizeof(ecs_component_rot_t),
     [ECS_COMPONENT__AABB] = sizeof(ecs_component_aabb_t),
-    [ECS_COMPONENT__GRAVITY] = sizeof(ecs_component_gravity_t)
+    [ECS_COMPONENT__GRAVITY] = sizeof(ecs_component_gravity_t),
+    [ECS_COMPONENT__SPRITE] = sizeof(ecs_component_sprite_t)
 };
 
 static void* const new_component(ecs_component_t const component);

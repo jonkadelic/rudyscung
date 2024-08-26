@@ -16,6 +16,7 @@ set(SOURCES
     src/render/renderer.c
     src/render/shader.c
     src/render/shaders.c
+    src/render/sprites.c
     src/render/tessellator.c
     src/render/textures.c
     src/render/tile_renderer.c

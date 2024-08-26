@@ -4,8 +4,8 @@
 #include <math.h>
 #include <stdlib.h>
 #include <sys/time.h>
-#include "../util.h"
 
+#include "../util.h"
 #include "chunk.h"
 #include "entity/ecs.h"
 #include "entity/ecs_components.h"
@@ -28,6 +28,7 @@ struct level {
     level_gen_t* level_gen;
     ecs_t* ecs;
     entity_t player;
+    entity_t trees[NUM_TREES];
 };
 
 level_t* const level_new(size_chunks_t const size[NUM_AXES]) {
@@ -42,7 +43,8 @@ level_t* const level_new(size_chunks_t const size[NUM_AXES]) {
 
     struct timeval time;
     gettimeofday(&time, nullptr);
-    self->level_gen = level_gen_new(time.tv_sec * 1000 + time.tv_usec / 1000);
+    unsigned int seed = time.tv_sec * 1000 + time.tv_usec / 1000;
+    self->level_gen = level_gen_new(seed);
 
     self->chunks = malloc(sizeof(chunk_t*) * size[AXIS__X] * size[AXIS__Y] * size[AXIS__Z]);
     assert(self->chunks != nullptr);
@@ -82,6 +84,31 @@ level_t* const level_new(size_chunks_t const size[NUM_AXES]) {
     float const player_aabb_max[NUM_AXES] = { 0.4f, 0.2f, 0.4f };
     aabb_set_bounds(player_aabb->aabb, player_aabb_min, player_aabb_max);
 
+    srand(seed);
+    for (size_t i = 0; i < NUM_TREES; i++) {
+        size_t i_tree_pos[NUM_AXES] = {
+            rand() / (RAND_MAX / (self->size[AXIS__X] * CHUNK_SIZE)),
+            0,
+            rand() / (RAND_MAX / (self->size[AXIS__Z] * CHUNK_SIZE))
+        };
+        for (size_t y = (self->size[AXIS__Y] * CHUNK_SIZE) - 1; y >= 0; y--) {
+            i_tree_pos[AXIS__Y] = y;
+            if (level_get_tile(self, i_tree_pos) != tile_get(TILE_ID__AIR)) {
+                i_tree_pos[AXIS__Y] = y + 1;
+                break;
+            }
+        }
+
+        self->trees[i] = ecs_new_entity(self->ecs);
+        ecs_component_pos_t* const tree_pos = ecs_attach_component(self->ecs, self->trees[i], ECS_COMPONENT__POS);
+        ecs_component_sprite_t* const tree_sprite = ecs_attach_component(self->ecs, self->trees[i], ECS_COMPONENT__SPRITE);
+
+        tree_pos->pos[AXIS__X] = i_tree_pos[AXIS__X] + 0.5f;
+        tree_pos->pos[AXIS__Y] = i_tree_pos[AXIS__Y];
+        tree_pos->pos[AXIS__Z] = i_tree_pos[AXIS__Z] + 0.5f;
+        
+        tree_sprite->sprite = SPRITE__TREE;
+    }
 
     return self;
 }
@@ -207,11 +234,15 @@ float const level_get_nearest_face_on_axis(level_t const* const self, float cons
 
             while (true) {
                 if (i_pos[a] < 0.0f || i_pos[a] >= level_size[a] * CHUNK_SIZE) {
-                    break;
+                    if (o[a] < 0) {
+                        return ceil(i_pos[a]);
+                    } else {
+                        return floor(i_pos[a]);
+                    }
                 }
 
-                for (axis_t a = 0; a < NUM_AXES; a++) {
-                    if (i_pos[a] < 0.0f || i_pos[a] >= level_size[a] * CHUNK_SIZE) {
+                for (axis_t aa = 0; aa < NUM_AXES; aa++) {
+                    if (i_pos[aa] < 0.0f || i_pos[aa] >= level_size[aa] * CHUNK_SIZE) {
                         return NAN;
                     }
                 }
@@ -233,13 +264,48 @@ float const level_get_nearest_face_on_axis(level_t const* const self, float cons
                 }
             }
 
-            if (o[a] < 0) {
-                return ceil(i_pos[a]);
-            } else {
-                return floor(i_pos[a]);
+            float final_pos[NUM_AXES];
+            for (axis_t aa = 0; aa < NUM_AXES; aa++) {
+                if (a == aa) {
+                    if (o[aa] < 0) {
+                        final_pos[aa] = ceil(i_pos[aa]);
+                    } else {
+                        final_pos[aa] = floor(i_pos[aa]);
+                    }
+                } else {
+                    final_pos[aa] = pos[aa];
+                }
             }
+
+            // tile_shape_t const tile_shape = level_get_tile_shape(self, VEC_CAST(size_t, i_pos));
+
+            // float pos2[2];
+            // side_map_point(side, final_pos, pos2);
+            // pos2[0] = map_to_0_1(pos2[0]);
+            // pos2[1] = map_to_0_1(pos2[1]);
+            
+            // float inner = tile_shape_get_inner_distance(tile_shape, side, pos2);
+            // if (inner == INFINITY) {
+            //     return NAN;
+            // } else {
+            //     inner = absf(inner);
+            //     if (o[a] < 0) {
+            //         final_pos[a] -= inner;
+            //     } else {
+            //         final_pos[a] += inner;
+            //     }
+            // }
+
+            return final_pos[a];
         }
     }
 
     return NAN;
+}
+
+entity_t const level_get_tree(level_t const* const self, size_t const index) {
+    assert(self != nullptr);
+    assert(index >= 0 && index < NUM_TREES);
+
+    return self->trees[index];
 }

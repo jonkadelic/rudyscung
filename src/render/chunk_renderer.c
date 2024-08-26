@@ -20,8 +20,8 @@ struct chunk_renderer {
     level_renderer_t const* level_renderer;
     chunk_t const* chunk;
     bool ready;
-    GLuint vbo;
     GLuint vao;
+    GLuint vbo;
     GLuint ebo;
     size_t num_elements;
 };

@@ -12,7 +12,7 @@ typedef struct level_slice {
     size_chunks_t size[NUM_AXES];
 } level_slice_t;
 
-level_renderer_t* const level_renderer_new(rudyscung_t* const rudyscung, level_t const* const level);
+level_renderer_t* const level_renderer_new(rudyscung_t* const rudyscung, level_t* const level);
 
 void level_renderer_delete(level_renderer_t* const self);
 
