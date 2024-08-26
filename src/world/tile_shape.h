@@ -23,3 +23,5 @@ typedef enum tile_shape {
 } tile_shape_t;
 
 bool const tile_shape_can_side_occlude(tile_shape_t const self, side_t const side);
+
+float const tile_shape_get_inner_distance(tile_shape_t const self, side_t const side, float const pos[2]);

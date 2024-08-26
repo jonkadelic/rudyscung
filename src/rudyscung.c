@@ -247,18 +247,19 @@ static void tick(rudyscung_t* const self, level_t* const level) {
     if (any_movement_input) {
         float left = 0;
         float forward = 0;
+        float const speed = 0.25f;
 
         if (keys.w) {
-            forward++;
+            forward += speed;
         }
         if (keys.s) {
-            forward--;
+            forward -= speed;
         }
         if (keys.a) {
-            left++;
+            left += speed;
         }
         if (keys.d) {
-            left--;
+            left -= speed;
         }
 
         ecs_component_vel_t* player_vel = ecs_get_component_data(ecs, player, ECS_COMPONENT__VEL);
@@ -356,7 +357,7 @@ static void update_slice(rudyscung_t* const self, level_t* const level, bool con
             slice_pos[a] = 0;
         }
         if (slice_pos[a] >= level_size[a] - slice_diameter) {
-            slice_pos[a] = level_size[a] - slice_diameter - 1;
+            slice_pos[a] = level_size[a] - slice_diameter;
         }
     }
 

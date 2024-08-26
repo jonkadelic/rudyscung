@@ -28,3 +28,5 @@ void side_get_offsets(side_t const self, int xyz[NUM_AXES]);
 side_t const side_get_opposite(side_t const self);
 
 axis_t const side_get_axis(side_t const self);
+
+void side_map_point(side_t const self, float const pos3[NUM_AXES], float pos2[2]);

@@ -196,20 +196,22 @@ float const level_get_distance_on_axis(level_t const* const self, float const po
 
     tile_t const* const air_tile = tile_get(TILE_ID__AIR);
 
-    int i[NUM_AXES];
+    float i[NUM_AXES];
     float d[NUM_AXES];
     for (axis_t a = 0; a < NUM_AXES; a++) {
-        if (o[a] == 1) {
-            i[a] = ceil(pos[a]);
-        } else if (o[a] == -1) {
-            i[a] = floor(pos[a]);
-        } else {
-            i[a] = (int) pos[a];
-        }
-        if (i[a] < 0 || i[a] >= level_size[a] * CHUNK_SIZE) {
+        int rounded = 0;
+        // if (o[a] == 1) {
+        //     rounded = ceil(pos[a]);
+        // } else if (o[a] == -1) {
+        //     rounded = floor(pos[a]);
+        // } else {
+            rounded = (int) pos[a];
+        // }
+        if (pos[a] < 0 || pos[a] >= level_size[a] * CHUNK_SIZE) {
             return 0.0f;
         }
-        d[a] = pos[a] - i[a];
+        i[a] = pos[a];
+        d[a] = 1 - (pos[a] - rounded);
         if (pos[a] < 0) d[a] = -d[a];
     }
 
@@ -224,17 +226,22 @@ float const level_get_distance_on_axis(level_t const* const self, float const po
                 if (i[a] < 0 || i[a] >= level_size[a] * CHUNK_SIZE) {
                     break;
                 }
-
-                int tile_offset[NUM_AXES] = { 0, 0, 0 };
-                for (axis_t aa = 0; aa < NUM_AXES; aa++) {
-                    if (o[aa] < 0) {
-                        tile_offset[aa] = o[aa];
-                    }
-                }
                 
-                tile = level_get_tile(self, (size_t[NUM_AXES]) { i[AXIS__X] + tile_offset[AXIS__X], i[AXIS__Y] + tile_offset[AXIS__Y], i[AXIS__Z] + tile_offset[AXIS__Z] });
+                tile = level_get_tile(self, VEC_CAST(size_t, i));
                 if (tile != air_tile) {
-                    break;
+                    tile_shape_t shape = level_get_tile_shape(self, VEC_CAST(size_t, i));
+                    if (shape != TILE_SHAPE__NO_RENDER) {
+                        float pos2[2];
+                        side_map_point(side, i, pos2);
+                        for (size_t p = 0; p < 2; p++) {
+                            pos2[p] = map_to_0_1(pos2[p]);
+                        }
+                        float inner = tile_shape_get_inner_distance(shape, side, pos2);
+                        if (inner != INFINITY) {
+                            d[a] += inner;
+                            break;
+                        }
+                    }
                 }
                 i[a] += o[a];
                 d[a] += o[a];
