@@ -119,19 +119,16 @@ void sprites_render(sprites_t const* const self, sprite_t const sprite, camera_t
 
     glBindTexture(GL_TEXTURE_2D, entry->tex);
 
-    // glEnable(GL_CULL_FACE);
-    // glCullFace(GL_BACK);
-    // glEnable(GL_BLEND);
-    // glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    glEnable(GL_CULL_FACE);
+    glCullFace(GL_BACK);
 
     glEnable(GL_DEPTH_TEST);
 
     glBindVertexArray(entry->vao);
     glDrawArrays(GL_TRIANGLES, 0, entry->num_elements);
 
-    // glDisable(GL_BLEND);
     glDisable(GL_DEPTH_TEST);
-    // glDisable(GL_CULL_FACE);
+    glDisable(GL_CULL_FACE);
 }
 
 static void sprite_new(sprites_t* const self, sprite_t const sprite, textures_t* const textures, tessellator_t* const tessellator, char const* const path, size_t size[2], float origin[2]) {
@@ -154,18 +151,18 @@ static void sprite_new(sprites_t* const self, sprite_t const sprite, textures_t*
     glGenBuffers(1, &(entry->vbo));
     assert(entry->vbo > 0);
 
-    float origin_xz = entry->origin[0];
+    float origin_x = entry->origin[0];
     float origin_y = 1 - entry->origin[1];
 
     tessellator_bind(tessellator, entry->vao, entry->vbo, 0);
 
-    tessellator_buffer_vct(tessellator, origin_xz - 0.0f, origin_y + 0.0f, origin_xz - 0.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f);
-    tessellator_buffer_vct(tessellator, origin_xz - 1.0f, origin_y + 0.0f, origin_xz - 0.0f, 1.0f, 1.0f, 1.0f, 0.0f, 1.0f);
-    tessellator_buffer_vct(tessellator, origin_xz - 0.0f, origin_y + 1.0f, origin_xz - 0.0f, 1.0f, 1.0f, 1.0f, 1.0f, 0.0f);
+    tessellator_buffer_vct(tessellator, origin_x - 0.0f, origin_y + 1.0f, 0.0f, 1.0f, 1.0f, 1.0f, 1.0f, 0.0f);
+    tessellator_buffer_vct(tessellator, origin_x - 1.0f, origin_y + 0.0f, 0.0f, 1.0f, 1.0f, 1.0f, 0.0f, 1.0f);
+    tessellator_buffer_vct(tessellator, origin_x - 0.0f, origin_y + 0.0f, 0.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f);
 
-    tessellator_buffer_vct(tessellator, origin_xz - 0.0f, origin_y + 1.0f, origin_xz - 0.0f, 1.0f, 1.0f, 1.0f, 1.0f, 0.0f);
-    tessellator_buffer_vct(tessellator, origin_xz - 1.0f, origin_y + 1.0f, origin_xz - 0.0f, 1.0f, 1.0f, 1.0f, 0.0f, 0.0f);
-    tessellator_buffer_vct(tessellator, origin_xz - 1.0f, origin_y + 0.0f, origin_xz - 0.0f, 1.0f, 1.0f, 1.0f, 0.0f, 1.0f);
+    tessellator_buffer_vct(tessellator, origin_x - 0.0f, origin_y + 1.0f, 0.0f, 1.0f, 1.0f, 1.0f, 1.0f, 0.0f);
+    tessellator_buffer_vct(tessellator, origin_x - 1.0f, origin_y + 1.0f, 0.0f, 1.0f, 1.0f, 1.0f, 0.0f, 0.0f);
+    tessellator_buffer_vct(tessellator, origin_x - 1.0f, origin_y + 0.0f, 0.0f, 1.0f, 1.0f, 1.0f, 0.0f, 1.0f);
 
     entry->num_elements = tessellator_draw(tessellator);
 

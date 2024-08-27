@@ -260,7 +260,6 @@ void level_renderer_draw(level_renderer_t const* const self, camera_t const* con
 
         sprites_render(self->sprites, tree_sprite->sprite, camera, 10.0f, tree_pos->pos, (bool[NUM_ROT_AXES]) { true, false });
     }
-
 }
 
 bool level_renderer_is_tile_side_occluded(level_renderer_t const* const self, size_t const pos[NUM_AXES], side_t const side) {

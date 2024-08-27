@@ -87,9 +87,9 @@ level_t* const level_new(size_chunks_t const size[NUM_AXES]) {
     srand(seed);
     for (size_t i = 0; i < NUM_TREES; i++) {
         size_t i_tree_pos[NUM_AXES] = {
-            rand() / (RAND_MAX / (self->size[AXIS__X] * CHUNK_SIZE)),
+            (size_t) (((float)rand() / RAND_MAX) * (self->size[AXIS__X] * CHUNK_SIZE)),
             0,
-            rand() / (RAND_MAX / (self->size[AXIS__Z] * CHUNK_SIZE))
+            (size_t) (((float)rand() / RAND_MAX) * (self->size[AXIS__Z] * CHUNK_SIZE))
         };
         for (size_t y = (self->size[AXIS__Y] * CHUNK_SIZE) - 1; y >= 0; y--) {
             i_tree_pos[AXIS__Y] = y;
