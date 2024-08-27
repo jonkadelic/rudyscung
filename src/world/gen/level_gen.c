@@ -190,7 +190,7 @@ static void look_up_sides(level_t const* const level, size_chunks_t const level_
 
 static bool tile_matches_pattern(level_t const* const level, tile_shape_t const tile_shape, bool const sides[NUM_SIDES], size_t const pos[NUM_AXES]);
 
-level_gen_t* const level_gen_new(unsigned int seed) {
+level_gen_t* const level_gen_new(uint64_t const seed) {
     level_gen_t* const self = malloc(sizeof(level_gen_t));
     assert(self != nullptr);
 

@@ -1,18 +1,15 @@
 #include "./rudyscung.h"
 
-#include <SDL2/SDL_events.h>
-#include <SDL2/SDL_mouse.h>
-#include <SDL2/SDL_timer.h>
-#include <SDL_keycode.h>
-#include <SDL_mouse.h>
-#include <SDL_video.h>
 #include <assert.h>
 #include <math.h>
 #include <stdlib.h>
 #include <stdio.h>
 
-#include <SDL_events.h>
-#include <SDL_timer.h>
+#include <SDL2/SDL_events.h>
+#include <SDL2/SDL_mouse.h>
+#include <SDL2/SDL_timer.h>
+#include <SDL2/SDL_keycode.h>
+#include <SDL2/SDL_video.h>
 
 #include "phys/raycast.h"
 #include "util.h"

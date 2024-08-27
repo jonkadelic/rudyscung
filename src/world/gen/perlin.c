@@ -4,6 +4,8 @@
 #include <stdlib.h>
 #include <math.h>
 
+#include "../../rand.h"
+
 struct perlin {
     int p[512];
 };
@@ -14,12 +16,12 @@ static double lerp(double t, double a, double b);
 
 static double grad(int hash, double x, double y, double z);
 
-perlin_t* const perlin_new(unsigned int seed) {
+perlin_t* const perlin_new(uint64_t const seed) {
     perlin_t* const self = malloc(sizeof(perlin_t));
     assert(self != nullptr);
 
     // Set up random
-    srand(seed);
+    random_t* rand = random_new(seed);
 
     // Assign initial values for each permutation
     for (size_t i = 0; i < 256; i++) {
@@ -28,12 +30,14 @@ perlin_t* const perlin_new(unsigned int seed) {
 
     // Shuffle values
     for (size_t i = 0; i < 256; i++) {
-        size_t new_i = rand() / (RAND_MAX / (256 - i)) + i;
+        size_t new_i = random_next_int_bounded(rand, 256 - i) + i;
         int temp = self->p[i];
         self->p[i] = self->p[new_i];
         self->p[new_i] = temp;
         self->p[i + 256] = self->p[i];
     }
+
+    random_delete(rand);
 
     return self;
 }

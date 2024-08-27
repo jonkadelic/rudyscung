@@ -1,8 +1,10 @@
 #pragma once
 
+#include <stdint.h>
+
 typedef struct perlin perlin_t;
 
-perlin_t* const perlin_new(unsigned int seed);
+perlin_t* const perlin_new(uint64_t const seed);
 
 void perlin_delete(perlin_t* const self);
 

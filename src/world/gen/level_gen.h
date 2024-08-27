@@ -5,7 +5,7 @@
 
 typedef struct level_gen level_gen_t;
 
-level_gen_t* const level_gen_new(unsigned int seed);
+level_gen_t* const level_gen_new(uint64_t const seed);
 
 void level_gen_delete(level_gen_t* const self);
 

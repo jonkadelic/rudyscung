@@ -14,6 +14,7 @@
 #include "tile.h"
 #include "tile_shape.h"
 #include "gen/level_gen.h"
+#include "../rand.h"
 
 #define CHUNK_INDEX(pos) (((pos[AXIS__Y]) * self->size[AXIS__Z] * self->size[AXIS__X]) + ((pos[AXIS__Z]) * self->size[AXIS__X]) + (pos[AXIS__X]))
 #define TO_CHUNK_SPACE(coord) ((coord) / CHUNK_SIZE)
@@ -28,6 +29,8 @@ struct level {
     bool* is_chunk_dirty;
     level_gen_t* level_gen;
     ecs_t* ecs;
+    uint64_t seed;
+    random_t* rand;
     entity_t player;
     entity_t trees[NUM_TREES];
 };
@@ -44,8 +47,8 @@ level_t* const level_new(size_chunks_t const size[NUM_AXES]) {
 
     struct timeval time;
     gettimeofday(&time, nullptr);
-    unsigned int seed = time.tv_sec * 1000 + time.tv_usec / 1000;
-    self->level_gen = level_gen_new(seed);
+    self->seed = time.tv_sec * 1000 + time.tv_usec / 1000;
+    self->level_gen = level_gen_new(self->seed);
 
     self->chunks = malloc(sizeof(chunk_t*) * size[AXIS__X] * size[AXIS__Y] * size[AXIS__Z]);
     assert(self->chunks != nullptr);
@@ -96,12 +99,12 @@ level_t* const level_new(size_chunks_t const size[NUM_AXES]) {
     float const player_aabb_max[NUM_AXES] = { 0.4f, 0.1999f, 0.4f };
     aabb_set_bounds(player_aabb->aabb, player_aabb_min, player_aabb_max);
 
-    srand(seed);
+    self->rand = random_new(self->seed);
     for (size_t i = 0; i < NUM_TREES; i++) {
         size_t i_tree_pos[NUM_AXES] = {
-            (size_t) (((float)rand() / RAND_MAX) * (self->size[AXIS__X] * CHUNK_SIZE)),
+            random_next_int_bounded(self->rand, self->size[AXIS__X] * CHUNK_SIZE),
             0,
-            (size_t) (((float)rand() / RAND_MAX) * (self->size[AXIS__Z] * CHUNK_SIZE))
+            random_next_int_bounded(self->rand, self->size[AXIS__Z] * CHUNK_SIZE)
         };
         for (size_t y = (self->size[AXIS__Y] * CHUNK_SIZE) - 1; y >= 0; y--) {
             i_tree_pos[AXIS__Y] = y;

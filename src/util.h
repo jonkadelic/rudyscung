@@ -11,6 +11,8 @@
 #define VEC_SUB(a, b) ((typeof(a[0])[]) VEC_SUB_INIT(a, b))
 #define VEC_CAST_INIT(t, a) { (t) a[AXIS__X], (t) a[AXIS__Y], (t) a[AXIS__Z] }
 #define VEC_CAST(t, a) ((t[]) VEC_CAST_INIT(t, a))
+#define MIN(a, b) (a > b ? b : a)
+#define MAX(a, b) (a > b ? a : b)
 
 char* const strcata(char const* const a, char const* const b);
 
