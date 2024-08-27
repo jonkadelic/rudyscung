@@ -195,26 +195,13 @@ void level_renderer_draw(level_renderer_t const* const self, camera_t const* con
     shader_t* const shader = shaders_get(shaders, "main");
     shader_bind(shader);
 
-    float camera_pos[NUM_AXES];
-    camera_get_pos(camera, camera_pos);
-    float camera_rot[NUM_ROT_AXES];
-    camera_get_rot(camera, camera_rot);
-
     size_t window_size[2];
     window_get_size(rudyscung_get_window(self->rudyscung), window_size);
 
-    mat4x4 mat_view;
-    mat4x4_identity(mat_view);
-    mat4x4_rotate(mat_view, mat_view, 1.0f, 0.0f, 0.0f, camera_rot[ROT_AXIS__X]);
-    mat4x4_rotate(mat_view, mat_view, 0.0f, 1.0f, 0.0f, camera_rot[ROT_AXIS__Y]);
-    mat4x4_translate_in_place(mat_view, -camera_pos[AXIS__X], -camera_pos[AXIS__Y], -camera_pos[AXIS__Z]);
-    shader_put_uniform_mat4x4(shader, "view", mat_view);
+    float camera_pos[NUM_AXES];
+    camera_get_pos(camera, camera_pos);
 
-    mat4x4 mat_proj;
-    mat4x4_identity(mat_proj);
-    // mat4x4_ortho(mat_proj, 0, 2.0f, 0, 2.0f, 0.1f, 100.0f);
-    mat4x4_perspective(mat_proj, TO_RADIANS(65.0f), (float) window_size[0] / window_size[1], 0.1f, 1000.0f);
-    shader_put_uniform_mat4x4(shader, "projection", mat_proj);
+    camera_set_matrices(camera, window_size, shader);
 
     mat4x4 mat_model;
     mat4x4_identity(mat_model);

@@ -29,6 +29,8 @@ void raycast_cast_in_level(raycast_t* const self, level_t const* const level, fl
     level_get_size(level, level_size);
     size_t level_size_tiles[NUM_AXES] = { level_size[AXIS__X] * CHUNK_SIZE, level_size[AXIS__Y] * CHUNK_SIZE, level_size[AXIS__Z] * CHUNK_SIZE };
 
+    self->hit = false;
+
     for (float range = 0.0f; range < max_range; range += ray_scale) {
         size_t tile_pos[NUM_AXES] = { (size_t) floorf(raypos[AXIS__X]), (size_t) floorf(raypos[AXIS__Y]), (size_t) floorf(raypos[AXIS__Z]) };
 

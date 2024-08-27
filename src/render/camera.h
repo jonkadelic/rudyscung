@@ -1,12 +1,17 @@
 #pragma once
 
 #include "../world/side.h"
+#include "./shader.h"
 
 typedef struct camera camera_t;
 
-camera_t* const camera_new(float const pos[NUM_AXES], float const rot[NUM_ROT_AXES]);
+typedef struct camera camera_perspective_t;
+
+camera_perspective_t* const camera_perspective_new(void);
 
 void camera_delete(camera_t* const self);
+
+void camera_set_matrices(camera_t const* const self, size_t const window_size[2], shader_t* const shader);
 
 void camera_get_pos(camera_t const* const self, float pos[NUM_AXES]);
 

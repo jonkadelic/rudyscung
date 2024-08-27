@@ -98,7 +98,7 @@ void rudyscung_run(rudyscung_t* const self) {
 
     renderer_set_level(self->renderer, level);
 
-    camera_t* camera = camera_new((float[NUM_AXES]) { 0.0f, 0.0f, 0.0f }, (float[NUM_ROT_AXES]) { 0.0f, 0.0f} );
+    camera_perspective_t* camera = camera_perspective_new();
 
     update_slice(self, level, true);
 
