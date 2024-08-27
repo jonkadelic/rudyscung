@@ -38,6 +38,7 @@ sprites_t* const sprites_new(rudyscung_t* const rudyscung) {
     tessellator_t* const tessellator = tessellator_new();
 
     sprite_new(self, SPRITE__TREE, textures, tessellator, "/sprite/tree.png", (size_t[2]) { 256, 256 }, (float[2]) { 0.5f, 1.0f });
+    sprite_new(self, SPRITE__MOB, textures, tessellator, "/sprite/mob.png", (size_t[2]) { 16, 32 }, (float[2]) { 0.5f, 1.0f });
 
     tessellator_delete(tessellator);
 
@@ -138,15 +139,18 @@ static void sprite_new(sprites_t* const self, sprite_t const sprite, textures_t*
     float origin_x = entry->origin[0];
     float origin_y = 1 - entry->origin[1];
 
+    float half_width = size[0] / 2.0f;
+    float half_height = size[1] / 2.0f;
+
     tessellator_bind(tessellator, entry->vao, entry->vbo, 0);
 
-    tessellator_buffer_vct(tessellator, origin_x - 0.0f, origin_y + 1.0f, 0.0f, 1.0f, 1.0f, 1.0f, 1.0f, 0.0f);
-    tessellator_buffer_vct(tessellator, origin_x - 1.0f, origin_y + 0.0f, 0.0f, 1.0f, 1.0f, 1.0f, 0.0f, 1.0f);
+    tessellator_buffer_vct(tessellator, origin_x - 0.0f, origin_y + half_height, 0.0f, 1.0f, 1.0f, 1.0f, 1.0f, 0.0f);
+    tessellator_buffer_vct(tessellator, origin_x - half_width, origin_y + 0.0f, 0.0f, 1.0f, 1.0f, 1.0f, 0.0f, 1.0f);
     tessellator_buffer_vct(tessellator, origin_x - 0.0f, origin_y + 0.0f, 0.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f);
 
-    tessellator_buffer_vct(tessellator, origin_x - 0.0f, origin_y + 1.0f, 0.0f, 1.0f, 1.0f, 1.0f, 1.0f, 0.0f);
-    tessellator_buffer_vct(tessellator, origin_x - 1.0f, origin_y + 1.0f, 0.0f, 1.0f, 1.0f, 1.0f, 0.0f, 0.0f);
-    tessellator_buffer_vct(tessellator, origin_x - 1.0f, origin_y + 0.0f, 0.0f, 1.0f, 1.0f, 1.0f, 0.0f, 1.0f);
+    tessellator_buffer_vct(tessellator, origin_x - 0.0f, origin_y + half_height, 0.0f, 1.0f, 1.0f, 1.0f, 1.0f, 0.0f);
+    tessellator_buffer_vct(tessellator, origin_x - half_width, origin_y + half_height, 0.0f, 1.0f, 1.0f, 1.0f, 0.0f, 0.0f);
+    tessellator_buffer_vct(tessellator, origin_x - half_width, origin_y + 0.0f, 0.0f, 1.0f, 1.0f, 1.0f, 0.0f, 1.0f);
 
     entry->num_elements = tessellator_draw(tessellator);
 

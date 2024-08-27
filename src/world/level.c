@@ -14,7 +14,7 @@
 #include "tile.h"
 #include "tile_shape.h"
 #include "gen/level_gen.h"
-#include "../rand.h"
+#include "../random.h"
 
 #define CHUNK_INDEX(pos) (((pos[AXIS__Y]) * self->size[AXIS__Z] * self->size[AXIS__X]) + ((pos[AXIS__Z]) * self->size[AXIS__X]) + (pos[AXIS__X]))
 #define TO_CHUNK_SPACE(coord) ((coord) / CHUNK_SIZE)
@@ -76,10 +76,10 @@ level_t* const level_new(size_chunks_t const size[NUM_AXES]) {
     level_gen_smooth(self->level_gen, self);
 
     self->ecs = ecs_new();
-    ecs_attach_system(self->ecs, ECS_COMPONENT__AABB, ecs_system_collision);
     ecs_attach_system(self->ecs, ECS_COMPONENT__VEL, ecs_system_velocity);
     ecs_attach_system(self->ecs, ECS_COMPONENT__VEL, ecs_system_friction);
     ecs_attach_system(self->ecs, ECS_COMPONENT__GRAVITY, ecs_system_gravity);
+    ecs_attach_system(self->ecs, ECS_COMPONENT__MOVE_RANDOM, ecs_system_move_random);
 
     self->player = ecs_new_entity(self->ecs);
     ecs_component_pos_t* const player_pos = ecs_attach_component(self->ecs, self->player, ECS_COMPONENT__POS);
@@ -96,9 +96,9 @@ level_t* const level_new(size_chunks_t const size[NUM_AXES]) {
     self->rand = random_new(self->seed);
     for (size_t i = 0; i < NUM_TREES; i++) {
         size_t i_tree_pos[NUM_AXES] = {
-            random_next_int_bounded(self->rand, self->size[AXIS__X] * CHUNK_SIZE),
+            random_next_int_bounded(self->rand, self->size[AXIS__X] * CHUNK_SIZE - 1),
             0,
-            random_next_int_bounded(self->rand, self->size[AXIS__Z] * CHUNK_SIZE)
+            random_next_int_bounded(self->rand, self->size[AXIS__Z] * CHUNK_SIZE - 1)
         };
         for (size_t y = (self->size[AXIS__Y] * CHUNK_SIZE) - 1; y >= 0; y--) {
             i_tree_pos[AXIS__Y] = y;
@@ -117,6 +117,35 @@ level_t* const level_new(size_chunks_t const size[NUM_AXES]) {
         tree_pos->pos[AXIS__Z] = i_tree_pos[AXIS__Z] + 0.5f;
         
         tree_sprite->sprite = SPRITE__TREE;
+        tree_sprite->scale = 0.1f;
+    }
+
+    for (size_t i = 0; i < 100; i++) {
+        size_t i_mob_pos[NUM_AXES] = {
+            random_next_int_bounded(self->rand, self->size[AXIS__X] * CHUNK_SIZE - 1),
+            120,
+            random_next_int_bounded(self->rand, self->size[AXIS__Z] * CHUNK_SIZE - 1)
+        };
+
+        entity_t const mob = ecs_new_entity(self->ecs);
+        ecs_component_pos_t* const mob_pos = ecs_attach_component(self->ecs, mob, ECS_COMPONENT__POS);
+        ecs_component_rot_t* const mob_rot = ecs_attach_component(self->ecs, mob, ECS_COMPONENT__ROT);
+        ecs_component_aabb_t* const mob_aabb = ecs_attach_component(self->ecs, mob, ECS_COMPONENT__AABB);
+        ecs_attach_component(self->ecs, mob, ECS_COMPONENT__GRAVITY);
+        ecs_attach_component(self->ecs, mob, ECS_COMPONENT__VEL);
+        ecs_component_sprite_t* const mob_sprite = ecs_attach_component(self->ecs, mob, ECS_COMPONENT__SPRITE);
+        ecs_attach_component(self->ecs, mob, ECS_COMPONENT__MOVE_RANDOM);
+
+        mob_pos->pos[AXIS__X] = i_mob_pos[AXIS__X] + 0.5f;
+        mob_pos->pos[AXIS__Y] = i_mob_pos[AXIS__Y];
+        mob_pos->pos[AXIS__Z] = i_mob_pos[AXIS__Z] + 0.5f;
+
+        mob_rot->rot[ROT_AXIS__Y] = M_PI * 2 * random_next_float(self->rand);
+
+        aabb_set_bounds(mob_aabb->aabb, (float[NUM_AXES]) { -0.4f, 0.0f, -0.4f }, (float[NUM_AXES]) { 0.4f, 1.8f, 0.4f });
+
+        mob_sprite->sprite = SPRITE__MOB;
+        mob_sprite->scale = 0.15f;
     }
 
     return self;
@@ -147,6 +176,12 @@ void level_get_size(level_t const* const self, size_chunks_t size[NUM_AXES]) {
     assert(self != nullptr);
 
     memcpy(size, self->size, sizeof(size_chunks_t) * NUM_AXES);
+}
+
+random_t* const level_get_random(level_t* const self) {
+    assert(self != nullptr);
+
+    return self->rand;
 }
 
 bool const level_is_chunk_dirty(level_t const* const self, size_chunks_t const pos[NUM_AXES]) {

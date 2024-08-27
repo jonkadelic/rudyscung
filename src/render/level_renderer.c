@@ -187,7 +187,7 @@ void level_renderer_tick(level_renderer_t* const self) {
     }
 }
 
-void level_renderer_draw(level_renderer_t const* const self, camera_t const* const camera) {
+void level_renderer_draw(level_renderer_t const* const self, camera_t const* const camera, float const partial_tick) {
     assert(self != nullptr);
     assert(self->chunk_renderers != nullptr);
 
@@ -249,7 +249,15 @@ void level_renderer_draw(level_renderer_t const* const self, camera_t const* con
                 float distance_sq = (distances[AXIS__X] * distances[AXIS__X]) + (distances[AXIS__Y] * distances[AXIS__Y]) + (distances[AXIS__Z] * distances[AXIS__Z]);
 
                 if (distance_sq < (24 * 24 * 24)) {
-                    sprites_render(self->sprites, entity_sprite->sprite, camera, 10.0f, entity_pos->pos, (bool[NUM_ROT_AXES]) { true, false });
+                    float pos[NUM_AXES];
+                    if (ecs_has_component(ecs, entity, ECS_COMPONENT__VEL)) {
+                        pos[AXIS__X] = lerp(entity_pos->pos_o[AXIS__X], entity_pos->pos[AXIS__X], partial_tick);
+                        pos[AXIS__Y] = lerp(entity_pos->pos_o[AXIS__Y], entity_pos->pos[AXIS__Y], partial_tick);
+                        pos[AXIS__Z] = lerp(entity_pos->pos_o[AXIS__Z], entity_pos->pos[AXIS__Z], partial_tick);
+                    } else {
+                        memcpy(pos, entity_pos->pos, sizeof(float) * NUM_AXES);
+                    }
+                    sprites_render(self->sprites, entity_sprite->sprite, camera, entity_sprite->scale, pos, (bool[NUM_ROT_AXES]) { true, false });
                 }
             }
         }

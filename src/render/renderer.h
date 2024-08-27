@@ -18,4 +18,4 @@ void renderer_tick(renderer_t* const self);
 
 void renderer_set_level(renderer_t* const self, level_t* const level);
 
-void renderer_render(renderer_t* const self, camera_t const* const camera);
+void renderer_render(renderer_t* const self, camera_t const* const camera, float const partial_tick);

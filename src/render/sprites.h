@@ -11,6 +11,7 @@ typedef struct sprites sprites_t;
 
 typedef enum sprite {
     SPRITE__TREE,
+    SPRITE__MOB,
     NUM_SPRITES
 } sprite_t;
 

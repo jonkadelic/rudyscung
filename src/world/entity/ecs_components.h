@@ -38,6 +38,7 @@ typedef struct ecs_component_gravity {
 
 typedef struct ecs_component_sprite {
     sprite_t sprite;
+    float scale;
 } ecs_component_sprite_t;
 
 typedef struct ecs_component_move_random {

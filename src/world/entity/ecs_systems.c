@@ -91,14 +91,6 @@ void ecs_system_friction(ecs_t* const self, level_t* const level, entity_t const
     }
 }
 
-void ecs_system_collision(ecs_t* const self, level_t* const level, entity_t const entity) {
-    assert(self != nullptr);
-    assert(level != nullptr);
-    assert(ecs_has_component(self, entity, ECS_COMPONENT__POS));
-    assert(ecs_has_component(self, entity, ECS_COMPONENT__VEL));
-    assert(ecs_has_component(self, entity, ECS_COMPONENT__AABB));
-}
-
 void ecs_system_gravity(ecs_t* const self, level_t* const level, entity_t const entity) {
     assert(self != nullptr);
     assert(level != nullptr);
@@ -109,4 +101,41 @@ void ecs_system_gravity(ecs_t* const self, level_t* const level, entity_t const 
     ecs_component_vel_t* const vel = ecs_get_component_data(self, entity, ECS_COMPONENT__VEL);
 
     vel->vel[AXIS__Y] -= gravity->acceleration;
+}
+
+void ecs_system_move_random(ecs_t* const self, level_t* const level, entity_t const entity) {
+    assert(self != nullptr);
+    assert(level != nullptr);
+    assert(ecs_has_component(self, entity, ECS_COMPONENT__POS));
+    assert(ecs_has_component(self, entity, ECS_COMPONENT__VEL));
+    assert(ecs_has_component(self, entity, ECS_COMPONENT__ROT));
+    assert(ecs_has_component(self, entity, ECS_COMPONENT__MOVE_RANDOM));
+
+    ecs_component_vel_t* const vel = ecs_get_component_data(self, entity, ECS_COMPONENT__VEL);
+    ecs_component_rot_t* const rot = ecs_get_component_data(self, entity, ECS_COMPONENT__ROT);
+
+    random_t* const rand = level_get_random(level);
+
+    if (random_next_int_bounded(rand, 100) == 0) {
+        rot->rot[ROT_AXIS__Y] = M_PI * 2 * random_next_float(rand);
+    }
+
+    bool jump = false;
+    if (random_next_int_bounded(rand, 50) == 0) {
+        jump = true;
+    }
+
+    float forward = 0.3f;
+    float cos_rot_dy = cos(rot->rot[ROT_AXIS__Y]);
+    float sin_rot_dy = sin(rot->rot[ROT_AXIS__Y]);
+
+    float vel_x = forward * sin_rot_dy;
+    float vel_z = -forward * cos_rot_dy;
+
+    vel->vel[AXIS__X] = vel_x;
+    vel->vel[AXIS__Z] = vel_z;
+
+    if (jump) {
+        vel->vel[AXIS__Y] = 1.0f;
+    }
 }

@@ -111,9 +111,6 @@ void rudyscung_run(rudyscung_t* const self) {
                 if (event.type == SDL_KEYDOWN || event.type == SDL_KEYUP) {
                     bool is_pressed = event.type == SDL_KEYDOWN;
                     switch (event.key.keysym.sym) {
-                        case SDLK_ESCAPE:
-                            SDL_SetRelativeMouseMode(false);
-                            break;
                         case SDLK_r:
                             if (is_pressed && event.key.repeat == SDL_FALSE) {
                                 level_delete(level);
@@ -121,6 +118,10 @@ void rudyscung_run(rudyscung_t* const self) {
                                 ecs = level_get_ecs(level);
                                 player = level_get_player(level);
                                 renderer_set_level(self->renderer, level);
+                                view_type_delete(view_type_entity);
+                                view_type_entity = view_type_entity_new(player);
+                                view_type_delete(view_type_isometric);
+                                view_type_isometric = view_type_isometric_new(player);
                                 update_slice(self, level, true);
                             }
                             break;
@@ -139,7 +140,7 @@ void rudyscung_run(rudyscung_t* const self) {
         }
         
         view_type_render_tick(view_type, level, partial_tick);
-        renderer_render(self->renderer, view_type_get_camera(view_type));
+        renderer_render(self->renderer, view_type_get_camera(view_type), partial_tick);
 
         // Game tick
         size_t ticks = (size_t)(delta_tick / MS_PER_TICK);

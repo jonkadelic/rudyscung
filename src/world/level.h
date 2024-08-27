@@ -5,6 +5,7 @@
 #include "chunk.h"
 #include "entity/ecs.h"
 #include "side.h"
+#include "../random.h"
 
 #define NUM_TREES 100
 
@@ -15,6 +16,8 @@ level_t* const level_new(size_chunks_t const size[NUM_AXES]);
 void level_delete(level_t* const self);
 
 void level_get_size(level_t const* const self, size_chunks_t size[NUM_AXES]);
+
+random_t* const level_get_random(level_t* const self);
 
 bool const level_is_chunk_dirty(level_t const* const self, size_chunks_t const pos[NUM_AXES]);
 

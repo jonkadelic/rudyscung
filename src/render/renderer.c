@@ -85,7 +85,7 @@ void renderer_set_level(renderer_t* const self, level_t *const level) {
     self->level_renderer = level_renderer_new(self->rudyscung, level);
 }
 
-void renderer_render(renderer_t* const self, camera_t const* const camera) {
+void renderer_render(renderer_t* const self, camera_t const* const camera, float const partial_tick) {
     assert(self != nullptr);
 
     uint64_t tick_start = SDL_GetTicks64();
@@ -98,7 +98,7 @@ void renderer_render(renderer_t* const self, camera_t const* const camera) {
         glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-        level_renderer_draw(self->level_renderer, camera);
+        level_renderer_draw(self->level_renderer, camera, partial_tick);
 
         char line_buffer[64];
         snprintf(line_buffer, sizeof(line_buffer) / sizeof(line_buffer[0]), "FPS: %.2f", self->frames.fps);
