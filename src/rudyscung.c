@@ -25,6 +25,7 @@
 #include "world/entity/ecs_components.h"
 #include "world/level.h"
 #include "world/side.h"
+#include "render/view_type.h"
 
 #define WINDOW_TITLE "rudyscung"
 #define WINDOW_INITIAL_WIDTH 800
@@ -40,22 +41,6 @@ struct rudyscung {
     font_t* font;
     renderer_t* renderer;
 };
-
-// TODO: Replace with actual input handling
-static struct {
-    bool w;
-    bool s;
-    bool a;
-    bool d;
-    bool left;
-    bool right;
-    bool up;
-    bool down;
-    bool space;
-    bool shift;
-    bool left_click;
-    bool right_click;
-} keys;
 
 static void tick(rudyscung_t* const self, level_t* const level);
 static void update_slice(rudyscung_t* const self, level_t* const level, bool const force);
@@ -98,7 +83,9 @@ void rudyscung_run(rudyscung_t* const self) {
 
     renderer_set_level(self->renderer, level);
 
-    camera_perspective_t* camera = camera_perspective_new();
+    view_type_t* view_type_entity = view_type_entity_new(player);
+    view_type_t* view_type_isometric = view_type_isometric_new(player);
+    view_type_t* view_type = view_type_isometric;
 
     update_slice(self, level, true);
 
@@ -109,115 +96,61 @@ void rudyscung_run(rudyscung_t* const self) {
         uint64_t const delta_tick = current_tick - last_game_tick;
         float const partial_tick = (delta_tick / (float) MS_PER_TICK) - floor((delta_tick / (float) MS_PER_TICK));
 
-        ecs_component_pos_t* player_pos = ecs_get_component_data(ecs, player, ECS_COMPONENT__POS);
-        ecs_component_rot_t* player_rot = ecs_get_component_data(ecs, player, ECS_COMPONENT__ROT);
-        if (player_rot->rot[ROT_AXIS__X] > M_PI / 2) {
-            player_rot->rot[ROT_AXIS__X] = M_PI / 2;
-        }
-        if (player_rot->rot[ROT_AXIS__X] < -M_PI / 2) {
-            player_rot->rot[ROT_AXIS__X] = -M_PI / 2;
-        }
-
         // Handle events
         SDL_Event event;
         while (SDL_PollEvent(&event)) {
-            if (event.type == SDL_QUIT) {
-                running = false;
-            }
-            if (event.type == SDL_WINDOWEVENT) {
-                if (event.window.event == SDL_WINDOWEVENT_SIZE_CHANGED) {
-                    window_handle_resize(self->window);
+            if (!view_type_handle_event(view_type, &event, level)) {
+                if (event.type == SDL_QUIT) {
+                    running = false;
                 }
-            }
-            if (event.type == SDL_MOUSEBUTTONDOWN) {
-                if (event.button.button == SDL_BUTTON_LEFT) {
-                    if (SDL_GetRelativeMouseMode()) {
-                        keys.left_click = true;
-                    } else {
-                        SDL_SetRelativeMouseMode(true);
+                if (event.type == SDL_WINDOWEVENT) {
+                    if (event.window.event == SDL_WINDOWEVENT_SIZE_CHANGED) {
+                        window_handle_resize(self->window);
                     }
-                } else if (event.button.button == SDL_BUTTON_RIGHT) {
-                    keys.right_click = true;
                 }
-            }
-            if (event.type == SDL_MOUSEBUTTONUP) {
-                if (event.button.button == SDL_BUTTON_LEFT) {
-                    keys.left_click = false;
-                } else if (event.button.button == SDL_BUTTON_RIGHT) {
-                    keys.right_click = false;
-                }
-            }
-            if (event.type == SDL_MOUSEMOTION) {
-                if (SDL_GetRelativeMouseMode()) {
-                    player_rot->rot[ROT_AXIS__Y] += event.motion.xrel / 125.0f;
-                    player_rot->rot[ROT_AXIS__X] += event.motion.yrel / 125.0f;
-                }
-            }
-            if (event.type == SDL_KEYDOWN || event.type == SDL_KEYUP) {
-                bool is_pressed = event.type == SDL_KEYDOWN;
-                switch (event.key.keysym.sym) {
-                    case SDLK_ESCAPE:
-                        SDL_SetRelativeMouseMode(false);
-                        break;
-                    case SDLK_w:
-                        keys.w = is_pressed;
-                        break;
-                    case SDLK_s:
-                        keys.s = is_pressed;
-                        break;
-                    case SDLK_a:
-                        keys.a = is_pressed;
-                        break;
-                    case SDLK_d:
-                        keys.d = is_pressed;
-                        break;
-                    case SDLK_LEFT:
-                        keys.left = is_pressed;
-                        break;
-                    case SDLK_RIGHT:
-                        keys.right = is_pressed;
-                        break;
-                    case SDLK_UP:
-                        keys.up = is_pressed;
-                        break;
-                    case SDLK_DOWN:
-                        keys.down = is_pressed;
-                        break;
-                    case SDLK_SPACE:
-                        keys.space = is_pressed;
-                        break;
-                    case SDLK_LSHIFT:
-                    case SDLK_RSHIFT:
-                        keys.shift = is_pressed;
-                        break;
-                    case SDLK_r:
-                        if (is_pressed && event.key.repeat == SDL_FALSE) {
-                            level_delete(level);
-                            level = level_new((size_chunks_t[NUM_AXES]) { LEVEL_SIZE, LEVEL_HEIGHT, LEVEL_SIZE });
-                            ecs = level_get_ecs(level);
-                            player = level_get_player(level);
-                            renderer_set_level(self->renderer, level);
-                            update_slice(self, level, true);
-                        }
-                        break;
+                if (event.type == SDL_KEYDOWN || event.type == SDL_KEYUP) {
+                    bool is_pressed = event.type == SDL_KEYDOWN;
+                    switch (event.key.keysym.sym) {
+                        case SDLK_ESCAPE:
+                            SDL_SetRelativeMouseMode(false);
+                            break;
+                        case SDLK_r:
+                            if (is_pressed && event.key.repeat == SDL_FALSE) {
+                                level_delete(level);
+                                level = level_new((size_chunks_t[NUM_AXES]) { LEVEL_SIZE, LEVEL_HEIGHT, LEVEL_SIZE });
+                                ecs = level_get_ecs(level);
+                                player = level_get_player(level);
+                                renderer_set_level(self->renderer, level);
+                                update_slice(self, level, true);
+                            }
+                            break;
+                        case SDLK_v:
+                            if (is_pressed && event.key.repeat == SDL_FALSE) {
+                                if (view_type == view_type_entity) {
+                                    view_type = view_type_isometric;
+                                } else {
+                                    view_type = view_type_entity;
+                                }
+                            }
+                            break;
+                    }
                 }
             }
         }
         
-        renderer_render(self->renderer, camera);
+        view_type_render_tick(view_type, level, partial_tick);
+        renderer_render(self->renderer, view_type_get_camera(view_type));
 
         // Game tick
         size_t ticks = (size_t)(delta_tick / MS_PER_TICK);
         for (uint64_t t = 0; t < ticks; t++) {
+            view_type_tick(view_type, level);
             tick(self, level);
         }
         last_game_tick = current_tick - (delta_tick % MS_PER_TICK);
-
-        camera_set_pos(camera, (float[NUM_AXES]) { lerp(player_pos->pos_o[AXIS__X], player_pos->pos[AXIS__X], partial_tick), lerp(player_pos->pos_o[AXIS__Y], player_pos->pos[AXIS__Y], partial_tick), lerp(player_pos->pos_o[AXIS__Z], player_pos->pos[AXIS__Z], partial_tick) });
-        camera_set_rot(camera, player_rot->rot);
     }
 
-    camera_delete(camera);
+    view_type_delete(view_type);
     level_delete(level);
 }
 
@@ -251,116 +184,6 @@ static void tick(rudyscung_t* const self, level_t* const level) {
 
     renderer_tick(self->renderer);
     level_tick(level);
-
-    static uint64_t last_block_break = 0;
-
-    ecs_t* ecs = level_get_ecs(level);
-    entity_t player = level_get_player(level);
-
-    bool any_movement_input = keys.w || keys.s || keys.a || keys.d;
-    bool any_vertical_movement_input = keys.shift || keys.space;
-    bool any_look_input = keys.left || keys.right || keys.up || keys.down;
-    bool any_click = keys.left_click || keys.right_click;
-
-    if (any_movement_input) {
-        float left = 0;
-        float forward = 0;
-        float const speed = 0.5f;
-
-        if (keys.w) {
-            forward += speed;
-        }
-        if (keys.s) {
-            forward -= speed;
-        }
-        if (keys.a) {
-            left += speed;
-        }
-        if (keys.d) {
-            left -= speed;
-        }
-
-        ecs_component_vel_t* player_vel = ecs_get_component_data(ecs, player, ECS_COMPONENT__VEL);
-        ecs_component_rot_t* player_rot = ecs_get_component_data(ecs, player, ECS_COMPONENT__ROT);
-
-        float cos_rot_dy = cos(player_rot->rot[ROT_AXIS__Y]);
-        float sin_rot_dy = sin(player_rot->rot[ROT_AXIS__Y]);
-
-        float vel_x = - left * cos_rot_dy + forward * sin_rot_dy;
-        float vel_z = - left * sin_rot_dy - forward * cos_rot_dy;
-
-        player_vel->vel[AXIS__X] = vel_x;
-        player_vel->vel[AXIS__Z] = vel_z;
-    }
-
-    if (any_vertical_movement_input) {
-        float up = 0;
-        float const speed = 0.5f;
-
-        if (keys.space) {
-            up += speed;
-        }
-        if (keys.shift) {
-            up -= speed;
-        }
-
-        ecs_component_vel_t* player_vel = ecs_get_component_data(ecs, player, ECS_COMPONENT__VEL);
-
-        float vel_y = up;
-
-        player_vel->vel[AXIS__Y] = vel_y;
-    }
-
-    if (any_look_input) {
-        float rot_dy = 0;
-        float rot_dx = 0;
-        float const speed = 0.25f;
-
-        if (keys.left) {
-            rot_dy -= speed;
-        }
-        if (keys.right) {
-            rot_dy += speed;
-        }
-        if (keys.up) {
-            rot_dx -= speed;
-        }
-        if (keys.down) {
-            rot_dx += speed;
-        }
-
-        ecs_component_rot_t* player_rot = ecs_get_component_data(ecs, player, ECS_COMPONENT__ROT);
-
-        float new_rot_y = player_rot->rot[ROT_AXIS__Y] + rot_dy;
-        float new_rot_x = player_rot->rot[ROT_AXIS__X] + rot_dx;
-
-        player_rot->rot[ROT_AXIS__Y] = new_rot_y;
-        player_rot->rot[ROT_AXIS__X] = new_rot_x;
-    }
-
-    if (any_click) {
-        ecs_component_pos_t const* const player_pos = ecs_get_component_data(ecs, player, ECS_COMPONENT__POS);
-        ecs_component_rot_t const* const player_rot = ecs_get_component_data(ecs, player, ECS_COMPONENT__ROT);
-
-        uint64_t current_tick = SDL_GetTicks64();
-
-        if (current_tick - last_block_break > 500) {
-            last_block_break = current_tick;
-
-            raycast_t raycast;
-            raycast_cast_in_level(&raycast, level, player_pos->pos, player_rot->rot);
-
-            if (raycast.hit) {
-                if (keys.left_click) {
-                    level_set_tile(level, raycast.tile_pos, TILE__AIR);
-                } else if (keys.right_click) {
-                    int offset[NUM_AXES];
-                    side_get_offsets(raycast.side, offset);
-                    level_set_tile(level, VEC_ADD(raycast.tile_pos, offset), TILE__STONE);
-                }
-            }
-        }
-    }
 
     update_slice(self, level, false);
 }

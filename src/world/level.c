@@ -32,7 +32,6 @@ struct level {
     uint64_t seed;
     random_t* rand;
     entity_t player;
-    entity_t trees[NUM_TREES];
 };
 
 level_t* const level_new(size_chunks_t const size[NUM_AXES]) {
@@ -48,7 +47,7 @@ level_t* const level_new(size_chunks_t const size[NUM_AXES]) {
     struct timeval time;
     gettimeofday(&time, nullptr);
     self->seed = time.tv_sec * 1000 + time.tv_usec / 1000;
-    self->level_gen = level_gen_new(self->seed);
+    self->level_gen = level_gen_new(0);
 
     self->chunks = malloc(sizeof(chunk_t*) * size[AXIS__X] * size[AXIS__Y] * size[AXIS__Z]);
     assert(self->chunks != nullptr);
@@ -86,18 +85,13 @@ level_t* const level_new(size_chunks_t const size[NUM_AXES]) {
     ecs_component_pos_t* const player_pos = ecs_attach_component(self->ecs, self->player, ECS_COMPONENT__POS);
     ecs_attach_component(self->ecs, self->player, ECS_COMPONENT__VEL);
     ecs_component_rot_t* const player_rot = ecs_attach_component(self->ecs, self->player, ECS_COMPONENT__ROT);
-    ecs_component_aabb_t* const player_aabb = ecs_attach_component(self->ecs, self->player, ECS_COMPONENT__AABB);
-    ecs_attach_component(self->ecs, self->player, ECS_COMPONENT__GRAVITY);
     
-    player_pos->pos[AXIS__X] = 24.0f;
-    player_pos->pos[AXIS__Y] = 100.0f;
-    player_pos->pos[AXIS__Z] = 24.0f;
+    player_pos->pos[AXIS__X] = (size[AXIS__X] / 2.0f) * CHUNK_SIZE;
+    player_pos->pos[AXIS__Y] = 120.0f;
+    player_pos->pos[AXIS__Z] = (size[AXIS__Z] / 2.0f) * CHUNK_SIZE;
 
     player_rot->rot[ROT_AXIS__Y] = M_PI / 4 * 3;
-
-    float const player_aabb_min[NUM_AXES] = { -0.4f, -1.8f, -0.4f };
-    float const player_aabb_max[NUM_AXES] = { 0.4f, 0.1999f, 0.4f };
-    aabb_set_bounds(player_aabb->aabb, player_aabb_min, player_aabb_max);
+    player_rot->rot[ROT_AXIS__X] = M_PI / 4 * 2;
 
     self->rand = random_new(self->seed);
     for (size_t i = 0; i < NUM_TREES; i++) {
@@ -114,9 +108,9 @@ level_t* const level_new(size_chunks_t const size[NUM_AXES]) {
             }
         }
 
-        self->trees[i] = ecs_new_entity(self->ecs);
-        ecs_component_pos_t* const tree_pos = ecs_attach_component(self->ecs, self->trees[i], ECS_COMPONENT__POS);
-        ecs_component_sprite_t* const tree_sprite = ecs_attach_component(self->ecs, self->trees[i], ECS_COMPONENT__SPRITE);
+        entity_t const tree = ecs_new_entity(self->ecs);
+        ecs_component_pos_t* const tree_pos = ecs_attach_component(self->ecs, tree, ECS_COMPONENT__POS);
+        ecs_component_sprite_t* const tree_sprite = ecs_attach_component(self->ecs, tree, ECS_COMPONENT__SPRITE);
 
         tree_pos->pos[AXIS__X] = i_tree_pos[AXIS__X] + 0.5f;
         tree_pos->pos[AXIS__Y] = i_tree_pos[AXIS__Y];
@@ -336,11 +330,4 @@ float const level_get_nearest_face_on_axis(level_t const* const self, float cons
     }
 
     return NAN;
-}
-
-entity_t const level_get_tree(level_t const* const self, size_t const index) {
-    assert(self != nullptr);
-    assert(index >= 0 && index < NUM_TREES);
-
-    return self->trees[index];
 }

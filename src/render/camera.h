@@ -6,8 +6,11 @@
 typedef struct camera camera_t;
 
 typedef struct camera camera_perspective_t;
+typedef struct camera camera_ortho_t;
 
 camera_perspective_t* const camera_perspective_new(void);
+
+camera_ortho_t* const camera_ortho_new(void);
 
 void camera_delete(camera_t* const self);
 

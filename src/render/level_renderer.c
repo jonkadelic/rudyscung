@@ -237,17 +237,21 @@ void level_renderer_draw(level_renderer_t const* const self, camera_t const* con
     glDisable(GL_CULL_FACE);
 
     ecs_t* ecs = level_get_ecs(self->level);
+    entity_t const highest_entity_id = ecs_get_highest_entity_id(ecs);
 
-    for (size_t i = 0; i < NUM_TREES; i++) {
-        entity_t tree = level_get_tree(self->level, i);
-        ecs_component_pos_t const* const tree_pos = ecs_get_component_data(ecs, tree, ECS_COMPONENT__POS);
-        ecs_component_sprite_t const* const tree_sprite = ecs_get_component_data(ecs, tree, ECS_COMPONENT__SPRITE);
+    for (entity_t entity = 0; entity <= highest_entity_id; entity++) {
+        if (ecs_does_entity_exist(ecs, entity)) {
+            if (ecs_has_component(ecs, entity, ECS_COMPONENT__POS) && ecs_has_component(ecs, entity, ECS_COMPONENT__SPRITE)) {
+                ecs_component_pos_t const* const entity_pos = ecs_get_component_data(ecs, entity, ECS_COMPONENT__POS);
+                ecs_component_sprite_t const* const entity_sprite = ecs_get_component_data(ecs, entity, ECS_COMPONENT__SPRITE);
 
-        float distances[NUM_AXES] = VEC_SUB_INIT(tree_pos->pos, camera_pos);
-        float distance_sq = (distances[AXIS__X] * distances[AXIS__X]) + (distances[AXIS__Y] * distances[AXIS__Y]) + (distances[AXIS__Z] * distances[AXIS__Z]);
+                float distances[NUM_AXES] = VEC_SUB_INIT(entity_pos->pos, camera_pos);
+                float distance_sq = (distances[AXIS__X] * distances[AXIS__X]) + (distances[AXIS__Y] * distances[AXIS__Y]) + (distances[AXIS__Z] * distances[AXIS__Z]);
 
-        if (distance_sq < (24 * 24 * 24)) {
-            sprites_render(self->sprites, tree_sprite->sprite, camera, 10.0f, tree_pos->pos, (bool[NUM_ROT_AXES]) { true, false });
+                if (distance_sq < (24 * 24 * 24)) {
+                    sprites_render(self->sprites, entity_sprite->sprite, camera, 10.0f, entity_pos->pos, (bool[NUM_ROT_AXES]) { true, false });
+                }
+            }
         }
     }
 

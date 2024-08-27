@@ -20,6 +20,7 @@ struct ecs {
     entity_storage_t* entities[MAX_ENTITIES];
     size_t systems_size;
     system_storage_t** systems;
+    entity_t highest_entity_id;
 };
 
 static size_t const COMPONENT_SIZES[NUM_ECS_COMPONENTS] = {
@@ -28,7 +29,8 @@ static size_t const COMPONENT_SIZES[NUM_ECS_COMPONENTS] = {
     [ECS_COMPONENT__ROT] = sizeof(ecs_component_rot_t),
     [ECS_COMPONENT__AABB] = sizeof(ecs_component_aabb_t),
     [ECS_COMPONENT__GRAVITY] = sizeof(ecs_component_gravity_t),
-    [ECS_COMPONENT__SPRITE] = sizeof(ecs_component_sprite_t)
+    [ECS_COMPONENT__SPRITE] = sizeof(ecs_component_sprite_t),
+    [ECS_COMPONENT__MOVE_RANDOM] = sizeof(ecs_component_move_random_t)
 };
 
 static void* const new_component(ecs_component_t const component);
@@ -93,6 +95,10 @@ entity_t const ecs_new_entity(ecs_t* const self) {
     }
     assert(found_slot);
 
+    if (self->highest_entity_id < entity) {
+        self->highest_entity_id = entity;
+    }
+
     entity_storage_t* entity_storage = calloc(1, sizeof(entity_storage_t));
     assert(entity_storage != nullptr);
 
@@ -147,7 +153,7 @@ void ecs_detach_component(ecs_t* const self, entity_t const entity, ecs_componen
     entity_storage->component_data[component] = nullptr;
 }
 
-bool ecs_has_component(ecs_t const* const self, entity_t const entity, ecs_component_t const component) {
+bool const ecs_has_component(ecs_t const* const self, entity_t const entity, ecs_component_t const component) {
     assert(self != nullptr);
     assert(self->entities[entity] != nullptr);
     assert(component >= 0 && component < NUM_ECS_COMPONENTS);
@@ -218,6 +224,22 @@ void ecs_detach_system(ecs_t* const self, ecs_component_t const component, ecs_s
     }
 
     assert(deleted_any);
+}
+
+entity_t const ecs_get_highest_entity_id(ecs_t* const self) {
+    assert(self != nullptr);
+
+    return self->highest_entity_id;
+}
+
+bool const ecs_does_entity_exist(ecs_t* const self, entity_t const entity) {
+    assert(self != nullptr);
+
+    if (entity < 0 || entity >= MAX_ENTITIES) {
+        return false;
+    }
+
+    return self->entities[entity] != nullptr;
 }
 
 static void* const new_component(ecs_component_t const component) {

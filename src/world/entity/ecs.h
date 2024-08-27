@@ -25,10 +25,14 @@ void* const ecs_attach_component(ecs_t* const self, entity_t const entity, ecs_c
 
 void ecs_detach_component(ecs_t* const self, entity_t const entity, ecs_component_t const component);
 
-bool ecs_has_component(ecs_t const* const self, entity_t const entity, ecs_component_t const component);
+bool const ecs_has_component(ecs_t const* const self, entity_t const entity, ecs_component_t const component);
 
 void* const ecs_get_component_data(ecs_t* const self, entity_t const entity, ecs_component_t const component);
 
 void ecs_attach_system(ecs_t* const self, ecs_component_t const component, ecs_system_t const system);
 
 void ecs_detach_system(ecs_t* const self, ecs_component_t const component, ecs_system_t const system);
+
+entity_t const ecs_get_highest_entity_id(ecs_t* const self);
+
+bool const ecs_does_entity_exist(ecs_t* const self, entity_t const entity);
