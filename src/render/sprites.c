@@ -4,9 +4,6 @@
 #include <string.h>
 #include <stdlib.h>
 
-#include <GL/glew.h>
-#include <GL/gl.h>
-
 #include "tessellator.h"
 #include "textures.h"
 #include "../rudyscung.h"

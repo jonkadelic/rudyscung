@@ -250,12 +250,12 @@ void level_gen_generate(level_gen_t* const self, chunk_t* const chunk) {
             size_t height = 64 + yo;
             for (size_t y = 0; y < CHUNK_SIZE && (chunk_pos[AXIS__Y] * CHUNK_SIZE + y) < height; y++) {
                 size_t wy = chunk_pos[AXIS__Y] * CHUNK_SIZE + y;
-                chunk_set_tile(chunk, (size_t[NUM_AXES]) { x, y, z }, tile_get(TILE_ID__STONE));
+                chunk_set_tile(chunk, (size_t[NUM_AXES]) { x, y, z }, TILE__STONE);
             }
             if (height >= chunk_pos[AXIS__Y] * CHUNK_SIZE && height < chunk_pos[AXIS__Y] * CHUNK_SIZE + CHUNK_SIZE) {
-                tile_t const* top_tile = tile_get(TILE_ID__GRASS);
+                tile_t top_tile = TILE__GRASS;
                 if (height <= 75) {
-                    top_tile = tile_get(TILE_ID__SAND);
+                    top_tile = TILE__SAND;
                 }
                 chunk_set_tile(chunk, (size_t[NUM_AXES]) { x, height - (chunk_pos[AXIS__Y] * CHUNK_SIZE), z }, top_tile);
             }
@@ -274,14 +274,12 @@ void level_gen_smooth(level_gen_t const* const self, level_t* const level) {
         level_size_tiles[a] = level_size[a] * CHUNK_SIZE;
     }
 
-    tile_t const* const air_tile = tile_get(TILE_ID__AIR);
-
     for (size_t z = 0; z < level_size_tiles[AXIS__Z]; z++) {
         for (size_t x = 0; x < level_size_tiles[AXIS__X]; x++) {
             size_t pos[NUM_AXES] = { x, level_size_tiles[AXIS__Y] - 1, z };
 
-            tile_t const* tile;
-            while ((tile = level_get_tile(level, pos)) == air_tile) {
+            tile_t tile;
+            while ((tile = level_get_tile(level, pos)) == TILE__AIR) {
                 pos[AXIS__Y]--;
             }
 
@@ -289,11 +287,11 @@ void level_gen_smooth(level_gen_t const* const self, level_t* const level) {
             look_up_sides(level, level_size_tiles, pos, sides_present);
 
             if (sides_present[SIDE__NORTH] + sides_present[SIDE__SOUTH] + sides_present[SIDE__WEST] + sides_present[SIDE__EAST] < 2) {
-                level_set_tile(level, pos, air_tile);
+                level_set_tile(level, pos, TILE__AIR);
                 pos[AXIS__Y]--;
-                tile_t const* top_tile = tile_get(TILE_ID__GRASS);
+                tile_t top_tile = TILE__GRASS;
                 if (pos[AXIS__Y] <= 75) {
-                    top_tile = tile_get(TILE_ID__SAND);
+                    top_tile = TILE__SAND;
                 }
                 level_set_tile(level, pos, top_tile);
             }
@@ -305,9 +303,9 @@ void level_gen_smooth(level_gen_t const* const self, level_t* const level) {
                     if (tile_matches_pattern(level, i, sides_present, pos)) {
                         level_set_tile_shape(level, pos, i);
                         if (i == TILE_SHAPE__CORNER_A_NORTH_WEST || i == TILE_SHAPE__CORNER_A_SOUTH_WEST || i == TILE_SHAPE__CORNER_A_NORTH_EAST || i == TILE_SHAPE__CORNER_A_SOUTH_EAST) {
-                            tile_t const* top_tile = tile_get(TILE_ID__GRASS);
+                            tile_t top_tile = TILE__GRASS;
                             if (pos[AXIS__Y] - 1 <= 75) {
-                                top_tile = tile_get(TILE_ID__SAND);
+                                top_tile = TILE__SAND;
                             }
                             level_set_tile(level, pos_below, top_tile);
 
@@ -335,8 +333,6 @@ void level_gen_smooth(level_gen_t const* const self, level_t* const level) {
 static void look_up_sides(level_t const* const level, size_chunks_t const level_size_tiles[NUM_AXES], size_t const pos[NUM_AXES], bool sides[NUM_SIDES]) {
     assert(level != nullptr);
 
-    tile_t const* const air_tile = tile_get(TILE_ID__AIR);
-
     for (side_t i = 0; i < NUM_SIDES; i++) {
         int offsets[NUM_AXES];
         side_get_offsets(i, offsets);
@@ -352,8 +348,8 @@ static void look_up_sides(level_t const* const level, size_chunks_t const level_
         }
         if (sides[i]) {
             size_t const pos_t_u[NUM_AXES] = { pos_t[AXIS__X], pos_t[AXIS__Y], pos_t[AXIS__Z] };
-            tile_t const* const offset_tile = level_get_tile(level, pos_t_u);
-            sides[i] = offset_tile != air_tile;
+            tile_t const offset_tile = level_get_tile(level, pos_t_u);
+            sides[i] = offset_tile != TILE__AIR;
         }
     }
 }
@@ -361,8 +357,6 @@ static void look_up_sides(level_t const* const level, size_chunks_t const level_
 static bool tile_matches_pattern(level_t const* const level, tile_shape_t const tile_shape, bool const sides[NUM_SIDES], size_t const pos[NUM_AXES]) {
     assert(level != nullptr);
     assert(tile_shape >= 0 && tile_shape < NUM_TILE_SHAPES);
-
-    tile_t const* const air_tile = tile_get(TILE_ID__AIR);
 
     if (memcmp(sides, SHAPE_LOOKUP[tile_shape].sides_present, sizeof(bool) * NUM_SIDES) == 0) {
         if (SHAPE_LOOKUP[tile_shape].has_extra) {
@@ -377,10 +371,10 @@ static bool tile_matches_pattern(level_t const* const level, tile_shape_t const 
                 bool north_east;
                 bool south_east;
             } extra = {
-                .north_west = level_get_tile(level, pos_north_west) != air_tile,
-                .south_west = level_get_tile(level, pos_south_west) != air_tile,
-                .north_east = level_get_tile(level, pos_north_east) != air_tile,
-                .south_east = level_get_tile(level, pos_south_east) != air_tile
+                .north_west = level_get_tile(level, pos_north_west) != TILE__AIR,
+                .south_west = level_get_tile(level, pos_south_west) != TILE__AIR,
+                .north_east = level_get_tile(level, pos_north_east) != TILE__AIR,
+                .south_east = level_get_tile(level, pos_south_east) != TILE__AIR
             };
             if (memcmp(&extra, &(SHAPE_LOOKUP[tile_shape].extra), sizeof(extra)) != 0) {
                 return false;

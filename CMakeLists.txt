@@ -9,6 +9,7 @@ find_package(SDL2 REQUIRED CONFIG COMPONENTS SDL2main)
 
 set(SOURCES
     src/phys/aabb.c
+    src/phys/raycast.c
     src/render/camera.c
     src/render/chunk_renderer.c
     src/render/font.c

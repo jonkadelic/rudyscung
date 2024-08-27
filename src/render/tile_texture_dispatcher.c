@@ -12,7 +12,7 @@ typedef struct entry {
 } entry_t;
 
 static entry_t const ENTRIES[NUM_TILES] = {
-    [TILE_ID__GRASS] = {
+    [TILE__GRASS] = {
         .exists = true,
         .is_callable = false,
         .texture_coords = {
@@ -24,7 +24,7 @@ static entry_t const ENTRIES[NUM_TILES] = {
             [SIDE__EAST] = { .x = 1, .y = 0 },
         }
     },
-    [TILE_ID__STONE] = {
+    [TILE__STONE] = {
         .exists = true,
         .is_callable = false,
         .texture_coords = {
@@ -36,7 +36,7 @@ static entry_t const ENTRIES[NUM_TILES] = {
             [SIDE__EAST] = { .x = 1, .y = 0 },
         }
     },
-    [TILE_ID__SAND] = {
+    [TILE__SAND] = {
         .exists = true,
         .is_callable = false,
         .texture_coords = {
@@ -50,13 +50,12 @@ static entry_t const ENTRIES[NUM_TILES] = {
     }
 };
 
-void tile_texture_dispatcher_get_tile_texture_coords(tile_t const* const tile, side_t const side, tile_texture_coords_t* const texture_coords) {
-    assert(tile != nullptr);
+void tile_texture_dispatcher_get_tile_texture_coords(tile_t const tile, side_t const side, tile_texture_coords_t* const texture_coords) {
+    assert(tile >= 0 && tile < NUM_TILES);
     assert(side >= 0 && side < NUM_SIDES);
     assert(texture_coords != nullptr);
 
-    tile_id_t id = tile_get_id(tile);
-    entry_t const* const entry = &(ENTRIES[id]);
+    entry_t const* const entry = &(ENTRIES[tile]);
 
     if (entry->exists) {
         if (entry->is_callable) {

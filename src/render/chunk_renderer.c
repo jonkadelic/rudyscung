@@ -64,6 +64,12 @@ void chunk_renderer_delete(chunk_renderer_t* const self) {
     free(self);
 }
 
+chunk_t const* const chunk_renderer_get_chunk(chunk_renderer_t const* const self) {
+    assert(self != nullptr);
+
+    return self->chunk;
+}
+
 bool chunk_renderer_is_ready(chunk_renderer_t const* const self) {
     assert(self != nullptr);
 
@@ -95,7 +101,7 @@ void chunk_renderer_build(chunk_renderer_t* const self, tessellator_t* const tes
                 }
                 size_t pos[NUM_AXES] = { x, y, z };
 
-                tile_t const* const tile = chunk_get_tile(self->chunk, pos);
+                tile_t const tile = chunk_get_tile(self->chunk, pos);
                 tile_shape_t const tile_shape = chunk_get_tile_shape(self->chunk, pos);
 
                 int const pos_i[NUM_AXES] = { x, y, z };

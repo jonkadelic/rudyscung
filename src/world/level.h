@@ -16,11 +16,13 @@ void level_delete(level_t* const self);
 
 void level_get_size(level_t const* const self, size_chunks_t size[NUM_AXES]);
 
+bool const level_is_chunk_dirty(level_t const* const self, size_chunks_t const pos[NUM_AXES]);
+
 chunk_t* const level_get_chunk(level_t const* const self, size_chunks_t const pos[NUM_AXES]);
 
-tile_t const* const level_get_tile(level_t const* const self, size_t const pos[NUM_AXES]);
+tile_t const level_get_tile(level_t const* const self, size_t const pos[NUM_AXES]);
 
-void level_set_tile(level_t* const self, size_t const pos[NUM_AXES], tile_t const* const tile);
+void level_set_tile(level_t* const self, size_t const pos[NUM_AXES], tile_t const tile);
 
 tile_shape_t const level_get_tile_shape(level_t const* const self, size_t const pos[NUM_AXES]);
 

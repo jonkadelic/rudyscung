@@ -6,7 +6,9 @@
 #define TO_RADIANS(degrees) (degrees * M_PI / 180.0)
 
 #define VEC_ADD_INIT(a, b) { a[AXIS__X] + b[AXIS__X], a[AXIS__Y] + b[AXIS__Y], a[AXIS__Z] + b[AXIS__Z] }
-#define VEC_ADD(a, b) ((typeof(a[0])[]) VEC_ADD(a, b))
+#define VEC_ADD(a, b) ((typeof(a[0])[]) VEC_ADD_INIT(a, b))
+#define VEC_SUB_INIT(a, b) { a[AXIS__X] - b[AXIS__X], a[AXIS__Y] - b[AXIS__Y], a[AXIS__Z] - b[AXIS__Z] }
+#define VEC_SUB(a, b) ((typeof(a[0])[]) VEC_SUB_INIT(a, b))
 #define VEC_CAST_INIT(t, a) { (t) a[AXIS__X], (t) a[AXIS__Y], (t) a[AXIS__Z] }
 #define VEC_CAST(t, a) ((t[]) VEC_CAST_INIT(t, a))
 

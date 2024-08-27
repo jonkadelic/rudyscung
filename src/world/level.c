@@ -25,6 +25,7 @@
 struct level {
     size_chunks_t size[NUM_AXES];
     chunk_t** chunks;
+    bool* is_chunk_dirty;
     level_gen_t* level_gen;
     ecs_t* ecs;
     entity_t player;
@@ -59,6 +60,17 @@ level_t* const level_new(size_chunks_t const size[NUM_AXES]) {
         }
     }
 
+    self->is_chunk_dirty = malloc(sizeof(bool) * size[AXIS__X] * size[AXIS__Y] * size[AXIS__Z]);
+    assert(self->is_chunk_dirty != nullptr);
+    for (size_chunks_t x = 0; x < size[AXIS__X]; x++) {
+        for (size_chunks_t y = 0; y < size[AXIS__Y]; y++) {
+            for (size_chunks_t z = 0; z < size[AXIS__Z]; z++) {
+                size_chunks_t const i_pos[NUM_AXES] = { x, y, z };
+                self->is_chunk_dirty[CHUNK_INDEX(i_pos)] = false;
+            }
+        }
+    }
+
     level_gen_smooth(self->level_gen, self);
 
     self->ecs = ecs_new();
@@ -81,7 +93,7 @@ level_t* const level_new(size_chunks_t const size[NUM_AXES]) {
     player_rot->rot[ROT_AXIS__Y] = M_PI / 4 * 3;
 
     float const player_aabb_min[NUM_AXES] = { -0.4f, -1.8f, -0.4f };
-    float const player_aabb_max[NUM_AXES] = { 0.4f, 0.2f, 0.4f };
+    float const player_aabb_max[NUM_AXES] = { 0.4f, 0.1999f, 0.4f };
     aabb_set_bounds(player_aabb->aabb, player_aabb_min, player_aabb_max);
 
     srand(seed);
@@ -93,7 +105,7 @@ level_t* const level_new(size_chunks_t const size[NUM_AXES]) {
         };
         for (size_t y = (self->size[AXIS__Y] * CHUNK_SIZE) - 1; y >= 0; y--) {
             i_tree_pos[AXIS__Y] = y;
-            if (level_get_tile(self, i_tree_pos) != tile_get(TILE_ID__AIR)) {
+            if (level_get_tile(self, i_tree_pos) != TILE__AIR) {
                 i_tree_pos[AXIS__Y] = y + 1;
                 break;
             }
@@ -140,6 +152,15 @@ void level_get_size(level_t const* const self, size_chunks_t size[NUM_AXES]) {
     memcpy(size, self->size, sizeof(size_chunks_t) * NUM_AXES);
 }
 
+bool const level_is_chunk_dirty(level_t const* const self, size_chunks_t const pos[NUM_AXES]) {
+    assert(self != nullptr);
+    for (axis_t a = 0; a < NUM_AXES; a++) {
+        assert(pos[a] >= 0 && pos[a] < self->size[a]);
+    }
+
+    return self->is_chunk_dirty[CHUNK_INDEX(pos)];
+}
+
 chunk_t* const level_get_chunk(level_t const* const self, size_chunks_t const pos[NUM_AXES]) {
     assert(self != nullptr);
     for (axis_t a = 0; a < NUM_AXES; a++) {
@@ -149,7 +170,7 @@ chunk_t* const level_get_chunk(level_t const* const self, size_chunks_t const po
     return self->chunks[CHUNK_INDEX(pos)];
 }
 
-tile_t const* const level_get_tile(level_t const* const self, size_t const pos[NUM_AXES]) {
+tile_t const level_get_tile(level_t const* const self, size_t const pos[NUM_AXES]) {
     assert(self != nullptr);
     for (axis_t a = 0; a < NUM_AXES; a++) {
         assert(pos[a] >= 0 && pos[a] < TO_TILE_SPACE(self->size[a]));
@@ -160,7 +181,7 @@ tile_t const* const level_get_tile(level_t const* const self, size_t const pos[N
     return chunk_get_tile(chunk, TO_POS_IN_CHUNK_ARR(pos));
 }
 
-void level_set_tile(level_t* const self, size_t const pos[NUM_AXES], tile_t const* const tile) {
+void level_set_tile(level_t* const self, size_t const pos[NUM_AXES], tile_t const tile) {
     assert(self != nullptr);
     for (axis_t a = 0; a < NUM_AXES; a++) {
         assert(pos[a] >= 0 && pos[a] < TO_TILE_SPACE(self->size[a]));
@@ -168,6 +189,8 @@ void level_set_tile(level_t* const self, size_t const pos[NUM_AXES], tile_t cons
     chunk_t* const chunk = level_get_chunk(self, TO_CHUNK_SPACE_ARR(pos));
 
     chunk_set_tile(chunk, TO_POS_IN_CHUNK_ARR(pos), tile);
+
+    self->is_chunk_dirty[CHUNK_INDEX(TO_CHUNK_SPACE_ARR(pos))] = true;
 }
 
 tile_shape_t const level_get_tile_shape(level_t const* const self, size_t const pos[NUM_AXES]) {
@@ -190,12 +213,23 @@ void level_set_tile_shape(level_t* const self, size_t const pos[NUM_AXES], tile_
     chunk_t* const chunk = level_get_chunk(self, TO_CHUNK_SPACE_ARR(pos));
 
     chunk_set_tile_shape(chunk, TO_POS_IN_CHUNK_ARR(pos), shape);
+
+    self->is_chunk_dirty[CHUNK_INDEX(TO_CHUNK_SPACE_ARR(pos))] = true;
 }
 
 void level_tick(level_t* const self) {
     assert(self != nullptr);
 
     ecs_tick(self->ecs, self);
+
+    for (size_chunks_t x = 0; x < self->size[AXIS__X]; x++) {
+        for (size_chunks_t y = 0; y < self->size[AXIS__Y]; y++) {
+            for (size_chunks_t z = 0; z < self->size[AXIS__Z]; z++) {
+                size_chunks_t const i_pos[NUM_AXES] = { x, y, z };
+                self->is_chunk_dirty[CHUNK_INDEX(i_pos)] = false;
+            }
+        }
+    }
 }
 
 ecs_t* const level_get_ecs(level_t* const self) {
@@ -221,8 +255,6 @@ float const level_get_nearest_face_on_axis(level_t const* const self, float cons
     size_chunks_t level_size[NUM_AXES];
     level_get_size(self, level_size);
 
-    tile_t const* const air_tile = tile_get(TILE_ID__AIR);
-
     float i_pos[NUM_AXES];
     for (axis_t a = 0; a < NUM_AXES; a++) {
         i_pos[a] = (int) pos[a] + 0.5f;
@@ -246,8 +278,8 @@ float const level_get_nearest_face_on_axis(level_t const* const self, float cons
                         return NAN;
                     }
                 }
-                tile_t const* const tile = level_get_tile(self, VEC_CAST(size_t, i_pos));
-                if (tile != air_tile) {
+                tile_t const tile = level_get_tile(self, VEC_CAST(size_t, i_pos));
+                if (tile != TILE__AIR) {
                     break;
                 }
 
