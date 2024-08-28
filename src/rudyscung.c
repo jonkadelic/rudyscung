@@ -26,6 +26,7 @@
 #include "world/level.h"
 #include "world/side.h"
 #include "render/view_type.h"
+#include "util/logger.h"
 
 #define WINDOW_TITLE "rudyscung"
 #define WINDOW_INITIAL_WIDTH 800
@@ -48,14 +49,18 @@ static void update_slice(rudyscung_t* const self, level_t* const level, bool con
 rudyscung_t* const rudyscung_new(char const* const resources_path) {
     assert(resources_path != nullptr);
 
+
     rudyscung_t* self = malloc(sizeof(rudyscung_t));
     assert(self != nullptr);
+
 
     self->window = window_new(WINDOW_TITLE, WINDOW_INITIAL_WIDTH, WINDOW_INITIAL_HEIGHT);
     self->shaders = shaders_new(resources_path);
     self->textures = textures_new(resources_path);
     self->font = font_new(self, resources_path, "default");
     self->renderer = renderer_new(self);
+    
+    LOG_DEBUG("rudyscung_t: initialized.");
 
     return self;
 }
@@ -70,15 +75,18 @@ void rudyscung_delete(rudyscung_t* const self) {
     window_delete(self->window);
 
     free(self);
+
+    LOG_DEBUG("rudyscung_t: deleted.");
 }
 
 void rudyscung_run(rudyscung_t* const self) {
     assert(self != nullptr);
 
+    LOG_INFO("rudyscung_t: starting core game loop...");
+
 #define LEVEL_SIZE 16
 #define LEVEL_HEIGHT 8
     level_t* level = level_new((size_chunks_t[NUM_AXES]) { LEVEL_SIZE, LEVEL_HEIGHT, LEVEL_SIZE });
-    ecs_t* ecs = level_get_ecs(level);
     entity_t player = level_get_player(level);
 
     renderer_set_level(self->renderer, level);
@@ -115,7 +123,6 @@ void rudyscung_run(rudyscung_t* const self) {
                             if (is_pressed && event.key.repeat == SDL_FALSE) {
                                 level_delete(level);
                                 level = level_new((size_chunks_t[NUM_AXES]) { LEVEL_SIZE, LEVEL_HEIGHT, LEVEL_SIZE });
-                                ecs = level_get_ecs(level);
                                 player = level_get_player(level);
                                 renderer_set_level(self->renderer, level);
                                 view_type_delete(view_type_entity);

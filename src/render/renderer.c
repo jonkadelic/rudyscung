@@ -18,6 +18,7 @@
 #include "../window.h"
 #include "./font.h"
 #include "../phys/raycast.h"
+#include "../util/logger.h"
 
 static void check_errors(void);
 
@@ -47,6 +48,8 @@ renderer_t* const renderer_new(rudyscung_t* const rudyscung) {
     self->frames.last_frame_tick = SDL_GetTicks64();
     self->frames.last_fps_update_tick = SDL_GetTicks64();
     self->frames.frames_since_last_fps_update = 0;
+
+    LOG_DEBUG("Initialized renderer_t.");
 
     return self;
 }

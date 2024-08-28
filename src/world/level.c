@@ -15,6 +15,7 @@
 #include "tile_shape.h"
 #include "gen/level_gen.h"
 #include "../random.h"
+#include "../util/logger.h"
 
 #define CHUNK_INDEX(pos) (((pos[AXIS__Y]) * self->size[AXIS__Z] * self->size[AXIS__X]) + ((pos[AXIS__Z]) * self->size[AXIS__X]) + (pos[AXIS__X]))
 #define TO_CHUNK_SPACE(coord) ((coord) / CHUNK_SIZE)
@@ -39,6 +40,8 @@ level_t* const level_new(size_chunks_t const size[NUM_AXES]) {
         assert(size[a] > 0);
     }
 
+    LOG_DEBUG("level_t: creating new level [%zu x %zu x %zu].", size[AXIS__X], size[AXIS__Y], size[AXIS__Z]);
+
     level_t* const self = malloc(sizeof(level_t));
     assert(self != nullptr);
 
@@ -51,6 +54,8 @@ level_t* const level_new(size_chunks_t const size[NUM_AXES]) {
 
     self->chunks = malloc(sizeof(chunk_t*) * size[AXIS__X] * size[AXIS__Y] * size[AXIS__Z]);
     assert(self->chunks != nullptr);
+
+    LOG_DEBUG("level_t: allocated %zu chunks.", size[AXIS__X] * size[AXIS__Y] * size[AXIS__Z]);
 
     for (size_chunks_t x = 0; x < size[AXIS__X]; x++) {
         for (size_chunks_t y = 0; y < size[AXIS__Y]; y++) {

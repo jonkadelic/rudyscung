@@ -1,11 +1,13 @@
 #include "./window.h"
 
-#include <SDL_video.h>
 #include <assert.h>
 #include <stdio.h>
 
+#include <SDL2/SDL_video.h>
 #include <SDL2/SDL.h>
 #include <GL/glew.h>
+
+#include "util/logger.h"
 
 struct window {
     SDL_Window* window;
@@ -29,13 +31,15 @@ window_t* const window_new(char const* const title, int const width, int const h
     
     glewExperimental = GL_TRUE;
     if (glewInit() != GLEW_OK) {
-        fprintf(stderr, "Failed to initialize GLEW\n");
+        LOG_ERROR("window_t: Failed to initialize GLEW!");
         assert(false);
     }
 
     self->gui_scale = 2.0f;
 
     // SDL_GL_SetSwapInterval(0);
+
+    LOG_DEBUG("window_t: initialized.");
 
     return self;
 }
@@ -47,6 +51,8 @@ void window_delete(window_t* const self) {
     SDL_DestroyWindow(self->window);
     self->window = nullptr;
     free(self);
+
+    LOG_DEBUG("window_t: deleted.");
 }
 
 void window_swap(window_t const* const self) {
@@ -83,5 +89,9 @@ float window_get_gui_scale(window_t const* const self) {
 void window_set_gui_scale(window_t* const self, float const scale) {
     assert(self != nullptr);
 
+    float old_scale = self->gui_scale;
+
     self->gui_scale = scale;
+
+    LOG_DEBUG("window_t: changed GUI scale (%.2f -> %.2f)", old_scale, scale);
 }

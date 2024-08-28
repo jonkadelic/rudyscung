@@ -9,7 +9,7 @@
 #else
 #include <GL/gl.h>
 #endif
-#include <SDL_timer.h>
+#include <SDL2/SDL_timer.h>
 
 #include "../world/chunk.h"
 #include "level_renderer.h"

@@ -21,6 +21,7 @@
 #include "textures.h"
 #include "shaders.h"
 #include "../linmath.h"
+#include "../util/logger.h"
 
 #define MAX_ENTRIES 128
 
@@ -51,6 +52,8 @@ font_t* const font_new(rudyscung_t* const rudyscung, char const* const resources
     assert(rudyscung != nullptr);
     assert(resources_path != nullptr);
     assert(font_name != nullptr);
+
+    LOG_DEBUG("font_t: initializing \"%s\".", font_name);
 
     char name_buffer[256];
     snprintf(name_buffer, sizeof(name_buffer) / sizeof(name_buffer[0]), "%s/font/%s.txt", resources_path, font_name);
@@ -121,6 +124,8 @@ font_t* const font_new(rudyscung_t* const rudyscung, char const* const resources
     self->tessellator = tessellator_new();
     tessellator_bind(self->tessellator, self->vao, self->vbo, 0);
 
+    LOG_DEBUG("font_t: initialized \"%s\".", font_name);
+
     return self;
 }
 
@@ -131,6 +136,8 @@ void font_delete(font_t* const self) {
     glDeleteVertexArrays(1, &(self->vao));
 
     free(self);
+
+    LOG_DEBUG("font_t: deleted.");
 }
 
 void font_draw(font_t const* const self, char const* const text, int const x, int const y) {

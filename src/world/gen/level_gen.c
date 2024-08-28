@@ -6,6 +6,7 @@
 
 #include "./perlin.h"
 #include "../level.h"
+#include "../../util/logger.h"
 
 struct level_gen {
     perlin_t* perlin;
@@ -196,6 +197,8 @@ level_gen_t* const level_gen_new(uint64_t const seed) {
 
     self->perlin = perlin_new(seed);
 
+    LOG_DEBUG("level_gen_t: initialized with seed %lu.", seed);
+
     return self;
 }
 
@@ -203,6 +206,8 @@ void level_gen_delete(level_gen_t* const self) {
     assert(self != nullptr);
 
     free(self);
+
+    LOG_DEBUG("level_gen_t: deleted.");
 }
 
 void level_gen_generate(level_gen_t* const self, chunk_t* const chunk) {
@@ -212,7 +217,7 @@ void level_gen_generate(level_gen_t* const self, chunk_t* const chunk) {
     size_chunks_t chunk_pos[NUM_AXES];
     chunk_get_pos(chunk, chunk_pos);
 
-    int seed = 0;
+    LOG_DEBUG("level_gen_t: generating chunk at [%zu, %zu, %zu].", chunk_pos[AXIS__X], chunk_pos[AXIS__Y], chunk_pos[AXIS__Z]);
 
     double grid[CHUNK_SIZE * CHUNK_SIZE];
     float scale = 64.0f;
@@ -273,6 +278,8 @@ void level_gen_smooth(level_gen_t const* const self, level_t* const level) {
     for (axis_t a = 0; a < NUM_AXES; a++) {
         level_size_tiles[a] = level_size[a] * CHUNK_SIZE;
     }
+
+    LOG_DEBUG("level_gen_t: smoothing %zu chunks...", level_size[AXIS__X] * level_size[AXIS__Y] * level_size[AXIS__Z]);
 
     for (size_t z = 0; z < level_size_tiles[AXIS__Z]; z++) {
         for (size_t x = 0; x < level_size_tiles[AXIS__X]; x++) {

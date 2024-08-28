@@ -14,6 +14,7 @@
 #endif
 
 #include "../util.h"
+#include "../util/logger.h"
 
 static GLuint load_texture(textures_t const* const self, char const* const path);
 
@@ -42,6 +43,8 @@ textures_t* const textures_new(char const* const resources_path) {
     int img_initted = IMG_Init(img_flags);
     assert((img_initted & img_flags) == img_flags);
 
+    LOG_DEBUG("textures_t: initialized.");
+
     return self;
 }
 
@@ -55,6 +58,8 @@ void textures_delete(textures_t* const self) {
     }
 
     free(self);
+
+    LOG_DEBUG("textures_t: deleted.");
 }
 
 GLuint textures_get_texture(textures_t* const self, texture_name_t const texture_name) {
@@ -67,8 +72,11 @@ GLuint textures_get_texture(textures_t* const self, texture_name_t const texture
         char* path = strcata(self->resources_path, texture_name_str);
 
         tex = load_texture(self, path);
-        free(path);
         self->textures[texture_name] = tex;
+
+        LOG_DEBUG("textures_t: cached texture at \"%s\".", path);
+
+        free(path);
     }
 
     return tex;
@@ -80,6 +88,9 @@ GLuint textures_get_texture_by_path(textures_t const* const self, char const* co
 
     char* path = strcata(self->resources_path, texture_path);
     GLuint tex = load_texture(self, path);
+
+    LOG_DEBUG("textures_t: read texture at \"%s\".", path);
+
     free(path);
 
     return tex;

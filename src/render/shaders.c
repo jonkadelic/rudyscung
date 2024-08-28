@@ -6,6 +6,7 @@
 #include <string.h>
 
 #include "./shader.h"
+#include "../util/logger.h"
 
 struct shaders {
     shader_t** shaders;
@@ -24,6 +25,8 @@ shaders_t* const shaders_new(char const* const resources_path) {
 
     shaders_t* const self = malloc(sizeof(shaders_t));
     assert(self != nullptr);
+
+    LOG_DEBUG("shaders_t: initializing...");
 
     self->shaders = malloc(SHADER_COUNT * sizeof(shader_t*));
     for (size_t i = 0; i < SHADER_COUNT; i++) {
@@ -50,7 +53,11 @@ shaders_t* const shaders_new(char const* const resources_path) {
         vertex_source = nullptr;
         free(fragment_source);
         fragment_source = nullptr;
+
+        LOG_DEBUG("shaders_t: initialized shader \"%s\".", SHADER_NAMES[i]);
     }
+
+    LOG_DEBUG("shaders_t: initialized.");
 
     return self;
 }
@@ -68,6 +75,8 @@ void shaders_delete(shaders_t* const self) {
 
     free(self->shaders);
     free(self);
+
+    LOG_DEBUG("shaders_t: deleted.");
 }
 
 void shaders_bind(shaders_t* const self, char const* const name) {

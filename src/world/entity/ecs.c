@@ -4,6 +4,7 @@
 #include <stdlib.h>
 
 #include "ecs_components.h"
+#include "../../util/logger.h"
 
 #define MAX_ENTITIES 1024
 
@@ -41,6 +42,8 @@ ecs_t* const ecs_new(void) {
     ecs_t* self = calloc(1, sizeof(ecs_t));
     assert(self != nullptr);
 
+    LOG_DEBUG("ecs_t: initialized.");
+
     return self;
 }
 
@@ -61,6 +64,8 @@ void ecs_delete(ecs_t* const self) {
     }
 
     free(self);
+
+    LOG_DEBUG("ecs_t: deleted.");
 }
 
 void ecs_tick(ecs_t* const self, level_t* const level) {
@@ -245,7 +250,7 @@ bool const ecs_does_entity_exist(ecs_t* const self, entity_t const entity) {
 static void* const new_component(ecs_component_t const component) {
     assert(component >= 0 && component < NUM_ECS_COMPONENTS);
 
-    void* const data = calloc(1, sizeof(COMPONENT_SIZES[component]));
+    void* const data = calloc(1, COMPONENT_SIZES[component]);
     assert(data != nullptr);
 
     switch (component) {

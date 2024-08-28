@@ -3,6 +3,8 @@
 #include <assert.h>
 #include <stdlib.h>
 
+#include "../util/logger.h"
+
 static void tile_new(tile_t const self);
 
 typedef struct tile_entry {
@@ -12,6 +14,8 @@ typedef struct tile_entry {
 static tile_entry_t* TILES[NUM_TILES];
 
 void tiles_init(void) {
+    LOG_DEBUG("Initializing tiles...");
+    
     for (size_t i = 0; i < NUM_TILES; i++) {
         TILES[i] = nullptr;
     }
