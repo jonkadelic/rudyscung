@@ -1,3 +1,2 @@
 CompileFlags:
   Add: [-std=c2x]
-  CompilationDatabase: build/
