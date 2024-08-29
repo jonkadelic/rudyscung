@@ -12,6 +12,8 @@
 #include "entity/ecs_components.h"
 #include "entity/ecs_systems.h"
 #include "side.h"
+#include "src/world/tile.h"
+#include "src/world/tile_shape.h"
 #include "tile.h"
 #include "tile_shape.h"
 #include "gen/level_gen.h"
@@ -114,12 +116,27 @@ level_t* const level_new(size_chunks_t const size[NUM_AXES]) {
             }
         }
 
+        size_t const below_pos[NUM_AXES] = { i_tree_pos[AXIS__X], i_tree_pos[AXIS__Y] - 1, i_tree_pos[AXIS__Z] };
+
+        if (level_get_tile(self, below_pos) != TILE__GRASS) {
+            i--;
+            continue;
+        }
+        float y_offset = 0.0f;
+        tile_shape_t const below_tile_shape = level_get_tile_shape(self, below_pos);
+        if (below_tile_shape == TILE_SHAPE__RAMP_NORTH || below_tile_shape == TILE_SHAPE__RAMP_SOUTH || below_tile_shape == TILE_SHAPE__RAMP_WEST || below_tile_shape == TILE_SHAPE__RAMP_EAST) {
+            y_offset = -0.5f;
+        }
+        if (below_tile_shape == TILE_SHAPE__CORNER_A_NORTH_WEST || below_tile_shape == TILE_SHAPE__CORNER_A_SOUTH_WEST || below_tile_shape == TILE_SHAPE__CORNER_A_NORTH_EAST || below_tile_shape == TILE_SHAPE__CORNER_A_SOUTH_EAST) {
+            y_offset = -1.0f;
+        }
+
         entity_t const tree = ecs_new_entity(self->ecs);
         ecs_component_pos_t* const tree_pos = ecs_attach_component(self->ecs, tree, ECS_COMPONENT__POS);
         ecs_component_sprite_t* const tree_sprite = ecs_attach_component(self->ecs, tree, ECS_COMPONENT__SPRITE);
 
         tree_pos->pos[AXIS__X] = i_tree_pos[AXIS__X] + 0.5f;
-        tree_pos->pos[AXIS__Y] = i_tree_pos[AXIS__Y];
+        tree_pos->pos[AXIS__Y] = i_tree_pos[AXIS__Y] + y_offset;
         tree_pos->pos[AXIS__Z] = i_tree_pos[AXIS__Z] + 0.5f;
         
         tree_sprite->sprite = SPRITE__TREE;
@@ -183,6 +200,12 @@ void level_delete(level_t* const self) {
     free(self);
 
     LOG_DEBUG("level_t: deleted.");
+}
+
+uint64_t const level_get_seed(level_t const* const self) {
+    assert(self != nullptr);
+
+    return self->seed;
 }
 
 void level_get_size(level_t const* const self, size_chunks_t size[NUM_AXES]) {

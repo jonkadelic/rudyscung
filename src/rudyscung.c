@@ -85,7 +85,7 @@ void rudyscung_run(rudyscung_t* const self) {
 
     LOG_INFO("rudyscung_t: starting core game loop...");
 
-#define LEVEL_SIZE 32
+#define LEVEL_SIZE 16
 #define LEVEL_HEIGHT 8
     level_t* level = level_new((size_chunks_t[NUM_AXES]) { LEVEL_SIZE, LEVEL_HEIGHT, LEVEL_SIZE });
     entity_t player = level_get_player(level);

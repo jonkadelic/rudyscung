@@ -1,4 +1,5 @@
 #include "./chunk_renderer.h"
+#include "src/world/side.h"
 
 #include <assert.h>
 #include <stdlib.h>
@@ -17,7 +18,7 @@
 #include "tile_renderer.h"
 
 struct chunk_renderer {
-    level_renderer_t const* level_renderer;
+    level_renderer_t* level_renderer;
     chunk_t const* chunk;
     bool ready;
     GLuint vao;
@@ -26,7 +27,7 @@ struct chunk_renderer {
     size_t num_elements;
 };
 
-chunk_renderer_t* const chunk_renderer_new(level_renderer_t const* const level_renderer, chunk_t const* const chunk) {
+chunk_renderer_t* const chunk_renderer_new(level_renderer_t* const level_renderer, chunk_t const* const chunk) {
     assert(level_renderer != nullptr);
     assert(chunk != nullptr);
 
@@ -80,8 +81,6 @@ void chunk_renderer_build(chunk_renderer_t* const self, tessellator_t* const tes
     assert(self != nullptr);
     assert(tessellator != nullptr);
 
-    // uint64_t start = SDL_GetTicks64();
-
     tessellator_bind(tessellator, self->vao, self->vbo, 0);
 
     size_chunks_t chunk_pos[NUM_AXES];
@@ -91,13 +90,13 @@ void chunk_renderer_build(chunk_renderer_t* const self, tessellator_t* const tes
     for (size_t x = 0; x < CHUNK_SIZE; x++) {
         for (size_t y = 0; y < CHUNK_SIZE; y++) {
             for (size_t z = 0; z < CHUNK_SIZE; z++) {
+                size_t world_pos[NUM_AXES] = {
+                    [AXIS__X] = chunk_pos[AXIS__X] * CHUNK_SIZE + x,
+                    [AXIS__Y] = chunk_pos[AXIS__Y] * CHUNK_SIZE + y,
+                    [AXIS__Z] = chunk_pos[AXIS__Z] * CHUNK_SIZE + z
+                };
                 for (side_t side = 0; side < NUM_SIDES; side++) {
-                    size_t pos[NUM_AXES] = {
-                        [AXIS__X] = chunk_pos[AXIS__X] * CHUNK_SIZE + x,
-                        [AXIS__Y] = chunk_pos[AXIS__Y] * CHUNK_SIZE + y,
-                        [AXIS__Z] = chunk_pos[AXIS__Z] * CHUNK_SIZE + z
-                    };
-                    occlusion[side] = level_renderer_is_tile_side_occluded(self->level_renderer, pos, side);
+                    occlusion[side] = level_renderer_is_tile_side_occluded(self->level_renderer, world_pos, side);
                 }
                 size_t pos[NUM_AXES] = { x, y, z };
 
@@ -105,18 +104,15 @@ void chunk_renderer_build(chunk_renderer_t* const self, tessellator_t* const tes
                 tile_shape_t const tile_shape = chunk_get_tile_shape(self->chunk, pos);
 
                 int const pos_i[NUM_AXES] = { x, y, z };
-                tile_renderer_render_tile(tessellator, pos_i, tile, tile_shape, occlusion);
+                float color[3] = { 1.0f, 1.0f, 1.0f };
+
+                tile_renderer_render_tile(tessellator, pos_i, tile, tile_shape, color, occlusion);
             }
         }
     }
 
     self->num_elements = tessellator_draw(tessellator);
     self->ready = true;
-
-    // uint64_t end = SDL_GetTicks64();
-    // size_chunks_t pos[NUM_AXES];
-    // chunk_get_pos(self->chunk, pos);
-    // printf("Drew chunk at {%lu, %lu, %lu} - took %lums\n", chunk_pos[AXIS__X], chunk_pos[AXIS__Y], chunk_pos[AXIS__Z], end - start);
 }
 
 void chunk_renderer_draw(chunk_renderer_t const* const self) {

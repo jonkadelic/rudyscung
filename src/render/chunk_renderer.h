@@ -6,7 +6,7 @@
 
 typedef struct chunk_renderer chunk_renderer_t;
 
-chunk_renderer_t* const chunk_renderer_new(level_renderer_t const* const level_renderer, chunk_t const* const chunk);
+chunk_renderer_t* const chunk_renderer_new(level_renderer_t* const level_renderer, chunk_t const* const chunk);
 
 void chunk_renderer_delete(chunk_renderer_t* const self);
 

@@ -86,7 +86,7 @@ bool const random_next_boolean(random_t* const self) {
 float const random_next_float(random_t* const self) {
     assert(self != nullptr);
 
-    return next(self, 24) / ((float)(1 << 24));
+    return (next(self, 24) & 0x00FFFFFF) / ((float)(1 << 24));
 }
 
 double const random_next_double(random_t* const self) {

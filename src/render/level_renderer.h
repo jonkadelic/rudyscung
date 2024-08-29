@@ -2,6 +2,7 @@
 
 #include "../world/level.h"
 #include "./camera.h"
+#include "src/world/side.h"
 
 typedef struct rudyscung rudyscung_t;
 
@@ -22,4 +23,4 @@ void level_renderer_tick(level_renderer_t* const self);
 
 void level_renderer_draw(level_renderer_t* const self, camera_t* const camera, float const partial_tick);
 
-bool level_renderer_is_tile_side_occluded(level_renderer_t const* const self, size_t const pos[NUM_AXES], side_t const side);
+bool const level_renderer_is_tile_side_occluded(level_renderer_t const* const self, size_t const pos[NUM_AXES], side_t const side);

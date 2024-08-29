@@ -1,19 +1,22 @@
 #pragma once
 
 #include <stddef.h>
+#include <stdint.h>
 
 #include "chunk.h"
 #include "entity/ecs.h"
 #include "side.h"
 #include "../random.h"
 
-#define NUM_TREES 100
+#define NUM_TREES 500
 
 typedef struct level level_t;
 
 level_t* const level_new(size_chunks_t const size[NUM_AXES]);
 
 void level_delete(level_t* const self);
+
+uint64_t const level_get_seed(level_t const* const self);
 
 void level_get_size(level_t const* const self, size_chunks_t size[NUM_AXES]);
 

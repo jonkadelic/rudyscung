@@ -1,4 +1,5 @@
 #include "./level_renderer.h"
+#include "src/random.h"
 
 #include <assert.h>
 #include <stdlib.h>
@@ -287,7 +288,7 @@ void level_renderer_draw(level_renderer_t* const self, camera_t* const camera, f
     }
 }
 
-bool level_renderer_is_tile_side_occluded(level_renderer_t const* const self, size_t const pos[NUM_AXES], side_t const side) {
+bool const level_renderer_is_tile_side_occluded(level_renderer_t const* const self, size_t const pos[NUM_AXES], side_t const side) {
     assert(self != nullptr);
     assert(side >= 0 && side < NUM_SIDES);
 

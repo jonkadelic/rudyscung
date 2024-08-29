@@ -58,7 +58,7 @@ sprites_t* const sprites_new(rudyscung_t* const rudyscung) {
             [SPRITE_ANGLE__LEFT] = TEXTURE_NAME__SPRITE_TREE,
             [SPRITE_ANGLE__RIGHT] = TEXTURE_NAME__SPRITE_TREE
         }, 
-        (size_t[2]) { 256, 256 }, 
+        (size_t[2]) { 64, 128 }, 
         (float[2]) { 0.5f, 1.0f }
     );
     sprite_new(self,
