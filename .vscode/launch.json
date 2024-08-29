@@ -30,6 +30,10 @@
                     "description": "Set Disassembly Flavor to Intel",
                     "text": "-gdb-set disassembly-flavor intel",
                     "ignoreFailures": true
+                },
+                {
+                    "description": "Break Abort",
+                    "text": "-break-insert -f --function abort"
                 }
             ]
         }
