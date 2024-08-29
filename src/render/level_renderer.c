@@ -1,4 +1,6 @@
 #include "./level_renderer.h"
+#include "src/world/entity/ecs.h"
+#include "src/world/side.h"
 
 #include <assert.h>
 #include <stdlib.h>
@@ -244,6 +246,11 @@ void level_renderer_draw(level_renderer_t const* const self, camera_t const* con
             if (ecs_has_component(ecs, entity, ECS_COMPONENT__POS) && ecs_has_component(ecs, entity, ECS_COMPONENT__SPRITE)) {
                 ecs_component_pos_t const* const entity_pos = ecs_get_component_data(ecs, entity, ECS_COMPONENT__POS);
                 ecs_component_sprite_t const* const entity_sprite = ecs_get_component_data(ecs, entity, ECS_COMPONENT__SPRITE);
+                float rotation_offset = 0.0f;
+                if (ecs_has_component(ecs, entity, ECS_COMPONENT__ROT)) {
+                    ecs_component_rot_t const* const entity_rot = ecs_get_component_data(ecs, entity, ECS_COMPONENT__ROT);
+                    rotation_offset = entity_rot->rot[ROT_AXIS__Y];
+                }
 
                 float distances[NUM_AXES] = VEC_SUB_INIT(entity_pos->pos, camera_pos);
                 float distance_sq = (distances[AXIS__X] * distances[AXIS__X]) + (distances[AXIS__Y] * distances[AXIS__Y]) + (distances[AXIS__Z] * distances[AXIS__Z]);
@@ -257,7 +264,7 @@ void level_renderer_draw(level_renderer_t const* const self, camera_t const* con
                     } else {
                         memcpy(pos, entity_pos->pos, sizeof(float) * NUM_AXES);
                     }
-                    sprites_render(self->sprites, entity_sprite->sprite, camera, entity_sprite->scale, pos, (bool[NUM_ROT_AXES]) { true, false });
+                    sprites_render(self->sprites, entity_sprite->sprite, camera, entity_sprite->scale, pos, rotation_offset, (bool[NUM_ROT_AXES]) { true, false });
                 }
             }
         }
@@ -270,7 +277,7 @@ void level_renderer_draw(level_renderer_t const* const self, camera_t const* con
     raycast_t raycast;
     raycast_cast_in_level(&raycast, self->level, player_pos->pos, player_rot->rot);
     if (raycast.hit) {
-        sprites_render(self->sprites, SPRITE__TREE, camera, 1.0f, raycast.pos, (bool[NUM_ROT_AXES]) { true, true });
+        sprites_render(self->sprites, SPRITE__TREE, camera, 0.0125f, raycast.pos, 0.0f, (bool[NUM_ROT_AXES]) { true, true });
     }
 }
 

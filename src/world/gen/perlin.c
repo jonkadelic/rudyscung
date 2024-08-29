@@ -7,7 +7,7 @@
 #include "../../random.h"
 
 struct perlin {
-    int p[512];
+    uint8_t p[512];
 };
 
 static double fade(double t);

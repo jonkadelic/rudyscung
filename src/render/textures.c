@@ -26,7 +26,10 @@ char const* const TEXTURE_NAME_LOOKUP[NUM_TEXTURE_NAMES] = {
     [TEXTURE_NAME__TERRAIN] = "/terrain.png",
     [TEXTURE_NAME__FONT_DEFAULT] = "/font/default.png",
     [TEXTURE_NAME__SPRITE_TREE] = "/sprite/tree.png",
-    [TEXTURE_NAME__SPRITE_MOB] = "/sprite/mob.png"
+    [TEXTURE_NAME__SPRITE_MOB_FRONT] = "/sprite/mob/front.png",
+    [TEXTURE_NAME__SPRITE_MOB_BACK] = "/sprite/mob/back.png",
+    [TEXTURE_NAME__SPRITE_MOB_LEFT] = "/sprite/mob/left.png",
+    [TEXTURE_NAME__SPRITE_MOB_RIGHT] = "/sprite/mob/right.png",
 };
 
 textures_t* const textures_new(char const* const resources_path) {

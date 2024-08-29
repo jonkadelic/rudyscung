@@ -122,7 +122,7 @@ level_t* const level_new(size_chunks_t const size[NUM_AXES]) {
         tree_pos->pos[AXIS__Z] = i_tree_pos[AXIS__Z] + 0.5f;
         
         tree_sprite->sprite = SPRITE__TREE;
-        tree_sprite->scale = 0.1f;
+        tree_sprite->scale = 0.05f;
     }
 
     for (size_t i = 0; i < 100; i++) {
@@ -150,7 +150,7 @@ level_t* const level_new(size_chunks_t const size[NUM_AXES]) {
         aabb_set_bounds(mob_aabb->aabb, (float[NUM_AXES]) { -0.4f, 0.0f, -0.4f }, (float[NUM_AXES]) { 0.4f, 1.8f, 0.4f });
 
         mob_sprite->sprite = SPRITE__MOB;
-        mob_sprite->scale = 0.15f;
+        mob_sprite->scale = 0.075f;
     }
 
     uint64_t const end_time = get_time_ms();
