@@ -86,7 +86,7 @@ font_t* const font_new(rudyscung_t* const rudyscung, char const* const resources
             for (size_t px = 0; px < self->char_size_px; px++) {
                 for (size_t py = 0; py < self->char_size_px; py++) {
                     uint32_t p = get_pixel(surface, x * self->char_size_px + px, y * self->char_size_px + py);
-                    if ((p & 0x00FFFFFF) != 0x000000) {
+                    if ((p & 0xFF000000) != 0x00000000) {
                         max_px = px;
                         break;
                     }
