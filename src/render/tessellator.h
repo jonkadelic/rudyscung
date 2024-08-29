@@ -2,12 +2,7 @@
 
 #include <stddef.h>
 
-#include <GL/glew.h>
-#if defined(__APPLE__)
-#include <OpenGL/gl.h>
-#else
-#include <GL/gl.h>
-#endif
+#include "src/util/gl.h"
 
 typedef struct tessellator tessellator_t;
 

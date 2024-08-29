@@ -5,8 +5,8 @@
 
 #include <SDL2/SDL_video.h>
 #include <SDL2/SDL.h>
-#include <GL/glew.h>
 
+#include "src/util/gl.h"
 #include "util/logger.h"
 
 struct window {

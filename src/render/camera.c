@@ -5,10 +5,9 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include <GL/glew.h>
-#include <GL/gl.h>
 #include <cglm/cglm.h>
 
+#include "src/util/gl.h"
 #include "../util.h"
 #include "cglm/mat4.h"
 #include "cglm/project.h"

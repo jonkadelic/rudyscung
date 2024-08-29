@@ -3,14 +3,9 @@
 #include <assert.h>
 #include <stdint.h>
 #include <stdlib.h>
+#include <string.h>
 
-#include <SDL2/SDL.h>
-#if defined(__APPLE__)
-#include <OpenGL/gl.h>
-#else
-#include <GL/gl.h>
-#endif
-
+#include "src/util/gl.h"
 #include "lib/stb_image.h"
 #include "../util.h"
 #include "../util/logger.h"

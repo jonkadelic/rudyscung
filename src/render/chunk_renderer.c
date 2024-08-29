@@ -4,14 +4,9 @@
 #include <assert.h>
 #include <stdlib.h>
 
-#include <GL/glew.h>
-#if defined(__APPLE__)
-#include <OpenGL/gl.h>
-#else
-#include <GL/gl.h>
-#endif
 #include <SDL2/SDL_timer.h>
 
+#include "src/util/gl.h"
 #include "../world/chunk.h"
 #include "level_renderer.h"
 #include "tessellator.h"

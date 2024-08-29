@@ -6,13 +6,8 @@
 
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_timer.h>
-#include <GL/glew.h>
-#if defined(__APPLE__)
-#include <OpenGL/gl.h>
-#else
-#include <GL/gl.h>
-#endif
 
+#include "src/util/gl.h"
 #include "../rudyscung.h"
 #include "./level_renderer.h"
 #include "../window.h"
