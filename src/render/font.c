@@ -90,7 +90,7 @@ font_t* const font_new(rudyscung_t* const rudyscung, char const* const resources
 
     for (size_t y = 0; y < num_lookup_lines; y++) {
         for (size_t x = 0; x < lookup_line_len; x++) {
-            char c = lookup_lines[y][x];
+            uint8_t c = lookup_lines[y][x];
             if (self->entries[c].exists) continue;
             size_t max_px = 0;
             for (size_t px = 0; px < self->char_size_px; px++) {
@@ -151,7 +151,7 @@ void font_draw(font_t const* const self, char const* const text, int const x, in
 
     size_t xo = 0;
     for (size_t i = 0; i < text_len; i++) {
-        char c = text[i];
+        uint8_t c = text[i];
         entry_t const* const entry = &(self->entries[c]);
         if (!self->entries[c].exists) {
             c = '?';

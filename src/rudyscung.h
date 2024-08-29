@@ -3,6 +3,7 @@
 #include "render/font.h"
 #include "render/shaders.h"
 #include "render/textures.h"
+#include "render/view_type.h"
 #include "window.h"
 
 typedef struct rudyscung rudyscung_t;
@@ -20,3 +21,5 @@ shaders_t* const rudyscung_get_shaders(rudyscung_t* const self);
 textures_t* const rudyscung_get_textures(rudyscung_t* const self);
 
 font_t* const rudyscung_get_font(rudyscung_t* const self);
+
+void rudyscung_set_view_type(rudyscung_t* const self, view_type_t* const view_type);

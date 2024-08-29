@@ -113,6 +113,10 @@ void ecs_system_move_random(ecs_t* const self, level_t* const level, entity_t co
     assert(ecs_has_component(self, entity, ECS_COMPONENT__ROT));
     assert(ecs_has_component(self, entity, ECS_COMPONENT__MOVE_RANDOM));
 
+    if (ecs_has_component(self, entity, ECS_COMPONENT__CONTROLLED)) {
+        return;
+    }
+
     ecs_component_vel_t* const vel = ecs_get_component_data(self, entity, ECS_COMPONENT__VEL);
     ecs_component_rot_t* const rot = ecs_get_component_data(self, entity, ECS_COMPONENT__ROT);
 

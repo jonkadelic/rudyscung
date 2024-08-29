@@ -11,6 +11,7 @@ typedef enum ecs_component {
     ECS_COMPONENT__GRAVITY,
     ECS_COMPONENT__SPRITE,
     ECS_COMPONENT__MOVE_RANDOM,
+    ECS_COMPONENT__CONTROLLED,
     NUM_ECS_COMPONENTS
 } ecs_component_t;
 
@@ -44,3 +45,7 @@ typedef struct ecs_component_sprite {
 typedef struct ecs_component_move_random {
     int padding;
 } ecs_component_move_random_t;
+
+typedef struct ecs_component_controlled {
+    int padding;
+} ecs_component_controlled_t;

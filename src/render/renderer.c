@@ -105,7 +105,7 @@ void renderer_render(renderer_t* const self, camera_t const* const camera, float
 
     // Render
     if (self->frames.target_fps == 0 || ((tick_start - self->frames.last_frame_tick) > (1000.0f / (self->frames.target_fps + 3)))) {
-        glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
+        glClearColor(0.2f, 0.5f, 0.6f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
         level_renderer_draw(self->level_renderer, camera, partial_tick);

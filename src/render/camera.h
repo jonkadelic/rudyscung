@@ -25,4 +25,4 @@ void camera_get_rot(camera_t const* const self, float rot[NUM_ROT_AXES]);
 
 void camera_set_rot(camera_t* const self, float const rot[NUM_ROT_AXES]);
 
-bool camera_pick(camera_t const* const self, size_t const window_size[2], size_t const screen_pos[2], float world_pos[NUM_AXES]);
+bool camera_pick(camera_t* const self, size_t const window_size[2], size_t const screen_pos[2], float world_pos[NUM_AXES]);

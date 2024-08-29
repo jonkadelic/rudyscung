@@ -41,6 +41,7 @@ struct rudyscung {
     textures_t* textures;
     font_t* font;
     renderer_t* renderer;
+    view_type_t* view_type;
 };
 
 static void tick(rudyscung_t* const self, level_t* const level);
@@ -67,6 +68,7 @@ rudyscung_t* const rudyscung_new(char const* const resources_path) {
 void rudyscung_delete(rudyscung_t* const self) {
     assert(self != nullptr);
 
+    view_type_delete(self->view_type);
     renderer_delete(self->renderer);
     font_delete(self->font);
     textures_delete(self->textures);
@@ -90,9 +92,7 @@ void rudyscung_run(rudyscung_t* const self) {
 
     renderer_set_level(self->renderer, level);
 
-    view_type_t* view_type_entity = view_type_entity_new(self->window, player);
-    view_type_t* view_type_isometric = view_type_isometric_new(self->window, player);
-    view_type_t* view_type = view_type_isometric;
+    self->view_type = view_type_isometric_new(self, player);
 
     update_slice(self, level, true);
 
@@ -106,7 +106,7 @@ void rudyscung_run(rudyscung_t* const self) {
         // Handle events
         SDL_Event event;
         while (SDL_PollEvent(&event)) {
-            if (!view_type_handle_event(view_type, &event, level)) {
+            if (!view_type_handle_event(self->view_type, &event, level)) {
                 if (event.type == SDL_QUIT) {
                     running = false;
                 }
@@ -124,20 +124,9 @@ void rudyscung_run(rudyscung_t* const self) {
                                 level = level_new((size_chunks_t[NUM_AXES]) { LEVEL_SIZE, LEVEL_HEIGHT, LEVEL_SIZE });
                                 player = level_get_player(level);
                                 renderer_set_level(self->renderer, level);
-                                view_type_delete(view_type_entity);
-                                view_type_entity = view_type_entity_new(self->window, player);
-                                view_type_delete(view_type_isometric);
-                                view_type_isometric = view_type_isometric_new(self->window, player);
+                                view_type_delete(self->view_type);
+                                self->view_type = view_type_isometric_new(self, player);
                                 update_slice(self, level, true);
-                            }
-                            break;
-                        case SDLK_v:
-                            if (is_pressed && event.key.repeat == SDL_FALSE) {
-                                if (view_type == view_type_entity) {
-                                    view_type = view_type_isometric;
-                                } else {
-                                    view_type = view_type_entity;
-                                }
                             }
                             break;
                     }
@@ -145,19 +134,18 @@ void rudyscung_run(rudyscung_t* const self) {
             }
         }
         
-        view_type_render_tick(view_type, level, partial_tick);
-        renderer_render(self->renderer, view_type_get_camera(view_type), partial_tick);
+        view_type_render_tick(self->view_type, level, partial_tick);
+        renderer_render(self->renderer, view_type_get_camera(self->view_type), partial_tick);
 
         // Game tick
         size_t ticks = (size_t)(delta_tick / MS_PER_TICK);
         for (uint64_t t = 0; t < ticks; t++) {
-            view_type_tick(view_type, level);
+            view_type_tick(self->view_type, level);
             tick(self, level);
         }
         last_game_tick = current_tick - (delta_tick % MS_PER_TICK);
     }
 
-    view_type_delete(view_type);
     level_delete(level);
 }
 
@@ -185,6 +173,14 @@ font_t* const rudyscung_get_font(rudyscung_t* const self) {
     return self->font;
 }
 
+void rudyscung_set_view_type(rudyscung_t* const self, view_type_t* const view_type) {
+    assert(self != nullptr);
+    assert(view_type != nullptr);
+
+    view_type_delete(self->view_type);
+    self->view_type = view_type;
+}
+
 static void tick(rudyscung_t* const self, level_t* const level) {
     assert(self != nullptr);
     assert(level != nullptr);
@@ -200,10 +196,10 @@ static void update_slice(rudyscung_t* const self, level_t* const level, bool con
 
     static int last_chunk_pos[NUM_AXES];
 
-    ecs_t* ecs = level_get_ecs(level);
-    entity_t player = level_get_player(level);
+    camera_t const* const camera = view_type_get_camera(self->view_type);
 
-    ecs_component_pos_t* player_pos = ecs_get_component_data(ecs, player, ECS_COMPONENT__POS);
+    float pos[NUM_AXES];
+    camera_get_pos(camera, pos);
 
     size_t const slice_diameter = 13;
     size_t const slice_radius = (slice_diameter - 1) / 2;
@@ -212,9 +208,9 @@ static void update_slice(rudyscung_t* const self, level_t* const level, bool con
     level_get_size(level, level_size);
 
     int const camera_pos[NUM_AXES] = {
-        floor(player_pos->pos[AXIS__X] / CHUNK_SIZE),
-        floor(player_pos->pos[AXIS__Y] / CHUNK_SIZE),
-        floor(player_pos->pos[AXIS__Z] / CHUNK_SIZE)
+        floor(pos[AXIS__X] / CHUNK_SIZE),
+        floor(pos[AXIS__Y] / CHUNK_SIZE),
+        floor(pos[AXIS__Z] / CHUNK_SIZE)
     };
 
     if (memcmp(camera_pos, last_chunk_pos, sizeof(int) * NUM_AXES) == 0 && !force) {

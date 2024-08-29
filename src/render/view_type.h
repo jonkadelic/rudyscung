@@ -5,15 +5,16 @@
 #include "./camera.h"
 #include "../world/entity/ecs.h"
 #include "../world/level.h"
-#include "src/window.h"
+
+typedef struct rudyscung rudyscung_t;
 
 typedef struct view_type view_type_t;
 typedef struct view_type view_type_entity_t;
 typedef struct view_type view_type_isometric_t;
 
-view_type_entity_t* const view_type_entity_new(window_t const* const window, entity_t const entity);
+view_type_entity_t* const view_type_entity_new(rudyscung_t* const rudyscung, entity_t const entity);
 
-view_type_isometric_t* const view_type_isometric_new(window_t const* const window, entity_t const player);
+view_type_isometric_t* const view_type_isometric_new(rudyscung_t* const rudyscung, entity_t const player);
 
 void view_type_delete(view_type_t* const self);
 

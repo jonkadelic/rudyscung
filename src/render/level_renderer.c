@@ -191,7 +191,7 @@ void level_renderer_tick(level_renderer_t* const self) {
     }
 }
 
-void level_renderer_draw(level_renderer_t const* const self, camera_t const* const camera, float const partial_tick) {
+void level_renderer_draw(level_renderer_t* const self, camera_t* const camera, float const partial_tick) {
     assert(self != nullptr);
     assert(self->chunk_renderers != nullptr);
 

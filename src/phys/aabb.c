@@ -19,6 +19,10 @@ aabb_t* const aabb_new(float const min[NUM_AXES], float const max[NUM_AXES]) {
     return self;
 }
 
+aabb_t* const aabb_new_default(void) {
+    return aabb_new((float[NUM_AXES]) { 0.0f, 0.0f, 0.0f }, (float[NUM_AXES]) { 1.0f, 1.0f, 1.0f });
+}
+
 void aabb_delete(aabb_t* const self) {
     assert(self != nullptr);
 
@@ -53,6 +57,24 @@ void aabb_get_size(aabb_t const* const self, float size[NUM_AXES]) {
     for (axis_t a = 0; a < NUM_AXES; a++) {
         size[a] = self->max[a] - self->min[a];
     }
+}
+
+void aabb_translate(aabb_t const* const self, float const offset[NUM_AXES], aabb_t* const out) {
+    assert(self != nullptr);
+    assert(out != nullptr);
+
+    aabb_set_bounds(out,
+        (float[NUM_AXES]) {
+            self->min[AXIS__X] + offset[AXIS__X],
+            self->min[AXIS__Y] + offset[AXIS__Y],
+            self->min[AXIS__Z] + offset[AXIS__Z]
+        },
+        (float[NUM_AXES]) {
+            self->max[AXIS__X] + offset[AXIS__X],
+            self->max[AXIS__Y] + offset[AXIS__Y],
+            self->max[AXIS__Z] + offset[AXIS__Z]
+        }
+    );
 }
 
 bool aabb_test_pos_inside(aabb_t const* const self, float const v[NUM_AXES]) {
@@ -93,7 +115,7 @@ bool aabb_test_aabb_overlap(aabb_t const* const self, aabb_t const* const other)
     return true;
 }
 
-void aabb_get_point(aabb_t const* const self, side_t sides[NUM_AXES], float pos[NUM_AXES]) {
+void aabb_get_point(aabb_t const* const self, side_t const sides[NUM_AXES], float pos[NUM_AXES]) {
     assert(self != nullptr);
 
     for (axis_t a = 0; a < NUM_AXES; a++) {

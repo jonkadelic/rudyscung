@@ -105,7 +105,7 @@ void sprites_get_origin(sprites_t const* const self, sprite_t const sprite, floa
     memcpy(origin, self->sprites[sprite].origin, sizeof(float) * 2);
 }
 
-void sprites_render(sprites_t const* const self, sprite_t const sprite, camera_t const* const camera, float const scale, float const pos[NUM_AXES], float const rotation_offset, bool const rotate[NUM_ROT_AXES]) {
+void sprites_render(sprites_t const* const self, sprite_t const sprite, camera_t* const camera, float const scale, float const pos[NUM_AXES], float const rotation_offset, bool const rotate[NUM_ROT_AXES]) {
     assert(self != nullptr);
     assert(sprite >= 0 && sprite < NUM_SPRITES);
     assert(camera != nullptr);
