@@ -250,7 +250,7 @@ bool const ecs_does_entity_exist(ecs_t* const self, entity_t const entity) {
 static void* const new_component(ecs_component_t const component) {
     assert(component >= 0 && component < NUM_ECS_COMPONENTS);
 
-    void* const data = calloc(1, sizeof(COMPONENT_SIZES[component]));
+    void* const data = calloc(1, COMPONENT_SIZES[component]);
     assert(data != nullptr);
 
     switch (component) {
