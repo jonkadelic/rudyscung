@@ -1,6 +1,5 @@
 #pragma once
 
-#include "lib/linmath.h"
 #include "../world/side.h"
 
 typedef struct aabb aabb_t;
@@ -13,7 +12,7 @@ void aabb_set_bounds(aabb_t* const self, float const min[NUM_AXES], float const 
 
 void aabb_get_size(aabb_t const* const self, float size[NUM_AXES]);
 
-bool aabb_test_vec3_inside(aabb_t const* const self, vec3 const v);
+bool aabb_test_pos_inside(aabb_t const* const self, float const v[NUM_AXES]);
 
 bool aabb_test_aabb_inside(aabb_t const* const self, aabb_t const* const other);
 

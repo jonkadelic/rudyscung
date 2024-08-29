@@ -4,6 +4,8 @@
 #include <string.h>
 #include <stdlib.h>
 
+#include <cglm/cglm.h>
+
 #include "src/world/side.h"
 #include "tessellator.h"
 #include "textures.h"
@@ -129,13 +131,13 @@ void sprites_render(sprites_t const* const self, sprite_t const sprite, camera_t
 
     camera_set_matrices(camera, window_size, shader);
 
-    mat4x4 mat_model;
-    mat4x4_identity(mat_model);
-    mat4x4_translate_in_place(mat_model, pos[AXIS__X], pos[AXIS__Y], pos[AXIS__Z]);
-    if (rotate[ROT_AXIS__Y]) mat4x4_rotate(mat_model, mat_model, 0.0f, 1.0f, 0.0f, -camera_rot[ROT_AXIS__Y]);
-    if (rotate[ROT_AXIS__X]) mat4x4_rotate(mat_model, mat_model, 1.0f, 0.0f, 0.0f, -camera_rot[ROT_AXIS__X]);
-    mat4x4_scale_aniso(mat_model, mat_model, scale, scale, scale);
-    shader_put_uniform_mat4x4(shader, "model", mat_model);
+    mat4 mat_model;
+    glm_mat4_identity(mat_model);
+    glm_translate(mat_model, (vec3) { pos[AXIS__X], pos[AXIS__Y], pos[AXIS__Z] });
+    if (rotate[ROT_AXIS__Y]) glm_rotate(mat_model, -camera_rot[ROT_AXIS__Y], (vec3) { 0.0f, 1.0f, 0.0f });
+    if (rotate[ROT_AXIS__X]) glm_rotate(mat_model, -camera_rot[ROT_AXIS__X], (vec3) { 1.0f, 0.0f, 0.0f });
+    glm_scale(mat_model, (vec3) { scale, scale, scale });
+    shader_put_uniform_mat4(shader, "model", mat_model);
 
     float delta[2] = {
         pos[AXIS__X] - camera_pos[AXIS__X],

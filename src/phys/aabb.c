@@ -2,10 +2,13 @@
 
 #include <assert.h>
 #include <stdlib.h>
+#include <string.h>
+
+#include "src/world/side.h"
 
 struct aabb {
-    vec3 min;
-    vec3 max;
+    float min[NUM_AXES];
+    float max[NUM_AXES];
 };
 
 aabb_t* const aabb_new(float const min[NUM_AXES], float const max[NUM_AXES]) {
@@ -52,7 +55,7 @@ void aabb_get_size(aabb_t const* const self, float size[NUM_AXES]) {
     }
 }
 
-bool aabb_test_vec3_inside(aabb_t const* const self, vec3 const v) {
+bool aabb_test_pos_inside(aabb_t const* const self, float const v[NUM_AXES]) {
     assert(self != nullptr);
 
     for (axis_t a = 0; a < NUM_AXES; a++) {

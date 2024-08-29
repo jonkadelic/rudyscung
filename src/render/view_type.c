@@ -10,6 +10,11 @@
 #include "./camera.h"
 #include "../phys/raycast.h"
 #include "../util.h"
+#include "src/window.h"
+#include "src/world/level.h"
+#include "src/world/side.h"
+#include "src/util/logger.h"
+#include "src/world/tile.h"
 
 typedef enum view_type_id {
     VIEW_TYPE_ID__ENTITY,
@@ -38,6 +43,7 @@ typedef struct keys {
 
 struct view_type {
     view_type_id_t view_type_id;
+    window_t const* window;
     camera_t* camera;
     handle_event handle_event;
     tick tick;
@@ -56,7 +62,7 @@ typedef struct _view_type_isometric {
     keys_t keys;
 } _view_type_isometric_t;
 
-static view_type_t* const view_type_new(view_type_id_t const view_type_id, camera_t* const camera, handle_event const handle_event, tick const tick, render_tick const render_tick, size_t const size);
+static view_type_t* const view_type_new(view_type_id_t const view_type_id, window_t const* const window, camera_t* const camera, handle_event const handle_event, tick const tick, render_tick const render_tick, size_t const size);
 
 static bool entity_handle_event(_view_type_entity_t* const self, SDL_Event const* const event, level_t* const level);
 
@@ -70,8 +76,8 @@ static void entity_render_tick(_view_type_entity_t* const self, level_t* const l
 
 static void isometric_render_tick(_view_type_isometric_t* const self, level_t* const level, float const partial_tick);
 
-view_type_entity_t* const view_type_entity_new(entity_t const entity) {
-    _view_type_entity_t* const self = (_view_type_entity_t*) view_type_new(VIEW_TYPE_ID__ENTITY, camera_perspective_new(), (handle_event) entity_handle_event, (tick) entity_tick, (render_tick) entity_render_tick, sizeof(_view_type_entity_t));
+view_type_entity_t* const view_type_entity_new(window_t const* const window, entity_t const entity) {
+    _view_type_entity_t* const self = (_view_type_entity_t*) view_type_new(VIEW_TYPE_ID__ENTITY, window, camera_perspective_new(), (handle_event) entity_handle_event, (tick) entity_tick, (render_tick) entity_render_tick, sizeof(_view_type_entity_t));
 
     self->entity = entity;
 
@@ -80,8 +86,8 @@ view_type_entity_t* const view_type_entity_new(entity_t const entity) {
     return (view_type_entity_t*) self;
 }
 
-view_type_isometric_t* const view_type_isometric_new(entity_t const player) {
-    _view_type_isometric_t* const self = (_view_type_isometric_t*) view_type_new(VIEW_TYPE_ID__ISOMETRIC, camera_ortho_new(), (handle_event) isometric_handle_event, (tick) isometric_tick, (render_tick) isometric_render_tick, sizeof(_view_type_isometric_t));
+view_type_isometric_t* const view_type_isometric_new(window_t const* const window, entity_t const player) {
+    _view_type_isometric_t* const self = (_view_type_isometric_t*) view_type_new(VIEW_TYPE_ID__ISOMETRIC, window, camera_ortho_new(), (handle_event) isometric_handle_event, (tick) isometric_tick, (render_tick) isometric_render_tick, sizeof(_view_type_isometric_t));
 
     self->player = player;
 
@@ -123,13 +129,20 @@ void view_type_render_tick(view_type_t* const self, level_t* const level, float 
     self->render_tick(self, level, partial_tick);
 }
 
-static view_type_t* const view_type_new(view_type_id_t const view_type_id, camera_t* const camera, handle_event const handle_event, tick const tick, render_tick const render_tick, size_t const size) {
+static view_type_t* const view_type_new(view_type_id_t const view_type_id, window_t const* const window, camera_t* const camera, handle_event const handle_event, tick const tick, render_tick const render_tick, size_t const size) {
     assert(view_type_id >= 0 && view_type_id < NUM_VIEW_TYPE_IDS);
+    assert(window != nullptr);
+    assert(camera != nullptr);
+    assert(handle_event != nullptr);
+    assert(tick != nullptr);
+    assert(render_tick != nullptr);
+    assert(size > 0);
 
     view_type_t* const self = malloc(size);
     assert(self != nullptr);
 
     self->view_type_id = view_type_id;
+    self->window = window;
     self->camera = camera;
     self->handle_event = handle_event;
     self->tick = tick;
@@ -244,6 +257,21 @@ static bool isometric_handle_event(_view_type_isometric_t* const self, SDL_Event
     assert(level != nullptr);
 
     switch (event->type) {
+        case SDL_MOUSEBUTTONUP:
+        case SDL_MOUSEBUTTONDOWN: {
+            bool is_pressed = event->type == SDL_MOUSEBUTTONDOWN;
+            switch (event->button.button) {
+                case SDL_BUTTON_LEFT: {
+                    self->keys.left_click = is_pressed;
+                    return true;
+                }
+                case SDL_BUTTON_RIGHT: {
+                    self->keys.right_click = is_pressed;
+                    return true;
+                }
+            }
+            return false;
+        }
         case SDL_KEYUP:
         case SDL_KEYDOWN: {
             bool is_pressed = event->type == SDL_KEYDOWN;
@@ -441,7 +469,7 @@ static void isometric_tick(_view_type_isometric_t* const self, level_t* const le
     if (any_movement_input) {
         float left = 0;
         float forward = 0;
-        float const speed = 0.5f;
+        float const speed = 2.0f;
 
         if (self->keys.w) {
             forward += speed;
@@ -468,7 +496,7 @@ static void isometric_tick(_view_type_isometric_t* const self, level_t* const le
 
     if (any_vertical_movement_input) {
         float up = 0;
-        float const speed = 0.5f;
+        float const speed = 0.125f;
 
         if (self->keys.up) {
             up -= speed;
@@ -496,6 +524,28 @@ static void isometric_tick(_view_type_isometric_t* const self, level_t* const le
         float new_rot_y = player_rot->rot[ROT_AXIS__Y] + rot_dy;
 
         player_rot->rot[ROT_AXIS__Y] = new_rot_y;
+    }
+
+    if (self->keys.left_click) {
+
+        uint64_t current_tick = SDL_GetTicks64();
+
+        if (current_tick - last_block_break > 500) {
+            last_block_break = current_tick;
+
+            int mouse_x, mouse_y;
+            SDL_GetMouseState(&mouse_x, &mouse_y);
+
+            size_t window_size[2];
+            window_get_size(self->super.window, window_size);
+
+            mouse_y = window_size[1] - mouse_y;
+
+            float world_pos[NUM_AXES];
+            if (camera_pick(self->super.camera, (size_t[2]) { window_size[0], window_size[1] }, (size_t[2]) { mouse_x, mouse_y }, world_pos)) {
+                level_set_tile(level, VEC_CAST(size_t, world_pos), TILE__AIR);
+            }
+        }
     }
 }
 

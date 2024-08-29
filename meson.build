@@ -8,6 +8,7 @@ project('rudyscung', 'c',
 cc = meson.get_compiler('c')
 
 m_dep = cc.find_library('m', required: false)
+cglm_dep = dependency('cglm')
 gl_dep = dependency('gl')
 glew_dep = dependency('glew', static: true)
 sdl2main_dep = dependency('sdl2main')
@@ -25,6 +26,7 @@ executable('rudyscung', sources,
         ],
         dependencies: [
                 m_dep,
+                cglm_dep,
                 gl_dep,
                 glew_dep,
                 sdl2main_dep,

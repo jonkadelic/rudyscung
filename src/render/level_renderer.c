@@ -1,9 +1,8 @@
 #include "./level_renderer.h"
-#include "src/world/entity/ecs.h"
-#include "src/world/side.h"
 
 #include <assert.h>
 #include <stdlib.h>
+#include <string.h>
 
 #include <GL/glew.h>
 #if defined(__APPLE__)
@@ -11,7 +10,10 @@
 #else
 #include <GL/gl.h>
 #endif
+#include <cglm/cglm.h>
 
+#include "src/world/entity/ecs.h"
+#include "src/world/side.h"
 #include "../phys/aabb.h"
 #include "../rudyscung.h"
 #include "../world/chunk.h"
@@ -205,9 +207,9 @@ void level_renderer_draw(level_renderer_t const* const self, camera_t const* con
 
     camera_set_matrices(camera, window_size, shader);
 
-    mat4x4 mat_model;
-    mat4x4_identity(mat_model);
-    shader_put_uniform_mat4x4(shader, "model", mat_model);
+    mat4 mat_model;
+    glm_mat4_identity(mat_model);
+    shader_put_uniform_mat4(shader, "model", mat_model);
 
     glEnable(GL_CULL_FACE);
     glCullFace(GL_BACK);
@@ -224,9 +226,13 @@ void level_renderer_draw(level_renderer_t const* const self, camera_t const* con
 
                 if (chunk_renderer != nullptr) {
                     if (chunk_renderer_is_ready(chunk_renderer)) {
-                        mat4x4_identity(mat_model);
-                        mat4x4_translate_in_place(mat_model, TO_TILE_SPACE(self->level_slice.pos[AXIS__X]) + TO_TILE_SPACE(x), TO_TILE_SPACE(self->level_slice.pos[AXIS__Y]) + TO_TILE_SPACE(y), TO_TILE_SPACE(self->level_slice.pos[AXIS__Z]) + TO_TILE_SPACE(z));
-                        shader_put_uniform_mat4x4(shader, "model", mat_model);
+                        glm_mat4_identity(mat_model);
+                        glm_translate(mat_model, (vec3) {
+                            TO_TILE_SPACE(self->level_slice.pos[AXIS__X]) + TO_TILE_SPACE(x),
+                            TO_TILE_SPACE(self->level_slice.pos[AXIS__Y]) + TO_TILE_SPACE(y),
+                            TO_TILE_SPACE(self->level_slice.pos[AXIS__Z]) + TO_TILE_SPACE(z)
+                        });
+                        shader_put_uniform_mat4(shader, "model", mat_model);
 
                         chunk_renderer_draw(chunk_renderer);
                     }

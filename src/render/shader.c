@@ -85,7 +85,7 @@ void shader_bind(shader_t const* const self) {
     glUseProgram(self->program);
 }
 
-void shader_put_uniform_mat4x4(shader_t* const shader, char const* const uniform, mat4x4 const value) {
+void shader_put_uniform_mat4(shader_t* const shader, char const* const uniform, mat4 const value) {
     GLuint location = glGetUniformLocation(shader->program, uniform);
     glUniformMatrix4fv(location, 1, GL_FALSE, (GLfloat*) value);
 }

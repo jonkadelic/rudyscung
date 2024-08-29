@@ -1,6 +1,6 @@
 #pragma once
 
-#include "lib/linmath.h"
+#include <cglm/cglm.h>
 
 typedef struct shader shader_t;
 
@@ -19,4 +19,4 @@ void shader_delete(shader_t* const self);
 
 void shader_bind(shader_t const* const self);
 
-void shader_put_uniform_mat4x4(shader_t* const self, char const* const uniform, mat4x4 const value);
+void shader_put_uniform_mat4(shader_t* const self, char const* const uniform, mat4 const value);

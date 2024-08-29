@@ -1,6 +1,7 @@
 #include "./raycast.h"
 
 #include <assert.h>
+#include <math.h>
 
 void raycast_cast_in_level(raycast_t* const self, level_t const* const level, float const pos[NUM_ROT_AXES], float const rot[NUM_ROT_AXES]) {
     assert(self != nullptr);

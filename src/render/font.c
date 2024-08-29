@@ -11,15 +11,14 @@
 #else
 #include <GL/gl.h>
 #endif
+#include <cglm/cglm.h>
 
-#include "lib/linmath.h"
 #include "lib/stb_image.h"
 #include "../rudyscung.h"
 #include "shader.h"
 #include "tessellator.h"
 #include "textures.h"
 #include "shaders.h"
-#include "lib/linmath.h"
 #include "../util/logger.h"
 
 #define MAX_ENTRIES 128
@@ -186,15 +185,15 @@ void font_draw(font_t const* const self, char const* const text, int const x, in
     window_get_size(window, window_size);
     float gui_scale = window_get_gui_scale(window);
 
-    mat4x4 mat_proj;
-    mat4x4_identity(mat_proj);
-    mat4x4_ortho(mat_proj, 0, window_size[0] / gui_scale, window_size[1] / gui_scale, 0, 100, 300);
-    shader_put_uniform_mat4x4(shader, "projection", mat_proj);
+    mat4 mat_proj;
+    glm_mat4_identity(mat_proj);
+    glm_ortho(0, window_size[0] / gui_scale, window_size[1] / gui_scale, 0, 100, 300, mat_proj);
+    shader_put_uniform_mat4(shader, "projection", mat_proj);
 
-    mat4x4 mat_model;
-    mat4x4_identity(mat_model);
-    mat4x4_translate_in_place(mat_model, 0, 0, -200);
-    shader_put_uniform_mat4x4(shader, "model", mat_model);
+    mat4 mat_model;
+    glm_mat4_identity(mat_model);
+    glm_translate(mat_model, (vec3) { 0, 0, -200 });
+    shader_put_uniform_mat4(shader, "model", mat_model);
 
     glEnable(GL_CULL_FACE);
     glCullFace(GL_BACK);

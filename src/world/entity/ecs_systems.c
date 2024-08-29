@@ -2,6 +2,8 @@
 
 #include <assert.h>
 #include <float.h>
+#include <string.h>
+#include <math.h>
 
 #include "ecs.h"
 #include "ecs_components.h"

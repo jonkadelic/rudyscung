@@ -90,8 +90,8 @@ void rudyscung_run(rudyscung_t* const self) {
 
     renderer_set_level(self->renderer, level);
 
-    view_type_t* view_type_entity = view_type_entity_new(player);
-    view_type_t* view_type_isometric = view_type_isometric_new(player);
+    view_type_t* view_type_entity = view_type_entity_new(self->window, player);
+    view_type_t* view_type_isometric = view_type_isometric_new(self->window, player);
     view_type_t* view_type = view_type_isometric;
 
     update_slice(self, level, true);
@@ -125,9 +125,9 @@ void rudyscung_run(rudyscung_t* const self) {
                                 player = level_get_player(level);
                                 renderer_set_level(self->renderer, level);
                                 view_type_delete(view_type_entity);
-                                view_type_entity = view_type_entity_new(player);
+                                view_type_entity = view_type_entity_new(self->window, player);
                                 view_type_delete(view_type_isometric);
-                                view_type_isometric = view_type_isometric_new(player);
+                                view_type_isometric = view_type_isometric_new(self->window, player);
                                 update_slice(self, level, true);
                             }
                             break;

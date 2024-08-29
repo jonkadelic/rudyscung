@@ -4,6 +4,7 @@
 #include <math.h>
 #include <stdlib.h>
 #include <sys/time.h>
+#include <string.h>
 
 #include "../util.h"
 #include "chunk.h"
