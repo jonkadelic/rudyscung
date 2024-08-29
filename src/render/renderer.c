@@ -19,6 +19,7 @@
 #include "./font.h"
 #include "../phys/raycast.h"
 #include "../util/logger.h"
+#include "../util.h"
 
 static void check_errors(void);
 
@@ -49,7 +50,7 @@ renderer_t* const renderer_new(rudyscung_t* const rudyscung) {
     self->frames.last_fps_update_tick = SDL_GetTicks64();
     self->frames.frames_since_last_fps_update = 0;
 
-    LOG_DEBUG("Initialized renderer_t.");
+    LOG_DEBUG("renderer_t: initialized.");
 
     return self;
 }
@@ -57,7 +58,13 @@ renderer_t* const renderer_new(rudyscung_t* const rudyscung) {
 void renderer_delete(renderer_t* const self) {
     assert(self != nullptr);
 
+    if (self->level_renderer != nullptr) {
+        level_renderer_delete(self->level_renderer);
+    }
+
     free(self);
+
+    LOG_DEBUG("renderer_t: deleted.");
 }
 
 level_renderer_t* const renderer_get_level_renderer(renderer_t* const self) {

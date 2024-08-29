@@ -23,5 +23,7 @@ int main(int argc, char** argv) {
     rudyscung_t* const rudyscung = rudyscung_new(resources_path);
     rudyscung_run(rudyscung);
 
+    rudyscung_delete(rudyscung);
+
     return 0;
 }

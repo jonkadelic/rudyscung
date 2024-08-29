@@ -53,7 +53,6 @@ rudyscung_t* const rudyscung_new(char const* const resources_path) {
     rudyscung_t* self = malloc(sizeof(rudyscung_t));
     assert(self != nullptr);
 
-
     self->window = window_new(WINDOW_TITLE, WINDOW_INITIAL_WIDTH, WINDOW_INITIAL_HEIGHT);
     self->shaders = shaders_new(resources_path);
     self->textures = textures_new(resources_path);
@@ -84,7 +83,7 @@ void rudyscung_run(rudyscung_t* const self) {
 
     LOG_INFO("rudyscung_t: starting core game loop...");
 
-#define LEVEL_SIZE 16
+#define LEVEL_SIZE 32
 #define LEVEL_HEIGHT 8
     level_t* level = level_new((size_chunks_t[NUM_AXES]) { LEVEL_SIZE, LEVEL_HEIGHT, LEVEL_SIZE });
     entity_t player = level_get_player(level);

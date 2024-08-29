@@ -21,3 +21,5 @@ float const lerp(float const a, float const b, float const t);
 float const absf(float const x);
 
 float const map_to_0_1(float const x);
+
+unsigned long const get_time_ms(void);

@@ -217,8 +217,6 @@ void level_gen_generate(level_gen_t* const self, chunk_t* const chunk) {
     size_chunks_t chunk_pos[NUM_AXES];
     chunk_get_pos(chunk, chunk_pos);
 
-    LOG_DEBUG("level_gen_t: generating chunk at [%zu, %zu, %zu].", chunk_pos[AXIS__X], chunk_pos[AXIS__Y], chunk_pos[AXIS__Z]);
-
     double grid[CHUNK_SIZE * CHUNK_SIZE];
     float scale = 64.0f;
     for (size_t x = 0; x < CHUNK_SIZE; x++) {

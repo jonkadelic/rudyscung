@@ -47,10 +47,10 @@ level_t* const level_new(size_chunks_t const size[NUM_AXES]) {
 
     memcpy(self->size, size, sizeof(size_chunks_t) * NUM_AXES);
 
-    struct timeval time;
-    gettimeofday(&time, nullptr);
-    self->seed = time.tv_sec * 1000 + time.tv_usec / 1000;
-    self->level_gen = level_gen_new(0);
+    self->seed = (uint64_t) get_time_ms();
+    self->level_gen = level_gen_new(self->seed);
+
+    uint64_t const start_time = get_time_ms();
 
     self->chunks = malloc(sizeof(chunk_t*) * size[AXIS__X] * size[AXIS__Y] * size[AXIS__Z]);
     assert(self->chunks != nullptr);
@@ -153,6 +153,11 @@ level_t* const level_new(size_chunks_t const size[NUM_AXES]) {
         mob_sprite->scale = 0.15f;
     }
 
+    uint64_t const end_time = get_time_ms();
+    LOG_DEBUG("level_t: generated level in %lums.", end_time - start_time);
+
+    LOG_DEBUG("level_t: initialized.");
+
     return self;
 }
 
@@ -175,6 +180,8 @@ void level_delete(level_t* const self) {
     ecs_delete(self->ecs);
 
     free(self);
+
+    LOG_DEBUG("level_t: deleted.");
 }
 
 void level_get_size(level_t const* const self, size_chunks_t size[NUM_AXES]) {

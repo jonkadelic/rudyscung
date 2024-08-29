@@ -2,7 +2,6 @@
 
 #include <assert.h>
 #include <stdlib.h>
-#include <sys/time.h>
 
 #include "./util.h"
 
@@ -22,9 +21,7 @@ random_t* const random_new(uint64_t const seed) {
 }
 
 random_t* const random_new_from_time(void) {
-    struct timeval time;
-    gettimeofday(&time, nullptr);
-    long seed = time.tv_sec * 1000 + time.tv_usec / 1000;
+    long seed = (long) get_time_ms();
 
     return random_new(seed);
 }

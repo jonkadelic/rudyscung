@@ -4,6 +4,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <math.h>
+#include <sys/time.h>
 
 char* const strcata(char const* const a, char const* const b) {
     char* const result = malloc(strlen(a) + strlen(b) + 1);
@@ -29,4 +30,11 @@ float const map_to_0_1(float const x) {
     }
 
     return x;
+}
+
+unsigned long const get_time_ms(void) {
+    struct timeval time;
+    gettimeofday(&time, nullptr);
+
+    return time.tv_sec * 1000 + time.tv_usec / 1000;
 }
