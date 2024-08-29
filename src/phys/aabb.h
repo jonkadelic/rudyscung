@@ -1,6 +1,6 @@
 #pragma once
 
-#include "../linmath.h"
+#include "lib/linmath.h"
 #include "../world/side.h"
 
 typedef struct aabb aabb_t;

@@ -24,7 +24,7 @@ struct sprites {
     sprite_entry_t sprites[NUM_SPRITES];
 };
 
-static void sprite_new(sprites_t* const self, sprite_t const sprite, textures_t* const textures, tessellator_t* tessellator, char const* const path, size_t size[2], float origin[2]);
+static void sprite_new(sprites_t* const self, sprite_t const sprite, textures_t* const textures, tessellator_t* tessellator, texture_name_t const texture_name, size_t size[2], float origin[2]);
 
 sprites_t* const sprites_new(rudyscung_t* const rudyscung) {
     assert(rudyscung != nullptr);
@@ -37,8 +37,8 @@ sprites_t* const sprites_new(rudyscung_t* const rudyscung) {
     textures_t* const textures = rudyscung_get_textures(rudyscung);
     tessellator_t* const tessellator = tessellator_new();
 
-    sprite_new(self, SPRITE__TREE, textures, tessellator, "/sprite/tree.png", (size_t[2]) { 256, 256 }, (float[2]) { 0.5f, 1.0f });
-    sprite_new(self, SPRITE__MOB, textures, tessellator, "/sprite/mob.png", (size_t[2]) { 16, 32 }, (float[2]) { 0.5f, 1.0f });
+    sprite_new(self, SPRITE__TREE, textures, tessellator, TEXTURE_NAME__SPRITE_TREE, (size_t[2]) { 256, 256 }, (float[2]) { 0.5f, 1.0f });
+    sprite_new(self, SPRITE__MOB, textures, tessellator, TEXTURE_NAME__SPRITE_MOB, (size_t[2]) { 16, 32 }, (float[2]) { 0.5f, 1.0f });
 
     tessellator_delete(tessellator);
 
@@ -116,14 +116,14 @@ void sprites_render(sprites_t const* const self, sprite_t const sprite, camera_t
     glDisable(GL_CULL_FACE);
 }
 
-static void sprite_new(sprites_t* const self, sprite_t const sprite, textures_t* const textures, tessellator_t* const tessellator, char const* const path, size_t size[2], float origin[2]) {
+static void sprite_new(sprites_t* const self, sprite_t const sprite, textures_t* const textures, tessellator_t* const tessellator, texture_name_t const texture_name, size_t size[2], float origin[2]) {
     assert(self != nullptr);
     assert(sprite >= 0 && sprite < NUM_SPRITES);
     assert(textures != nullptr);
 
     sprite_entry_t* const entry = &(self->sprites[sprite]);
 
-    entry->tex = textures_get_texture_by_path(textures, path);
+    entry->tex = textures_get_texture(textures, texture_name)->name;
     memcpy(entry->size, size, sizeof(size_t) * 2);
     memcpy(entry->origin, origin, sizeof(float) * 2);
     entry->num_elements = 0;

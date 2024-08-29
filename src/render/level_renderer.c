@@ -213,7 +213,7 @@ void level_renderer_draw(level_renderer_t const* const self, camera_t const* con
     glEnable(GL_DEPTH_TEST);
 
     textures_t* const textures = rudyscung_get_textures(self->rudyscung);
-    glBindTexture(GL_TEXTURE_2D, textures_get_texture(textures, TEXTURE_NAME__TERRAIN));
+    glBindTexture(GL_TEXTURE_2D, textures_get_texture(textures, TEXTURE_NAME__TERRAIN)->name);
 
     for (size_chunks_t x = 0; x < self->level_slice.size[AXIS__X]; x++) {
         for (size_chunks_t y = 0; y < self->level_slice.size[AXIS__Y]; y++) {

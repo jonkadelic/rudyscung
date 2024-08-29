@@ -1,13 +1,10 @@
 #include "./font.h"
 
-#include <SDL2/SDL_pixels.h>
 #include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
-#include <SDL2/SDL_image.h>
-#include <SDL2/SDL_surface.h>
 #include <GL/glew.h>
 #if defined(__APPLE__)
 #include <OpenGL/gl.h>
@@ -15,15 +12,27 @@
 #include <GL/gl.h>
 #endif
 
+#include "lib/linmath.h"
+#include "lib/stb_image.h"
 #include "../rudyscung.h"
 #include "shader.h"
 #include "tessellator.h"
 #include "textures.h"
 #include "shaders.h"
-#include "../linmath.h"
+#include "lib/linmath.h"
 #include "../util/logger.h"
 
 #define MAX_ENTRIES 128
+
+struct {
+    texture_name_t const texture_name;
+    char const* const name;
+} const FONT_NAME_INFO[NUM_FONT_NAMES] = {
+    [FONT_NAME__DEFAULT] = {
+        .texture_name = TEXTURE_NAME__FONT_DEFAULT,
+        .name = "default"
+    }
+};
 
 typedef struct entry {
     bool exists;
@@ -46,17 +55,18 @@ struct font {
 };
 
 static size_t read_font_txt_file(char const* const path, char*** const lines);
-static uint32_t get_pixel(SDL_Surface const* const surface, size_t const x, size_t const y);
 
-font_t* const font_new(rudyscung_t* const rudyscung, char const* const resources_path, char const* const font_name) {
+font_t* const font_new(rudyscung_t* const rudyscung, char const* const resources_path, font_name_t const font_name) {
     assert(rudyscung != nullptr);
     assert(resources_path != nullptr);
-    assert(font_name != nullptr);
+    assert(font_name >= 0 && font_name < NUM_FONT_NAMES);
 
     LOG_DEBUG("font_t: initializing \"%s\".", font_name);
 
+    auto font_name_info = &(FONT_NAME_INFO[font_name]);
+
     char name_buffer[256];
-    snprintf(name_buffer, sizeof(name_buffer) / sizeof(name_buffer[0]), "%s/font/%s.txt", resources_path, font_name);
+    snprintf(name_buffer, sizeof(name_buffer) / sizeof(name_buffer[0]), "%s/font/%s.txt", resources_path, font_name_info->name);
     char** lookup_lines = nullptr;
     size_t num_lookup_lines = read_font_txt_file(name_buffer, &lookup_lines);
     size_t lookup_line_len = strlen(lookup_lines[0]);
@@ -71,11 +81,12 @@ font_t* const font_new(rudyscung_t* const rudyscung, char const* const resources
         self->entries[i].exists = false;
     }
 
-    snprintf(name_buffer, sizeof(name_buffer) / sizeof(name_buffer[0]), "%s/font/%s.png", resources_path, font_name);
-    SDL_Surface* surface = IMG_Load(name_buffer);
-    assert(surface != nullptr);
+    // Get texture
+    textures_t* const textures = rudyscung_get_textures(self->rudyscung);
+    texture_t const* const texture = textures_get_texture(textures, font_name_info->texture_name);
+    self->tex = texture->name;
 
-    self->font_size_px = surface->w;
+    self->font_size_px = texture->size[0];
     self->char_size_px = self->font_size_px / lookup_line_len;
 
     for (size_t y = 0; y < num_lookup_lines; y++) {
@@ -85,7 +96,7 @@ font_t* const font_new(rudyscung_t* const rudyscung, char const* const resources
             size_t max_px = 0;
             for (size_t px = 0; px < self->char_size_px; px++) {
                 for (size_t py = 0; py < self->char_size_px; py++) {
-                    uint32_t p = get_pixel(surface, x * self->char_size_px + px, y * self->char_size_px + py);
+                    uint32_t p = texture_get_pixel(texture, (size_t[2]) { x * self->char_size_px + px, y * self->char_size_px + py });
                     if ((p & 0xFF000000) != 0x00000000) {
                         max_px = px;
                         break;
@@ -98,14 +109,6 @@ font_t* const font_new(rudyscung_t* const rudyscung, char const* const resources
             self->entries[c].y = y * self->char_size_px;
         }
     }
-
-    // Get texture
-    textures_t* const textures = rudyscung_get_textures(self->rudyscung);
-    snprintf(name_buffer, sizeof(name_buffer) / sizeof(name_buffer[0]), "/font/%s.png", font_name);
-    self->tex = textures_get_texture_by_path(textures, name_buffer);
-
-    // Delete surface
-    SDL_FreeSurface(surface);
 
     // Free lookup
     for (size_t i = 0; i < num_lookup_lines; i++) {
@@ -249,16 +252,4 @@ static size_t read_font_txt_file(char const* const path, char*** const lines) {
     free(buffer);
 
     return num_lines;
-}
-
-static uint32_t get_pixel(SDL_Surface const* const surface, size_t const x, size_t const y) {
-    assert(surface != nullptr);
-
-    if (surface->format->BytesPerPixel == 1) {
-        uint8_t lookup = ((uint8_t*) surface->pixels)[y * surface->w + x];
-        SDL_Color const* const c = &(surface->format->palette->colors[lookup]);
-        return (c->a << 24) | (c->r << 16) | (c->g << 8) | (c->b);
-    }
-
-    return ((uint32_t*) surface->pixels)[y * surface->w + x];
 }

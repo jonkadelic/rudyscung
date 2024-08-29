@@ -5,26 +5,28 @@
 #include <stdlib.h>
 
 #include <SDL2/SDL.h>
-#include <SDL2/SDL_surface.h>
-#include <SDL2/SDL_image.h>
 #if defined(__APPLE__)
 #include <OpenGL/gl.h>
 #else
 #include <GL/gl.h>
 #endif
 
+#include "lib/stb_image.h"
 #include "../util.h"
 #include "../util/logger.h"
 
-static GLuint load_texture(textures_t const* const self, char const* const path);
+static texture_t* const load_texture(textures_t const* const self, char const* const path);
 
 struct textures {
     char const* resources_path;
-    GLuint textures[NUM_TEXTURE_NAMES];
+    texture_t* textures[NUM_TEXTURE_NAMES];
 };
 
 char const* const TEXTURE_NAME_LOOKUP[NUM_TEXTURE_NAMES] = {
-    [TEXTURE_NAME__TERRAIN] = "/terrain.png"
+    [TEXTURE_NAME__TERRAIN] = "/terrain.png",
+    [TEXTURE_NAME__FONT_DEFAULT] = "/font/default.png",
+    [TEXTURE_NAME__SPRITE_TREE] = "/sprite/tree.png",
+    [TEXTURE_NAME__SPRITE_MOB] = "/sprite/mob.png"
 };
 
 textures_t* const textures_new(char const* const resources_path) {
@@ -35,13 +37,8 @@ textures_t* const textures_new(char const* const resources_path) {
     self->resources_path = resources_path;
 
     for (size_t i = 0; i < NUM_TEXTURE_NAMES; i++) {
-        self->textures[i] = 0;
+        self->textures[i] = nullptr;
     }
-
-    // Initialize SDL_image
-    int img_flags = IMG_INIT_PNG;
-    int img_initted = IMG_Init(img_flags);
-    assert((img_initted & img_flags) == img_flags);
 
     LOG_DEBUG("textures_t: initialized.");
 
@@ -51,9 +48,11 @@ textures_t* const textures_new(char const* const resources_path) {
 void textures_delete(textures_t* const self) {
     assert(self != nullptr);
 
-    for (size_t i = 0; i < NUM_TEXTURE_NAMES; i++) {
-        if (self->textures[i] != 0) {
-            glDeleteTextures(1, &(self->textures[i]));
+    for (texture_name_t tex = 0; tex < NUM_TEXTURE_NAMES; tex++) {
+        if (self->textures[tex] != nullptr) {
+            glDeleteTextures(1, &(self->textures[tex]->name));
+            free((void*) self->textures[tex]->pixels);
+            free(self->textures[tex]);
         }
     }
 
@@ -62,17 +61,18 @@ void textures_delete(textures_t* const self) {
     LOG_DEBUG("textures_t: deleted.");
 }
 
-GLuint textures_get_texture(textures_t* const self, texture_name_t const texture_name) {
+texture_t const* const textures_get_texture(textures_t* const self, texture_name_t const texture_name) {
     assert(self != nullptr);
     assert(texture_name >= 0 && texture_name < NUM_TEXTURE_NAMES);
 
-    GLuint tex = self->textures[texture_name];
-    if (tex == 0) {
+    texture_t const* tex = self->textures[texture_name];
+    if (tex == nullptr) {
         char const* const texture_name_str = TEXTURE_NAME_LOOKUP[texture_name];
         char* path = strcata(self->resources_path, texture_name_str);
 
-        tex = load_texture(self, path);
-        self->textures[texture_name] = tex;
+        texture_t* const rw_tex = load_texture(self, path);
+        self->textures[texture_name] = rw_tex;
+        tex = rw_tex;
 
         LOG_DEBUG("textures_t: cached texture at \"%s\".", path);
 
@@ -82,59 +82,59 @@ GLuint textures_get_texture(textures_t* const self, texture_name_t const texture
     return tex;
 }
 
-GLuint textures_get_texture_by_path(textures_t const* const self, char const* const texture_path) {
+uint32_t const texture_get_pixel(texture_t const* const self, size_t const pos[2]) {
     assert(self != nullptr);
-    assert(texture_path != nullptr);
+    assert(pos[0] < self->size[0]);
+    assert(pos[1] < self->size[1]);
 
-    char* path = strcata(self->resources_path, texture_path);
-    GLuint tex = load_texture(self, path);
+    uint32_t result = 0xFFFFFF;
+    memcpy(&result, &(self->pixels[(pos[1] * self->size[1] + pos[0]) * self->num_channels]), self->num_channels);
 
-    LOG_DEBUG("textures_t: read texture at \"%s\".", path);
-
-    free(path);
-
-    return tex;
+    return result;
 }
 
-static GLuint load_texture(textures_t const* const self, char const* const path) {
+static texture_t* const load_texture(textures_t const* const self, char const* const path) {
     assert(self != nullptr);
     assert(path != nullptr);
 
-    // Load texture using SDL
-    SDL_Surface* surface = IMG_Load(path);
-    assert(surface != nullptr);
+    // Load texture
+    int width, height, num_channels;
+    uint8_t* const data = stbi_load(path, &width, &height, &num_channels, 0);
+    assert(data != nullptr);
+
+    GLuint mode = 0;
+    switch (num_channels) {
+        case 3:
+            mode = GL_RGB;
+            break;
+        case 4:
+            mode = GL_RGBA;
+            break;
+        default:
+            assert(false);
+    }
 
     // Generate texture in OpenGL
-    GLuint tex = 0;
-    glGenTextures(1, &tex);
-    assert(tex != 0);
-    glBindTexture(GL_TEXTURE_2D, tex);
+    GLuint name = 0;
+    glGenTextures(1, &name);
+    assert(name != 0);
+    glBindTexture(GL_TEXTURE_2D, name);
 
-    uint8_t* pixels = surface->pixels;
-    GLuint mode = GL_RGB;
-    if (surface->format->BytesPerPixel == 4) {
-        mode = GL_RGBA;
-    } else if (surface->format->BytesPerPixel == 1) {
-        mode = GL_RGBA;
-        pixels = malloc(surface->w * surface->h * 4);
-        assert(pixels != nullptr);
-        for (int i = 0; i < surface->w * surface->h; i++) {
-            uint8_t index = ((uint8_t*)(surface->pixels))[i];
-            pixels[i * 4 + 0] = surface->format->palette->colors[index].r;
-            pixels[i * 4 + 1] = surface->format->palette->colors[index].g;
-            pixels[i * 4 + 2] = surface->format->palette->colors[index].b;
-            pixels[i * 4 + 3] = surface->format->palette->colors[index].a;
-        }
-    }
-
-    glTexImage2D(GL_TEXTURE_2D, 0, mode, surface->w, surface->h, 0, mode, GL_UNSIGNED_BYTE, pixels);
-    if (surface->format->BytesPerPixel == 1) {
-        free(pixels);
-    }
-    SDL_FreeSurface(surface);
+    glTexImage2D(GL_TEXTURE_2D, 0, mode, width, height, 0, mode, GL_UNSIGNED_BYTE, data);
 
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 
-    return tex;
+    texture_t const texture_local = (texture_t) {
+        .name = name,
+        .num_channels = num_channels,
+        .size = { width, height },
+        .pixels = data
+    };
+    texture_t* const texture = malloc(sizeof(texture_t));
+    assert(texture != nullptr);
+
+    memcpy(texture, &texture_local, sizeof(texture_t));
+
+    return texture;
 }

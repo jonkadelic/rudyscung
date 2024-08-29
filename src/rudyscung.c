@@ -56,7 +56,7 @@ rudyscung_t* const rudyscung_new(char const* const resources_path) {
     self->window = window_new(WINDOW_TITLE, WINDOW_INITIAL_WIDTH, WINDOW_INITIAL_HEIGHT);
     self->shaders = shaders_new(resources_path);
     self->textures = textures_new(resources_path);
-    self->font = font_new(self, resources_path, "default");
+    self->font = font_new(self, resources_path, FONT_NAME__DEFAULT);
     self->renderer = renderer_new(self);
     
     LOG_DEBUG("rudyscung_t: initialized.");

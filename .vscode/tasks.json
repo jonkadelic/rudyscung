@@ -2,9 +2,22 @@
     "version": "2.0.0",
     "tasks": [
         {
-            "label": "Build",
+            "label": "Build WSL",
             "type": "shell",
             "command": "cd ${workspaceFolder}; meson compile -C builddir",
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            },
+            "presentation": {
+                "reveal": "always",
+                "panel": "shared"
+            }
+        },
+        {
+            "label": "Build Windows",
+            "type": "shell",
+            "command": "cd ${workspaceFolder}; meson compile -C builddir_x86_64-w64-mingw32",
             "group": {
                 "kind": "build",
                 "isDefault": true

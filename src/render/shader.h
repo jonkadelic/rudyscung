@@ -1,6 +1,6 @@
 #pragma once
 
-#include "../linmath.h"
+#include "lib/linmath.h"
 
 typedef struct shader shader_t;
 
