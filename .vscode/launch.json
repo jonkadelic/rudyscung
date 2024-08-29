@@ -9,6 +9,10 @@
             "type": "cppdbg",
             "request": "launch",
             "program": "${workspaceFolder}/builddir/rudyscung",
+            "windows": {
+                "program": "${workspaceFolder}/builddir/rudyscung.exe",
+                "miDebuggerPath": "C:/msys64/mingw64/bin/gdb.exe"
+            },
             "args": [],
             "stopAtEntry": false,
             "cwd": "${workspaceFolder}",

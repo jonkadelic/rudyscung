@@ -1,5 +1,7 @@
 #pragma once
 
+#include <stdint.h>
+
 #include <GL/glew.h>
 #if defined(__APPLE__)
 #include <OpenGL/gl.h>

@@ -4,7 +4,24 @@
         {
             "label": "Build",
             "type": "shell",
-            "command": "cd ${workspaceFolder}; meson compile -C builddir",
+            "command": "meson compile -C builddir",
+            "windows": {
+                "command": "meson compile -C builddir",
+                "options": {
+                    "shell": {
+                        "executable": "C:\\msys64\\usr\\bin\\bash.exe",
+                        "args": [
+                            "--login",
+                            "-i",
+                            "-c"
+                        ]
+                    },
+                    "env": {
+                        "MSYSTEM": "MINGW64",
+                        "CHERE_INVOKING": "1"
+                    }
+                }    
+            },
             "group": {
                 "kind": "build",
                 "isDefault": true

@@ -2,13 +2,14 @@ project('rudyscung', 'c',
         default_options: [
                 'c_std=gnu2x',
                 'default_library=static'
-        ])
+        ]
+)
 
 cc = meson.get_compiler('c')
 
 m_dep = cc.find_library('m', required: false)
 gl_dep = dependency('gl')
-glew_dep = dependency('glew')
+glew_dep = dependency('glew', static: true)
 sdl2main_dep = dependency('sdl2main')
 sdl2_dep = dependency('sdl2')
 
@@ -19,10 +20,17 @@ subdir('src')
 
 executable('rudyscung', sources,
         # win_subsystem: 'windows',
+        c_args: [
+                '-DGLEW_STATIC'
+        ],
         dependencies: [
                 m_dep,
                 gl_dep,
                 glew_dep,
                 sdl2main_dep,
                 sdl2_dep
-        ])
+        ],
+        link_args: [
+                '-static'
+        ]
+)
