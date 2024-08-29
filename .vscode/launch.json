@@ -5,20 +5,23 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "(gdb) Launch",
+            "name": "Launch",
             "type": "cppdbg",
             "request": "launch",
+            "MIMode": "gdb",
             "program": "${workspaceFolder}/builddir/rudyscung",
             "windows": {
                 "program": "${workspaceFolder}/builddir/rudyscung.exe",
                 "miDebuggerPath": "C:/msys64/mingw64/bin/gdb.exe"
+            },
+            "osx": {
+                "MIMode": "lldb"
             },
             "args": [],
             "stopAtEntry": false,
             "cwd": "${workspaceFolder}",
             "environment": [],
             "externalConsole": false,
-            "MIMode": "gdb",
             "preLaunchTask": "Build",
             "setupCommands": [
                 {
