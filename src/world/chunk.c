@@ -12,8 +12,8 @@
 
 struct chunk {
     size_chunks_t pos[NUM_AXES];
-    tile_t tiles[CHUNK_SIZE * CHUNK_SIZE * CHUNK_SIZE];
-    tile_shape_t tile_shapes[CHUNK_SIZE * CHUNK_SIZE * CHUNK_SIZE];
+    uint8_t tiles[CHUNK_SIZE * CHUNK_SIZE * CHUNK_SIZE];
+    uint8_t tile_shapes[CHUNK_SIZE * CHUNK_SIZE * CHUNK_SIZE];
 };
 
 chunk_t* const chunk_new(size_chunks_t const pos[NUM_AXES]) {
