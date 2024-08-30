@@ -108,7 +108,7 @@ void view_type_delete(view_type_t* const self) {
     free(self);
 }
 
-camera_t const* const view_type_get_camera(view_type_t const* const self) {
+camera_t* const view_type_get_camera(view_type_t const* const self) {
     assert(self != nullptr);
 
     return self->camera;
@@ -216,7 +216,7 @@ static bool entity_handle_event(_view_type_entity_t* const self, SDL_Event const
                 case SDLK_ESCAPE:
                     ecs_t* const ecs = level_get_ecs(level);
                     ecs_detach_component(ecs, self->entity, ECS_COMPONENT__CONTROLLED);
-                    view_type_isometric_t* const view_type = view_type_isometric_new(self->super.client, level_get_player(level));
+                    view_type_isometric_t* const view_type = view_type_isometric_new(self->super.client, client_get_player(self->super.client));
                     client_set_view_type(self->super.client, view_type);
                     return true;
                 case SDLK_w:

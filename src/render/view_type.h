@@ -18,7 +18,7 @@ view_type_isometric_t* const view_type_isometric_new(client_t* const client, ent
 
 void view_type_delete(view_type_t* const self);
 
-camera_t const* const view_type_get_camera(view_type_t const* const self);
+camera_t* const view_type_get_camera(view_type_t const* const self);
 
 bool const view_type_handle_event(view_type_t* const self, SDL_Event const* const event, level_t* const level);
 

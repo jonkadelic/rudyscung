@@ -40,6 +40,4 @@ void level_tick(level_t* const self);
 
 ecs_t* const level_get_ecs(level_t* const self);
 
-entity_t const level_get_player(level_t const* const self);
-
 float const level_get_nearest_face_on_axis(level_t const* const self, float const pos[NUM_AXES], side_t const side, float const max_range);

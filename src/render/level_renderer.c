@@ -29,7 +29,6 @@
 
 struct level_renderer {
     client_t* client;
-    level_t* level;
     tessellator_t* tessellator;
     sprites_t* sprites;
     chunk_renderer_t** chunk_renderers;
@@ -39,26 +38,18 @@ struct level_renderer {
 static void delete_chunk_renderers(level_renderer_t* const self);
 static void reload_chunk_renderers(level_renderer_t* const self);
 
-level_renderer_t* const level_renderer_new(client_t* const client, level_t* const level) {
-    assert(level != nullptr);
+level_renderer_t* const level_renderer_new(client_t* const client) {
+    assert(client != nullptr);
 
     level_renderer_t* const self = malloc(sizeof(level_renderer_t));
     assert(self != nullptr);
 
     self->client = client;
-    self->level = level;
-
-    size_chunks_t size[NUM_AXES];
-    level_get_size(level, size);
-    memcpy(self->level_slice.size, size, sizeof(size_chunks_t) * NUM_AXES);
-    for (axis_t a = 0; a < NUM_AXES; a++) {
-        self->level_slice.pos[a] = 0;
-    }
 
     self->tessellator = tessellator_new();
     self->sprites = sprites_new(client);
 
-    self->chunk_renderers = nullptr;
+    level_renderer_level_changed(self);
 
     return self;
 }
@@ -73,6 +64,22 @@ void level_renderer_delete(level_renderer_t* const self) {
     sprites_delete(self->sprites);
     
     free(self);
+}
+
+void level_renderer_level_changed(level_renderer_t* const self) {
+    assert(self != nullptr);
+
+    delete_chunk_renderers(self);
+
+    level_t* const level = client_get_level(self->client);
+    size_chunks_t size[NUM_AXES];
+    level_get_size(level, size);
+    memcpy(self->level_slice.size, size, sizeof(size_chunks_t) * NUM_AXES);
+    for (axis_t a = 0; a < NUM_AXES; a++) {
+        self->level_slice.pos[a] = 0;
+    }
+
+    reload_chunk_renderers(self);
 }
 
 void level_renderer_slice(level_renderer_t* const self, level_slice_t const* const slice) {
@@ -165,6 +172,8 @@ void level_renderer_slice(level_renderer_t* const self, level_slice_t const* con
 void level_renderer_tick(level_renderer_t* const self) {
     assert(self != nullptr);
 
+    level_t* const level = client_get_level(self->client);
+
     size_t remaining = 20;
     size_t const chunks_area = self->level_slice.size[AXIS__Y] * self->level_slice.size[AXIS__Z] * self->level_slice.size[AXIS__X];
     for (size_chunks_t i = 0; i < chunks_area; i++) {
@@ -178,7 +187,7 @@ void level_renderer_tick(level_renderer_t* const self) {
             size_chunks_t pos[NUM_AXES];
             chunk_get_pos(chunk, pos);
 
-            if (!chunk_renderer_is_ready(chunk_renderer) || level_is_chunk_dirty(self->level, pos)) {
+            if (!chunk_renderer_is_ready(chunk_renderer) || level_is_chunk_dirty(level, pos)) {
                 chunk_renderer_build(chunk_renderer, self->tessellator);
                 remaining--;
             }
@@ -189,6 +198,8 @@ void level_renderer_tick(level_renderer_t* const self) {
 void level_renderer_draw(level_renderer_t* const self, camera_t* const camera, float const partial_tick) {
     assert(self != nullptr);
     assert(self->chunk_renderers != nullptr);
+
+    level_t* const level = client_get_level(self->client);
 
     shaders_t* const shaders = client_get_shaders(self->client);
     shader_t* const shader = shaders_get(shaders, "main");
@@ -239,7 +250,7 @@ void level_renderer_draw(level_renderer_t* const self, camera_t* const camera, f
     glDisable(GL_DEPTH_TEST);
     glDisable(GL_CULL_FACE);
 
-    ecs_t* ecs = level_get_ecs(self->level);
+    ecs_t* ecs = level_get_ecs(level);
     entity_t const highest_entity_id = ecs_get_highest_entity_id(ecs);
 
     for (entity_t entity = 0; entity <= highest_entity_id; entity++) {
@@ -272,11 +283,11 @@ void level_renderer_draw(level_renderer_t* const self, camera_t* const camera, f
     }
 
     // Raycast and draw sprite
-    ecs_component_pos_t const* const player_pos = ecs_get_component_data(ecs, level_get_player(self->level), ECS_COMPONENT__POS);
-    ecs_component_rot_t const* const player_rot = ecs_get_component_data(ecs, level_get_player(self->level), ECS_COMPONENT__ROT);
+    ecs_component_pos_t const* const player_pos = ecs_get_component_data(ecs, client_get_player(self->client), ECS_COMPONENT__POS);
+    ecs_component_rot_t const* const player_rot = ecs_get_component_data(ecs, client_get_player(self->client), ECS_COMPONENT__ROT);
 
     raycast_t raycast;
-    raycast_cast_in_level(&raycast, self->level, player_pos->pos, player_rot->rot);
+    raycast_cast_in_level(&raycast, level, player_pos->pos, player_rot->rot);
     if (raycast.hit) {
         sprites_render(self->sprites, SPRITE__TREE, camera, 0.0125f, raycast.pos, 0.0f, (bool[NUM_ROT_AXES]) { true, true });
     }
@@ -286,8 +297,10 @@ bool const level_renderer_is_tile_side_occluded(level_renderer_t const* const se
     assert(self != nullptr);
     assert(side >= 0 && side < NUM_SIDES);
 
+    level_t* const level = client_get_level(self->client);
+
     size_chunks_t level_size[NUM_AXES];
-    level_get_size(self->level, level_size);
+    level_get_size(level, level_size);
 
     for (axis_t a = 0; a < NUM_AXES; a++) {
         assert(pos[a] >= 0 && pos[a] < TO_TILE_SPACE(level_size[a]));
@@ -314,7 +327,7 @@ bool const level_renderer_is_tile_side_occluded(level_renderer_t const* const se
         t_pos[a] = pos[a] + offsets[a];
     }
 
-    tile_shape_t tshape = level_get_tile_shape(self->level, t_pos);
+    tile_shape_t tshape = level_get_tile_shape(level, t_pos);
     side_t tside = side_get_opposite(side);
 
     return tile_shape_can_side_occlude(tshape, tside);
@@ -340,6 +353,8 @@ static void delete_chunk_renderers(level_renderer_t* const self) {
 static void reload_chunk_renderers(level_renderer_t* const self) {
     assert(self != nullptr);
 
+    level_t* const level = client_get_level(self->client);
+
     size_t const chunks_area = self->level_slice.size[AXIS__Y] * self->level_slice.size[AXIS__Z] * self->level_slice.size[AXIS__X];
     if (self->chunk_renderers == nullptr) {
         self->chunk_renderers = malloc(sizeof(chunk_renderer_t*) * chunks_area);
@@ -351,13 +366,13 @@ static void reload_chunk_renderers(level_renderer_t* const self) {
     }
 
     size_chunks_t level_size[NUM_AXES];
-    level_get_size(self->level, level_size);
+    level_get_size(level, level_size);
 
     for (size_chunks_t x = 0; x < self->level_slice.size[AXIS__X] && (self->level_slice.pos[AXIS__X] + x) < level_size[AXIS__X]; x++) {
         for (size_chunks_t y = 0; y < self->level_slice.size[AXIS__Y] && (self->level_slice.pos[AXIS__Y] + y) < level_size[AXIS__Y]; y++) {
             for (size_chunks_t z = 0; z < self->level_slice.size[AXIS__Z] && (self->level_slice.pos[AXIS__Z] + z) < level_size[AXIS__Z]; z++) {
                 if (self->chunk_renderers[CHUNK_INDEX(x, y, z)] == nullptr) {
-                    chunk_t const* const chunk = level_get_chunk(self->level, (size_chunks_t[NUM_AXES]) { self->level_slice.pos[AXIS__X] + x, self->level_slice.pos[AXIS__Y] + y, self->level_slice.pos[AXIS__Z] + z });
+                    chunk_t const* const chunk = level_get_chunk(level, (size_chunks_t[NUM_AXES]) { self->level_slice.pos[AXIS__X] + x, self->level_slice.pos[AXIS__Y] + y, self->level_slice.pos[AXIS__Z] + z });
                     self->chunk_renderers[CHUNK_INDEX(x, y, z)] = chunk_renderer_new(self, chunk);
                 }
             }

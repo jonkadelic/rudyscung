@@ -35,7 +35,6 @@ struct level {
     ecs_t* ecs;
     uint64_t seed;
     random_t* rand;
-    entity_t player;
 };
 
 level_t* const level_new(size_chunks_t const size[NUM_AXES]) {
@@ -88,18 +87,6 @@ level_t* const level_new(size_chunks_t const size[NUM_AXES]) {
     ecs_attach_system(self->ecs, ECS_COMPONENT__VEL, ecs_system_friction);
     ecs_attach_system(self->ecs, ECS_COMPONENT__GRAVITY, ecs_system_gravity);
     ecs_attach_system(self->ecs, ECS_COMPONENT__MOVE_RANDOM, ecs_system_move_random);
-
-    self->player = ecs_new_entity(self->ecs);
-    ecs_component_pos_t* const player_pos = ecs_attach_component(self->ecs, self->player, ECS_COMPONENT__POS);
-    ecs_attach_component(self->ecs, self->player, ECS_COMPONENT__VEL);
-    ecs_component_rot_t* const player_rot = ecs_attach_component(self->ecs, self->player, ECS_COMPONENT__ROT);
-    
-    player_pos->pos[AXIS__X] = (size[AXIS__X] / 2.0f) * CHUNK_SIZE;
-    player_pos->pos[AXIS__Y] = 120.0f;
-    player_pos->pos[AXIS__Z] = (size[AXIS__Z] / 2.0f) * CHUNK_SIZE;
-
-    player_rot->rot[ROT_AXIS__Y] = M_PI / 4 * 3;
-    player_rot->rot[ROT_AXIS__X] = M_PI / 4 * 2;
 
     self->rand = random_new(self->seed);
     for (size_t i = 0; i < NUM_TREES; i++) {
@@ -313,12 +300,6 @@ ecs_t* const level_get_ecs(level_t* const self) {
     assert(self != nullptr);
 
     return self->ecs;
-}
-
-entity_t const level_get_player(level_t const* const self) {
-    assert(self != nullptr);
-
-    return self->player;
 }
 
 float const level_get_nearest_face_on_axis(level_t const* const self, float const pos[NUM_AXES], side_t const side, float const max_range) {

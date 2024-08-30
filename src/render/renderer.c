@@ -14,13 +14,12 @@
 #include "src/render/font.h"
 #include "src/phys/raycast.h"
 #include "src/util/logger.h"
-#include "src/util/util.h"
 
 static void check_errors(void);
+static void draw_overlay(renderer_t* const self);
 
 struct renderer {
     client_t* client;
-    level_t* level;
     level_renderer_t* level_renderer;
     struct {
         size_t target_fps;
@@ -38,7 +37,6 @@ renderer_t* const renderer_new(client_t* const client) {
     assert(self != nullptr);
 
     self->client = client;
-    self->level = nullptr;
     self->level_renderer = nullptr;
     self->frames.target_fps = 60;
     self->frames.last_frame_tick = SDL_GetTicks64();
@@ -62,6 +60,16 @@ void renderer_delete(renderer_t* const self) {
     LOG_DEBUG("renderer_t: deleted.");
 }
 
+void renderer_level_changed(renderer_t* const self) {
+    assert(self != nullptr);
+
+    if (self->level_renderer == nullptr) {
+        self->level_renderer = level_renderer_new(self->client);
+    } else {
+        level_renderer_level_changed(self->level_renderer);
+    }
+}
+
 level_renderer_t* const renderer_get_level_renderer(renderer_t* const self) {
     assert(self != nullptr);
 
@@ -76,60 +84,23 @@ void renderer_tick(renderer_t* const self) {
     }
 }
 
-void renderer_set_level(renderer_t* const self, level_t *const level) {
-    assert(self != nullptr);
-    assert(level != nullptr);
-
-    self->level = level;
-
-    if (self->level_renderer != nullptr) {
-        level_renderer_delete(self->level_renderer);
-        self->level_renderer = nullptr;
-    }
-
-    self->level_renderer = level_renderer_new(self->client, level);
-}
-
-void renderer_render(renderer_t* const self, camera_t const* const camera, float const partial_tick) {
+void renderer_render(renderer_t* const self, camera_t* const camera, float const partial_tick) {
     assert(self != nullptr);
 
     uint64_t tick_start = SDL_GetTicks64();
 
     window_t const* const window = client_get_window(self->client);
-    font_t const* const font = client_get_font(self->client);
 
     // Render
     if (self->frames.target_fps == 0 || ((tick_start - self->frames.last_frame_tick) > (1000.0f / (self->frames.target_fps + 3)))) {
         glClearColor(0.2f, 0.5f, 0.6f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-        level_renderer_draw(self->level_renderer, camera, partial_tick);
-
-        char line_buffer[64];
-        snprintf(line_buffer, sizeof(line_buffer) / sizeof(line_buffer[0]), "FPS: %.2f", self->frames.fps);
-        font_draw(font, line_buffer, 0, 0);
-
-        if (self->level != nullptr) {
-            ecs_t* const ecs = level_get_ecs(self->level);
-            entity_t const player = level_get_player(self->level);
-
-            ecs_component_pos_t const* const player_pos = ecs_get_component_data(ecs, player, ECS_COMPONENT__POS);
-            ecs_component_vel_t const* const player_vel = ecs_get_component_data(ecs, player, ECS_COMPONENT__VEL);
-            ecs_component_rot_t const* const player_rot = ecs_get_component_data(ecs, player, ECS_COMPONENT__ROT);
-
-            snprintf(line_buffer, sizeof(line_buffer) / sizeof(line_buffer[0]), "x: %.2f y: %.2f z: %.2f", player_pos->pos[AXIS__X], player_pos->pos[AXIS__Y], player_pos->pos[AXIS__Z]);
-            font_draw(font, line_buffer, 0, 12);
-
-            snprintf(line_buffer, sizeof(line_buffer) / sizeof(line_buffer[0]), "vx: %.2f vy: %.2f z: %.2f", player_vel->vel[AXIS__X], player_vel->vel[AXIS__Y], player_vel->vel[AXIS__Z]);
-            font_draw(font, line_buffer, 0, 24);
-
-            raycast_t raycast;
-            raycast_cast_in_level(&raycast, self->level, player_pos->pos, player_rot->rot);
-            if (raycast.hit) {
-                snprintf(line_buffer, sizeof(line_buffer) / sizeof(line_buffer[0]), "hit: %zu %zu %zu, block: %d", raycast.tile_pos[AXIS__X], raycast.tile_pos[AXIS__Y], raycast.tile_pos[AXIS__Z], raycast.tile);
-                font_draw(font, line_buffer, 0, 36);
-            }
+        if (self->level_renderer != nullptr) {
+            level_renderer_draw(self->level_renderer, camera, partial_tick);
         }
+
+        draw_overlay(self);
 
         window_swap(window);
 
@@ -153,5 +124,38 @@ static void check_errors(void) {
     GLenum error;
     while ((error = glGetError()) != GL_NO_ERROR) {
         fprintf(stderr, "OpenGL error: %s\n", glewGetErrorString(error));
+    }
+}
+
+static void draw_overlay(renderer_t* const self) {
+    assert(self != nullptr);
+
+    font_t const* const font = client_get_font(self->client);
+
+    char line_buffer[64];
+    snprintf(line_buffer, sizeof(line_buffer) / sizeof(line_buffer[0]), "FPS: %.2f", self->frames.fps);
+    font_draw(font, line_buffer, 0, 0);
+
+    if (self->level_renderer != nullptr) {
+        level_t* const level = client_get_level(self->client);
+        ecs_t* const ecs = level_get_ecs(level);
+        entity_t const player = client_get_player(self->client);
+
+        ecs_component_pos_t const* const player_pos = ecs_get_component_data(ecs, player, ECS_COMPONENT__POS);
+        ecs_component_vel_t const* const player_vel = ecs_get_component_data(ecs, player, ECS_COMPONENT__VEL);
+        ecs_component_rot_t const* const player_rot = ecs_get_component_data(ecs, player, ECS_COMPONENT__ROT);
+
+        snprintf(line_buffer, sizeof(line_buffer) / sizeof(line_buffer[0]), "x: %.2f y: %.2f z: %.2f", player_pos->pos[AXIS__X], player_pos->pos[AXIS__Y], player_pos->pos[AXIS__Z]);
+        font_draw(font, line_buffer, 0, 12);
+
+        snprintf(line_buffer, sizeof(line_buffer) / sizeof(line_buffer[0]), "vx: %.2f vy: %.2f z: %.2f", player_vel->vel[AXIS__X], player_vel->vel[AXIS__Y], player_vel->vel[AXIS__Z]);
+        font_draw(font, line_buffer, 0, 24);
+
+        raycast_t raycast;
+        raycast_cast_in_level(&raycast, level, player_pos->pos, player_rot->rot);
+        if (raycast.hit) {
+            snprintf(line_buffer, sizeof(line_buffer) / sizeof(line_buffer[0]), "hit: %zu %zu %zu, block: %d", raycast.tile_pos[AXIS__X], raycast.tile_pos[AXIS__Y], raycast.tile_pos[AXIS__Z], raycast.tile);
+            font_draw(font, line_buffer, 0, 36);
+        }
     }
 }

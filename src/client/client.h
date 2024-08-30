@@ -22,4 +22,8 @@ textures_t* const client_get_textures(client_t* const self);
 
 font_t* const client_get_font(client_t* const self);
 
+level_t* const client_get_level(client_t* const self);
+
+entity_t const client_get_player(client_t* const self);
+
 void client_set_view_type(client_t* const self, view_type_t* const view_type);
