@@ -9,9 +9,9 @@
             "type": "cppdbg",
             "request": "launch",
             "MIMode": "gdb",
-            "program": "${workspaceFolder}/builddir/rudyscung",
+            "program": "${workspaceFolder}/builddir/client",
             "windows": {
-                "program": "${workspaceFolder}/builddir/rudyscung.exe",
+                "program": "${workspaceFolder}/builddir/client.exe",
                 "miDebuggerPath": "C:/msys64/mingw64/bin/gdb.exe"
             },
             "osx": {

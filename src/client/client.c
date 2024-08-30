@@ -1,9 +1,8 @@
-#include "./rudyscung.h"
+#include "./client.h"
 
 #include <assert.h>
 #include <math.h>
 #include <stdlib.h>
-#include <stdio.h>
 
 #include <SDL2/SDL_events.h>
 #include <SDL2/SDL_mouse.h>
@@ -11,8 +10,6 @@
 #include <SDL2/SDL_keycode.h>
 #include <SDL2/SDL_video.h>
 
-#include "src/phys/raycast.h"
-#include "src/util/util.h"
 #include "src/render/font.h"
 #include "src/render/level_renderer.h"
 #include "src/render/shaders.h"
@@ -22,7 +19,6 @@
 #include "src/client/window.h"
 #include "src/world/chunk.h"
 #include "src/world/entity/ecs.h"
-#include "src/world/entity/ecs_components.h"
 #include "src/world/level.h"
 #include "src/world/side.h"
 #include "src/render/view_type.h"
@@ -35,7 +31,7 @@
 #define TICKS_PER_SECOND 20
 #define MS_PER_TICK (1000 / (TICKS_PER_SECOND))
 
-struct rudyscung {
+struct client {
     window_t* window;
     shaders_t* shaders;
     textures_t* textures;
@@ -44,14 +40,14 @@ struct rudyscung {
     view_type_t* view_type;
 };
 
-static void tick(rudyscung_t* const self, level_t* const level);
-static void update_slice(rudyscung_t* const self, level_t* const level, bool const force);
+static void tick(client_t* const self, level_t* const level);
+static void update_slice(client_t* const self, level_t* const level, bool const force);
 
-rudyscung_t* const rudyscung_new(char const* const resources_path) {
+client_t* const client_new(char const* const resources_path) {
     assert(resources_path != nullptr);
 
 
-    rudyscung_t* self = malloc(sizeof(rudyscung_t));
+    client_t* self = malloc(sizeof(client_t));
     assert(self != nullptr);
 
     self->window = window_new(WINDOW_TITLE, WINDOW_INITIAL_WIDTH, WINDOW_INITIAL_HEIGHT);
@@ -60,12 +56,12 @@ rudyscung_t* const rudyscung_new(char const* const resources_path) {
     self->font = font_new(self, resources_path, FONT_NAME__DEFAULT);
     self->renderer = renderer_new(self);
     
-    LOG_DEBUG("rudyscung_t: initialized.");
+    LOG_DEBUG("client_t: initialized.");
 
     return self;
 }
 
-void rudyscung_delete(rudyscung_t* const self) {
+void client_delete(client_t* const self) {
     assert(self != nullptr);
 
     view_type_delete(self->view_type);
@@ -77,13 +73,13 @@ void rudyscung_delete(rudyscung_t* const self) {
 
     free(self);
 
-    LOG_DEBUG("rudyscung_t: deleted.");
+    LOG_DEBUG("client_t: deleted.");
 }
 
-void rudyscung_run(rudyscung_t* const self) {
+void client_run(client_t* const self) {
     assert(self != nullptr);
 
-    LOG_INFO("rudyscung_t: starting core game loop...");
+    LOG_INFO("client_t: starting core game loop...");
 
 #define LEVEL_SIZE 16
 #define LEVEL_HEIGHT 8
@@ -149,31 +145,31 @@ void rudyscung_run(rudyscung_t* const self) {
     level_delete(level);
 }
 
-window_t* const rudyscung_get_window(rudyscung_t* const self) {
+window_t* const client_get_window(client_t* const self) {
     assert(self != nullptr);
 
     return self->window;
 }
 
-shaders_t* const rudyscung_get_shaders(rudyscung_t* const self) {
+shaders_t* const client_get_shaders(client_t* const self) {
     assert(self != nullptr);
 
     return self->shaders;
 }
 
-textures_t* const rudyscung_get_textures(rudyscung_t* const self) {
+textures_t* const client_get_textures(client_t* const self) {
     assert(self != nullptr);
 
     return self->textures;
 }
 
-font_t* const rudyscung_get_font(rudyscung_t* const self) {
+font_t* const client_get_font(client_t* const self) {
     assert(self != nullptr);
 
     return self->font;
 }
 
-void rudyscung_set_view_type(rudyscung_t* const self, view_type_t* const view_type) {
+void client_set_view_type(client_t* const self, view_type_t* const view_type) {
     assert(self != nullptr);
     assert(view_type != nullptr);
 
@@ -181,7 +177,7 @@ void rudyscung_set_view_type(rudyscung_t* const self, view_type_t* const view_ty
     self->view_type = view_type;
 }
 
-static void tick(rudyscung_t* const self, level_t* const level) {
+static void tick(client_t* const self, level_t* const level) {
     assert(self != nullptr);
     assert(level != nullptr);
 
@@ -191,7 +187,7 @@ static void tick(rudyscung_t* const self, level_t* const level) {
     update_slice(self, level, false);
 }
 
-static void update_slice(rudyscung_t* const self, level_t* const level, bool const force) {
+static void update_slice(client_t* const self, level_t* const level, bool const force) {
     assert(self != nullptr);
 
     static int last_chunk_pos[NUM_AXES];

@@ -11,7 +11,7 @@
 #include "src/phys/raycast.h"
 #include "src/util/util.h"
 #include "src/render/font.h"
-#include "src/client/rudyscung.h"
+#include "src/client/client.h"
 #include "src/world/entity/ecs.h"
 #include "src/world/entity/ecs_components.h"
 #include "src/world/level.h"
@@ -47,7 +47,7 @@ typedef struct keys {
 
 struct view_type {
     view_type_id_t view_type_id;
-    rudyscung_t* rudyscung;
+    client_t* client;
     camera_t* camera;
     handle_event handle_event;
     tick tick;
@@ -66,7 +66,7 @@ typedef struct _view_type_isometric {
     keys_t keys;
 } _view_type_isometric_t;
 
-static view_type_t* const view_type_new(view_type_id_t const view_type_id, rudyscung_t* const rudyscung, camera_t* const camera, handle_event const handle_event, tick const tick, render_tick const render_tick, size_t const size);
+static view_type_t* const view_type_new(view_type_id_t const view_type_id, client_t* const client, camera_t* const camera, handle_event const handle_event, tick const tick, render_tick const render_tick, size_t const size);
 
 static bool entity_handle_event(_view_type_entity_t* const self, SDL_Event const* const event, level_t* const level);
 
@@ -80,8 +80,8 @@ static void entity_render_tick(_view_type_entity_t* const self, level_t* const l
 
 static void isometric_render_tick(_view_type_isometric_t* const self, level_t* const level, float const partial_tick);
 
-view_type_entity_t* const view_type_entity_new(rudyscung_t* const rudyscung, entity_t const entity) {
-    _view_type_entity_t* const self = (_view_type_entity_t*) view_type_new(VIEW_TYPE_ID__ENTITY, rudyscung, camera_perspective_new(), (handle_event) entity_handle_event, (tick) entity_tick, (render_tick) entity_render_tick, sizeof(_view_type_entity_t));
+view_type_entity_t* const view_type_entity_new(client_t* const client, entity_t const entity) {
+    _view_type_entity_t* const self = (_view_type_entity_t*) view_type_new(VIEW_TYPE_ID__ENTITY, client, camera_perspective_new(), (handle_event) entity_handle_event, (tick) entity_tick, (render_tick) entity_render_tick, sizeof(_view_type_entity_t));
 
     self->entity = entity;
 
@@ -90,8 +90,8 @@ view_type_entity_t* const view_type_entity_new(rudyscung_t* const rudyscung, ent
     return (view_type_entity_t*) self;
 }
 
-view_type_isometric_t* const view_type_isometric_new(rudyscung_t* const rudyscung, entity_t const player) {
-    _view_type_isometric_t* const self = (_view_type_isometric_t*) view_type_new(VIEW_TYPE_ID__ISOMETRIC, rudyscung, camera_ortho_new(), (handle_event) isometric_handle_event, (tick) isometric_tick, (render_tick) isometric_render_tick, sizeof(_view_type_isometric_t));
+view_type_isometric_t* const view_type_isometric_new(client_t* const client, entity_t const player) {
+    _view_type_isometric_t* const self = (_view_type_isometric_t*) view_type_new(VIEW_TYPE_ID__ISOMETRIC, client, camera_ortho_new(), (handle_event) isometric_handle_event, (tick) isometric_tick, (render_tick) isometric_render_tick, sizeof(_view_type_isometric_t));
 
     self->player = player;
 
@@ -133,9 +133,9 @@ void view_type_render_tick(view_type_t* const self, level_t* const level, float 
     self->render_tick(self, level, partial_tick);
 }
 
-static view_type_t* const view_type_new(view_type_id_t const view_type_id, rudyscung_t* const rudyscung, camera_t* const camera, handle_event const handle_event, tick const tick, render_tick const render_tick, size_t const size) {
+static view_type_t* const view_type_new(view_type_id_t const view_type_id, client_t* const client, camera_t* const camera, handle_event const handle_event, tick const tick, render_tick const render_tick, size_t const size) {
     assert(view_type_id >= 0 && view_type_id < NUM_VIEW_TYPE_IDS);
-    assert(rudyscung != nullptr);
+    assert(client != nullptr);
     assert(camera != nullptr);
     assert(handle_event != nullptr);
     assert(tick != nullptr);
@@ -146,7 +146,7 @@ static view_type_t* const view_type_new(view_type_id_t const view_type_id, rudys
     assert(self != nullptr);
 
     self->view_type_id = view_type_id;
-    self->rudyscung = rudyscung;
+    self->client = client;
     self->camera = camera;
     self->handle_event = handle_event;
     self->tick = tick;
@@ -216,8 +216,8 @@ static bool entity_handle_event(_view_type_entity_t* const self, SDL_Event const
                 case SDLK_ESCAPE:
                     ecs_t* const ecs = level_get_ecs(level);
                     ecs_detach_component(ecs, self->entity, ECS_COMPONENT__CONTROLLED);
-                    view_type_isometric_t* const view_type = view_type_isometric_new(self->super.rudyscung, level_get_player(level));
-                    rudyscung_set_view_type(self->super.rudyscung, view_type);
+                    view_type_isometric_t* const view_type = view_type_isometric_new(self->super.client, level_get_player(level));
+                    client_set_view_type(self->super.client, view_type);
                     return true;
                 case SDLK_w:
                     self->keys.w = is_pressed;
@@ -543,7 +543,7 @@ static void isometric_tick(_view_type_isometric_t* const self, level_t* const le
             int mouse_x, mouse_y;
             SDL_GetMouseState(&mouse_x, &mouse_y);
 
-            window_t const* const window = rudyscung_get_window(self->super.rudyscung);
+            window_t const* const window = client_get_window(self->super.client);
             size_t window_size[2];
             window_get_size(window, window_size);
 
@@ -563,8 +563,8 @@ static void isometric_tick(_view_type_isometric_t* const self, level_t* const le
                         if (aabb_test_pos_inside(aabb, world_pos)) {
                             LOG_DEBUG("view_type_t: picked entity %zu.", entity);
                             ecs_attach_component(ecs, entity, ECS_COMPONENT__CONTROLLED);
-                            view_type_entity_t* view_type = view_type_entity_new(self->super.rudyscung, entity);
-                            rudyscung_set_view_type(self->super.rudyscung, view_type);
+                            view_type_entity_t* view_type = view_type_entity_new(self->super.client, entity);
+                            client_set_view_type(self->super.client, view_type);
                             aabb_delete(aabb);
                             return; // Exit as quickly as possible as we're technically operating in an object that no longer exists
                         }

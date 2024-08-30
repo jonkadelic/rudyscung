@@ -25,8 +25,18 @@ server_sources = []
 subdir('lib')
 subdir('src')
 
+common_lib = library('common', common_sources,
+        dependencies: [
+                m_dep
+        ],
+        link_args: [
+                '-static'
+        ]
+)
+
 if host_system == 'darwin'
-        executable('rudyscung', [common_sources, client_sources],
+        executable('client', client_sources,
+                link_with: common_lib,
                 dependencies: [
                         m_dep,
                         cglm_dep,
@@ -35,11 +45,18 @@ if host_system == 'darwin'
                         sdl2_dep
                 ]
         )
+        # executable('server', server_sources,
+        #         link_with: common_lib,
+        #         dependencies: [
+        #                 m_dep
+        #         ]
+        # )
 else
-        executable('rudyscung', [common_sources, client_sources],
+        executable('client', client_sources,
                 c_args: [
                         '-DGLEW_STATIC'
                 ],
+                link_with: common_lib,
                 dependencies: [
                         m_dep,
                         cglm_dep,
@@ -52,4 +69,13 @@ else
                         '-static'
                 ]
         )
+        # executable('server', server_sources,
+        #         link_with: common_lib,
+        #         dependencies: [
+        #                 m_dep
+        #         ],
+        #         link_args: [
+        #                 '-static'
+        #         ]
+        # )
 endif

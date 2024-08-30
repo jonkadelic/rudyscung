@@ -1,7 +1,7 @@
 #pragma once
 
 // Predefines
-typedef struct rudyscung rudyscung_t;
+typedef struct client client_t;
 
 typedef struct font font_t;
 
@@ -10,7 +10,7 @@ typedef enum font_name {
     NUM_FONT_NAMES
 } font_name_t;
 
-font_t* const font_new(rudyscung_t* const rudyscung, char const* const resources_path, font_name_t const font_name);
+font_t* const font_new(client_t* const client, char const* const resources_path, font_name_t const font_name);
 
 void font_delete(font_t* const self);
 

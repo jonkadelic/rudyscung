@@ -4,7 +4,7 @@
 #include "src/render/camera.h"
 #include "src/world/side.h"
 
-typedef struct rudyscung rudyscung_t;
+typedef struct client client_t;
 
 typedef struct level_renderer level_renderer_t;
 
@@ -13,7 +13,7 @@ typedef struct level_slice {
     size_chunks_t size[NUM_AXES];
 } level_slice_t;
 
-level_renderer_t* const level_renderer_new(rudyscung_t* const rudyscung, level_t* const level);
+level_renderer_t* const level_renderer_new(client_t* const client, level_t* const level);
 
 void level_renderer_delete(level_renderer_t* const self);
 

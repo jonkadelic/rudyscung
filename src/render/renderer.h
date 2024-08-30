@@ -4,11 +4,11 @@
 #include "src/render/camera.h"
 #include "src/render/level_renderer.h"
 
-typedef struct rudyscung rudyscung_t;
+typedef struct client client_t;
 
 typedef struct renderer renderer_t;
 
-renderer_t* const renderer_new(rudyscung_t* const rudyscung);
+renderer_t* const renderer_new(client_t* const client);
 
 void renderer_delete(renderer_t* const self);
 

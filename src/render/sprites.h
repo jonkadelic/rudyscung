@@ -4,7 +4,7 @@
 
 #include "src/world/side.h"
 
-typedef struct rudyscung rudyscung_t;
+typedef struct client client_t;
 typedef struct camera camera_t;
 
 typedef struct sprites sprites_t;
@@ -15,7 +15,7 @@ typedef enum sprite {
     NUM_SPRITES
 } sprite_t;
 
-sprites_t* const sprites_new(rudyscung_t* const rudyscung);
+sprites_t* const sprites_new(client_t* const client);
 
 void sprites_delete(sprites_t* const self);
 

@@ -1,5 +1,5 @@
 client_sources += files(
     'main.c',
-    'rudyscung.c',
+    'client.c',
     'window.c'
 )

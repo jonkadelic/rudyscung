@@ -1,6 +1,6 @@
 #include <SDL2/SDL.h>
 
-#include "src/client/rudyscung.h"
+#include "src/client/client.h"
 #include "src/world/tile.h"
 #include "src/util/logger.h"
 
@@ -16,14 +16,14 @@ int main(int argc, char** argv) {
         LOG_DEBUG("Resources path set to %s.", resources_path);
     }
 
-    // Static initialization
+    // static initialization
     tiles_init();
 
-    // Init RudyScung
-    rudyscung_t* const rudyscung = rudyscung_new(resources_path);
-    rudyscung_run(rudyscung);
+    // init rudyscung
+    client_t* const client = client_new(resources_path);
+    client_run(client);
 
-    rudyscung_delete(rudyscung);
+    client_delete(client);
 
     return 0;
 }

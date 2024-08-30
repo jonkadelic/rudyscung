@@ -6,15 +6,15 @@
 #include "src/world/entity/ecs.h"
 #include "src/world/level.h"
 
-typedef struct rudyscung rudyscung_t;
+typedef struct client client_t;
 
 typedef struct view_type view_type_t;
 typedef struct view_type view_type_entity_t;
 typedef struct view_type view_type_isometric_t;
 
-view_type_entity_t* const view_type_entity_new(rudyscung_t* const rudyscung, entity_t const entity);
+view_type_entity_t* const view_type_entity_new(client_t* const client, entity_t const entity);
 
-view_type_isometric_t* const view_type_isometric_new(rudyscung_t* const rudyscung, entity_t const player);
+view_type_isometric_t* const view_type_isometric_new(client_t* const client, entity_t const player);
 
 void view_type_delete(view_type_t* const self);
 

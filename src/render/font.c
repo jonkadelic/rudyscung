@@ -9,7 +9,7 @@
 
 #include "src/render/gl.h"
 #include "lib/stb_image.h"
-#include "src/client/rudyscung.h"
+#include "src/client/client.h"
 #include "src/render/shader.h"
 #include "src/render/tessellator.h"
 #include "src/render/textures.h"
@@ -36,7 +36,7 @@ typedef struct entry {
 } entry_t;
 
 struct font {
-    rudyscung_t* rudyscung;
+    client_t* client;
 
     GLuint tex;
     size_t char_size_px;
@@ -50,8 +50,8 @@ struct font {
 
 static size_t read_font_txt_file(char const* const path, char*** const lines);
 
-font_t* const font_new(rudyscung_t* const rudyscung, char const* const resources_path, font_name_t const font_name) {
-    assert(rudyscung != nullptr);
+font_t* const font_new(client_t* const client, char const* const resources_path, font_name_t const font_name) {
+    assert(client != nullptr);
     assert(resources_path != nullptr);
     assert(font_name >= 0 && font_name < NUM_FONT_NAMES);
 
@@ -68,7 +68,7 @@ font_t* const font_new(rudyscung_t* const rudyscung, char const* const resources
     font_t* const self = malloc(sizeof(font_t) + (sizeof(entry_t)));
     assert(self != nullptr);
 
-    self->rudyscung = rudyscung;
+    self->client = client;
 
     // Blank entries
     for (size_t i = 0; i < MAX_ENTRIES; i++) {
@@ -76,7 +76,7 @@ font_t* const font_new(rudyscung_t* const rudyscung, char const* const resources
     }
 
     // Get texture
-    textures_t* const textures = rudyscung_get_textures(self->rudyscung);
+    textures_t* const textures = client_get_textures(self->client);
     texture_t const* const texture = textures_get_texture(textures, font_name_info->texture_name);
     self->tex = texture->name;
 
@@ -171,11 +171,11 @@ void font_draw(font_t const* const self, char const* const text, int const x, in
 
     size_t elements = tessellator_draw(self->tessellator);
 
-    shaders_t* const shaders = rudyscung_get_shaders(self->rudyscung);
+    shaders_t* const shaders = client_get_shaders(self->client);
     shader_t* const shader = shaders_get(shaders, "font");
     shader_bind(shader);
 
-    window_t* const window = rudyscung_get_window(self->rudyscung);
+    window_t* const window = client_get_window(self->client);
     size_t window_size[2];
     window_get_size(window, window_size);
     float gui_scale = window_get_gui_scale(window);

@@ -8,7 +8,7 @@
 #include <SDL2/SDL_timer.h>
 
 #include "src/render/gl.h"
-#include "src/client/rudyscung.h"
+#include "src/client/client.h"
 #include "src/render/level_renderer.h"
 #include "src/client/window.h"
 #include "src/render/font.h"
@@ -19,7 +19,7 @@
 static void check_errors(void);
 
 struct renderer {
-    rudyscung_t* rudyscung;
+    client_t* client;
     level_t* level;
     level_renderer_t* level_renderer;
     struct {
@@ -31,13 +31,13 @@ struct renderer {
     } frames;
 };
 
-renderer_t* const renderer_new(rudyscung_t* const rudyscung) {
-    assert(rudyscung != nullptr);
+renderer_t* const renderer_new(client_t* const client) {
+    assert(client != nullptr);
 
     renderer_t* const self = malloc(sizeof(renderer_t));
     assert(self != nullptr);
 
-    self->rudyscung = rudyscung;
+    self->client = client;
     self->level = nullptr;
     self->level_renderer = nullptr;
     self->frames.target_fps = 60;
@@ -87,7 +87,7 @@ void renderer_set_level(renderer_t* const self, level_t *const level) {
         self->level_renderer = nullptr;
     }
 
-    self->level_renderer = level_renderer_new(self->rudyscung, level);
+    self->level_renderer = level_renderer_new(self->client, level);
 }
 
 void renderer_render(renderer_t* const self, camera_t const* const camera, float const partial_tick) {
@@ -95,8 +95,8 @@ void renderer_render(renderer_t* const self, camera_t const* const camera, float
 
     uint64_t tick_start = SDL_GetTicks64();
 
-    window_t const* const window = rudyscung_get_window(self->rudyscung);
-    font_t const* const font = rudyscung_get_font(self->rudyscung);
+    window_t const* const window = client_get_window(self->client);
+    font_t const* const font = client_get_font(self->client);
 
     // Render
     if (self->frames.target_fps == 0 || ((tick_start - self->frames.last_frame_tick) > (1000.0f / (self->frames.target_fps + 3)))) {

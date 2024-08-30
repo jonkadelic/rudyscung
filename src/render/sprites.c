@@ -9,7 +9,7 @@
 #include "src/world/side.h"
 #include "src/render/tessellator.h"
 #include "src/render/textures.h"
-#include "src/client/rudyscung.h"
+#include "src/client/client.h"
 #include "src/render/camera.h"
 
 typedef struct sprite_entry {
@@ -23,21 +23,21 @@ typedef struct sprite_entry {
 } sprite_entry_t;
 
 struct sprites {
-    rudyscung_t* rudyscung;
+    client_t* client;
     sprite_entry_t sprites[NUM_SPRITES];
 };
 
 static void sprite_new(sprites_t* const self, sprite_t const sprite, textures_t* const textures, tessellator_t* tessellator, size_t const num_texture_paths, char const* const texture_paths[], size_t size[2], float origin[2]);
 
-sprites_t* const sprites_new(rudyscung_t* const rudyscung) {
-    assert(rudyscung != nullptr);
+sprites_t* const sprites_new(client_t* const client) {
+    assert(client != nullptr);
 
     sprites_t* self = malloc(sizeof(sprites_t));
     assert(self != nullptr);
 
-    self->rudyscung = rudyscung;
+    self->client = client;
 
-    textures_t* const textures = rudyscung_get_textures(rudyscung);
+    textures_t* const textures = client_get_textures(client);
     tessellator_t* const tessellator = tessellator_new();
 
     sprite_new(self, 
@@ -124,7 +124,7 @@ void sprites_render(sprites_t const* const self, sprite_t const sprite, camera_t
         return;
     }
 
-    shaders_t* const shaders = rudyscung_get_shaders(self->rudyscung);
+    shaders_t* const shaders = client_get_shaders(self->client);
     shader_t* const shader = shaders_get(shaders, "main");
     shader_bind(shader);
 
@@ -134,7 +134,7 @@ void sprites_render(sprites_t const* const self, sprite_t const sprite, camera_t
     camera_get_rot(camera, camera_rot);
 
     size_t window_size[2];
-    window_get_size(rudyscung_get_window(self->rudyscung), window_size);
+    window_get_size(client_get_window(self->client), window_size);
 
     camera_set_matrices(camera, window_size, shader);
 

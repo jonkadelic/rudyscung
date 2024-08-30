@@ -10,7 +10,7 @@
 #include "src/world/entity/ecs.h"
 #include "src/world/side.h"
 #include "src/phys/aabb.h"
-#include "src/client/rudyscung.h"
+#include "src/client/client.h"
 #include "src/world/chunk.h"
 #include "src/world/level.h"
 #include "src/util/util.h"
@@ -28,7 +28,7 @@
 #define TO_TILE_SPACE(chunk_coord) ((chunk_coord) * CHUNK_SIZE)
 
 struct level_renderer {
-    rudyscung_t* rudyscung;
+    client_t* client;
     level_t* level;
     tessellator_t* tessellator;
     sprites_t* sprites;
@@ -39,13 +39,13 @@ struct level_renderer {
 static void delete_chunk_renderers(level_renderer_t* const self);
 static void reload_chunk_renderers(level_renderer_t* const self);
 
-level_renderer_t* const level_renderer_new(rudyscung_t* const rudyscung, level_t* const level) {
+level_renderer_t* const level_renderer_new(client_t* const client, level_t* const level) {
     assert(level != nullptr);
 
     level_renderer_t* const self = malloc(sizeof(level_renderer_t));
     assert(self != nullptr);
 
-    self->rudyscung = rudyscung;
+    self->client = client;
     self->level = level;
 
     size_chunks_t size[NUM_AXES];
@@ -56,7 +56,7 @@ level_renderer_t* const level_renderer_new(rudyscung_t* const rudyscung, level_t
     }
 
     self->tessellator = tessellator_new();
-    self->sprites = sprites_new(rudyscung);
+    self->sprites = sprites_new(client);
 
     self->chunk_renderers = nullptr;
 
@@ -190,12 +190,12 @@ void level_renderer_draw(level_renderer_t* const self, camera_t* const camera, f
     assert(self != nullptr);
     assert(self->chunk_renderers != nullptr);
 
-    shaders_t* const shaders = rudyscung_get_shaders(self->rudyscung);
+    shaders_t* const shaders = client_get_shaders(self->client);
     shader_t* const shader = shaders_get(shaders, "main");
     shader_bind(shader);
 
     size_t window_size[2];
-    window_get_size(rudyscung_get_window(self->rudyscung), window_size);
+    window_get_size(client_get_window(self->client), window_size);
 
     float camera_pos[NUM_AXES];
     camera_get_pos(camera, camera_pos);
@@ -211,7 +211,7 @@ void level_renderer_draw(level_renderer_t* const self, camera_t* const camera, f
 
     glEnable(GL_DEPTH_TEST);
 
-    textures_t* const textures = rudyscung_get_textures(self->rudyscung);
+    textures_t* const textures = client_get_textures(self->client);
     glBindTexture(GL_TEXTURE_2D, textures_get_texture(textures, TEXTURE_NAME__TERRAIN)->name);
 
     for (size_chunks_t x = 0; x < self->level_slice.size[AXIS__X]; x++) {
