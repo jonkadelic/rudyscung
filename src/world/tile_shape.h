@@ -1,6 +1,6 @@
 #pragma once
 
-#include "./side.h"
+#include "src/world/side.h"
 
 typedef enum tile_shape {
     TILE_SHAPE__NO_RENDER,

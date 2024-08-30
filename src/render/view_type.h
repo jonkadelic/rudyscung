@@ -2,9 +2,9 @@
 
 #include <SDL2/SDL_events.h>
 
-#include "./camera.h"
-#include "../world/entity/ecs.h"
-#include "../world/level.h"
+#include "src/render/camera.h"
+#include "src/world/entity/ecs.h"
+#include "src/world/level.h"
 
 typedef struct rudyscung rudyscung_t;
 

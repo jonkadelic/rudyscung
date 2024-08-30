@@ -3,7 +3,7 @@
 #include <assert.h>
 #include <stdlib.h>
 
-#include "./util.h"
+#include "src/util/util.h"
 
 struct random {
     uint64_t seed;

@@ -4,8 +4,6 @@
 #include <math.h>
 #include <stddef.h>
 
-#include "side.h"
-
 static bool const CAN_OCCLUDE[NUM_TILE_SHAPES][NUM_SIDES] = {
     [TILE_SHAPE__NO_RENDER] = {
         [SIDE__NORTH] = false,

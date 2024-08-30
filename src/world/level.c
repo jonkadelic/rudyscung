@@ -6,19 +6,19 @@
 #include <sys/time.h>
 #include <string.h>
 
-#include "../util.h"
-#include "chunk.h"
-#include "entity/ecs.h"
-#include "entity/ecs_components.h"
-#include "entity/ecs_systems.h"
-#include "side.h"
+#include "src/util/util.h"
+#include "src/world/chunk.h"
+#include "src/world/entity/ecs.h"
+#include "src/world/entity/ecs_components.h"
+#include "src/world/entity/ecs_systems.h"
+#include "src/world/side.h"
 #include "src/world/tile.h"
 #include "src/world/tile_shape.h"
-#include "tile.h"
-#include "tile_shape.h"
-#include "gen/level_gen.h"
-#include "../random.h"
-#include "../util/logger.h"
+#include "src/world/tile.h"
+#include "src/world/tile_shape.h"
+#include "src/world/gen/level_gen.h"
+#include "src/util/random.h"
+#include "src/util/logger.h"
 
 #define CHUNK_INDEX(pos) (((pos[AXIS__Y]) * self->size[AXIS__Z] * self->size[AXIS__X]) + ((pos[AXIS__Z]) * self->size[AXIS__X]) + (pos[AXIS__X]))
 #define TO_CHUNK_SPACE(coord) ((coord) / CHUNK_SIZE)

@@ -4,7 +4,7 @@
 #include <stdlib.h>
 #include <math.h>
 
-#include "../../random.h"
+#include "src/util/random.h"
 
 struct perlin {
     uint8_t p[512];

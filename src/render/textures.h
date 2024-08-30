@@ -2,7 +2,7 @@
 
 #include <stdint.h>
 
-#include "src/util/gl.h"
+#include "src/render/gl.h"
 
 typedef struct texture {
     GLuint const name;

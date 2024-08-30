@@ -3,10 +3,10 @@
 #include <stddef.h>
 #include <stdint.h>
 
-#include "chunk.h"
-#include "entity/ecs.h"
-#include "side.h"
-#include "../random.h"
+#include "src/world/chunk.h"
+#include "src/world/entity/ecs.h"
+#include "src/world/side.h"
+#include "src/util/random.h"
 
 #define NUM_TREES 500
 

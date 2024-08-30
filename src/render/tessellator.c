@@ -5,8 +5,6 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "src/util/gl.h"
-
 #define MAX_ENTRIES (1024 * 128)
 
 typedef struct vertex {

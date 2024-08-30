@@ -1,7 +1,7 @@
 #pragma once
 
-#include "../world/level.h"
-#include "./camera.h"
+#include "src/world/level.h"
+#include "src/render/camera.h"
 #include "src/world/side.h"
 
 typedef struct rudyscung rudyscung_t;

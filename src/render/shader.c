@@ -5,7 +5,7 @@
 #include <assert.h>
 #include <stdio.h>
 
-#include "src/util/gl.h"
+#include "src/render/gl.h"
 
 struct shader {
     GLuint program;

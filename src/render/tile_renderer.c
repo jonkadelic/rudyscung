@@ -3,9 +3,9 @@
 #include <assert.h>
 #include <math.h>
 
-#include "./tessellator.h"
-#include "./tile_texture_dispatcher.h"
-#include "src/util.h"
+#include "src/render/tessellator.h"
+#include "src/render/tile_texture_dispatcher.h"
+#include "src/util/util.h"
 
 #define TERRAIN_SIZE_PIXELS 256
 #define TILE_SIZE_PIXELS 16

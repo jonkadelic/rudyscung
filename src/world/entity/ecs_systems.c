@@ -5,10 +5,10 @@
 #include <string.h>
 #include <math.h>
 
-#include "ecs.h"
-#include "ecs_components.h"
-#include "../level.h"
-#include "../../util.h"
+#include "src/world/entity/ecs.h"
+#include "src/world/entity/ecs_components.h"
+#include "src/world/level.h"
+#include "src/util/util.h"
 
 void ecs_system_velocity(ecs_t* const self, level_t* const level, entity_t const entity) {
     assert(self != nullptr);

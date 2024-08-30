@@ -1,7 +1,6 @@
 project('rudyscung', 'c',
         default_options: [
-                'c_std=gnu2x',
-                'objc_std=c17',
+                'c_std=c2x',
                 'default_library=static'
         ]
 )
@@ -19,14 +18,15 @@ if host_system != 'darwin'
 endif
 sdl2_dep = dependency('sdl2')
 
-sources = []
+common_sources = []
+client_sources = []
+server_sources = []
 
 subdir('lib')
 subdir('src')
 
-
 if host_system == 'darwin'
-        executable('rudyscung', sources,
+        executable('rudyscung', [common_sources, client_sources],
                 dependencies: [
                         m_dep,
                         cglm_dep,
@@ -36,20 +36,20 @@ if host_system == 'darwin'
                 ]
         )
 else
-        executable('rudyscung', sources,
-        c_args: [
-                '-DGLEW_STATIC'
-        ],
-        dependencies: [
-                m_dep,
-                cglm_dep,
-                gl_dep,
-                glew_dep,
-                sdl2main_dep,
-                sdl2_dep
-        ],
-        link_args: [
-                '-static'
-        ]
-)
+        executable('rudyscung', [common_sources, client_sources],
+                c_args: [
+                        '-DGLEW_STATIC'
+                ],
+                dependencies: [
+                        m_dep,
+                        cglm_dep,
+                        gl_dep,
+                        glew_dep,
+                        sdl2main_dep,
+                        sdl2_dep
+                ],
+                link_args: [
+                        '-static'
+                ]
+        )
 endif

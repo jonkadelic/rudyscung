@@ -4,10 +4,6 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "side.h"
-#include "tile.h"
-#include "tile_shape.h"
-
 #define COORD(pos) (((pos[AXIS__Y]) * CHUNK_SIZE * CHUNK_SIZE) + ((pos[AXIS__Z]) * CHUNK_SIZE) + (pos[AXIS__X]))
 
 struct chunk {

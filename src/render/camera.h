@@ -1,7 +1,7 @@
 #pragma once
 
-#include "../world/side.h"
-#include "./shader.h"
+#include "src/world/side.h"
+#include "src/render/shader.h"
 #include "src/world/side.h"
 
 typedef struct camera camera_t;

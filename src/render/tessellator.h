@@ -2,7 +2,7 @@
 
 #include <stddef.h>
 
-#include "src/util/gl.h"
+#include "src/render/gl.h"
 
 typedef struct tessellator tessellator_t;
 

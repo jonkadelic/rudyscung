@@ -4,9 +4,9 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "./perlin.h"
-#include "../level.h"
-#include "../../util/logger.h"
+#include "src/world/gen/perlin.h"
+#include "src/world/level.h"
+#include "src/util/logger.h"
 
 struct level_gen {
     perlin_t* perlin;

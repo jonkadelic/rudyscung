@@ -1,8 +1,8 @@
 #pragma once
 
-#include "tessellator.h"
-#include "level_renderer.h"
-#include "../world/chunk.h"
+#include "src/render/tessellator.h"
+#include "src/render/level_renderer.h"
+#include "src/world/chunk.h"
 
 typedef struct chunk_renderer chunk_renderer_t;
 

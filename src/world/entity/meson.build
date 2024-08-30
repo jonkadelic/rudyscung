@@ -1,4 +1,4 @@
-sources += files(
+common_sources += files(
     'ecs_systems.c',
     'ecs.c'
 )

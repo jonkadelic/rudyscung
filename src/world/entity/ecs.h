@@ -1,6 +1,6 @@
 #pragma once
 
-#include "./ecs_components.h"
+#include "src/world/entity/ecs_components.h"
 
 // Predefines
 typedef struct level level_t;

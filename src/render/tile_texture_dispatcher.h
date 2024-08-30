@@ -1,7 +1,7 @@
 #pragma once
 
-#include "../world/tile.h"
-#include "../world/side.h"
+#include "src/world/tile.h"
+#include "src/world/side.h"
 
 typedef size_t tile_texture_coord_t;
 

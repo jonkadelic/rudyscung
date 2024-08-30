@@ -1,8 +1,8 @@
 #include <SDL2/SDL.h>
 
-#include "rudyscung.h"
-#include "world/tile.h"
-#include "util/logger.h"
+#include "src/client/rudyscung.h"
+#include "src/world/tile.h"
+#include "src/util/logger.h"
 
 int main(int argc, char** argv) {
     logger_set_log_level(LOG_LEVEL__DEBUG);

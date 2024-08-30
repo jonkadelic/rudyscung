@@ -1,7 +1,7 @@
 #pragma once
 
-#include "../chunk.h"
-#include "../level.h"
+#include "src/world/chunk.h"
+#include "src/world/level.h"
 
 typedef struct level_gen level_gen_t;
 

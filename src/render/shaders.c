@@ -5,8 +5,8 @@
 #include <assert.h>
 #include <string.h>
 
-#include "./shader.h"
-#include "../util/logger.h"
+#include "src/render/shader.h"
+#include "src/util/logger.h"
 
 struct shaders {
     shader_t** shaders;

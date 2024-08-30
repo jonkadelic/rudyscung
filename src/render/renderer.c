@@ -7,14 +7,14 @@
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_timer.h>
 
-#include "src/util/gl.h"
-#include "../rudyscung.h"
-#include "./level_renderer.h"
-#include "../window.h"
-#include "./font.h"
-#include "../phys/raycast.h"
-#include "../util/logger.h"
-#include "../util.h"
+#include "src/render/gl.h"
+#include "src/client/rudyscung.h"
+#include "src/render/level_renderer.h"
+#include "src/client/window.h"
+#include "src/render/font.h"
+#include "src/phys/raycast.h"
+#include "src/util/logger.h"
+#include "src/util/util.h"
 
 static void check_errors(void);
 

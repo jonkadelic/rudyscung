@@ -1,16 +1,16 @@
 #include "./chunk_renderer.h"
-#include "src/world/side.h"
 
 #include <assert.h>
 #include <stdlib.h>
 
 #include <SDL2/SDL_timer.h>
 
-#include "src/util/gl.h"
-#include "../world/chunk.h"
-#include "level_renderer.h"
-#include "tessellator.h"
-#include "tile_renderer.h"
+#include "src/render/gl.h"
+#include "src/world/side.h"
+#include "src/world/chunk.h"
+#include "src/render/level_renderer.h"
+#include "src/render/tessellator.h"
+#include "src/render/tile_renderer.h"
 
 struct chunk_renderer {
     level_renderer_t* level_renderer;

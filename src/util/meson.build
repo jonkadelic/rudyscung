@@ -1,3 +1,5 @@
-sources += files(
-    'logger.c'
+common_sources += files(
+    'logger.c',
+    'random.c',
+    'util.c'
 )

@@ -1,28 +1,27 @@
 #include "./level_renderer.h"
-#include "src/random.h"
 
 #include <assert.h>
 #include <stdlib.h>
 #include <string.h>
 
-#include "src/util/gl.h"
 #include <cglm/cglm.h>
 
+#include "src/render/gl.h"
 #include "src/world/entity/ecs.h"
 #include "src/world/side.h"
-#include "../phys/aabb.h"
-#include "../rudyscung.h"
-#include "../world/chunk.h"
-#include "../world/level.h"
-#include "../util.h"
-#include "./chunk_renderer.h"
-#include "./tessellator.h"
-#include "./shaders.h"
-#include "./shader.h"
-#include "./textures.h"
-#include "camera.h"
-#include "./sprites.h"
-#include "../phys/raycast.h"
+#include "src/phys/aabb.h"
+#include "src/client/rudyscung.h"
+#include "src/world/chunk.h"
+#include "src/world/level.h"
+#include "src/util/util.h"
+#include "src/render/chunk_renderer.h"
+#include "src/render/tessellator.h"
+#include "src/render/shaders.h"
+#include "src/render/shader.h"
+#include "src/render/textures.h"
+#include "src/render/camera.h"
+#include "src/render/sprites.h"
+#include "src/phys/raycast.h"
 
 #define CHUNK_INDEX(x, y, z) (((y) * self->level_slice.size[AXIS__Z] * self->level_slice.size[AXIS__X]) + ((z) * self->level_slice.size[AXIS__X]) + (x))
 #define TO_CHUNK_SPACE(tile_coord) ((tile_coord) / CHUNK_SIZE)

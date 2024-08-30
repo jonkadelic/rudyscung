@@ -7,11 +7,11 @@
 #include <SDL2/SDL_mouse.h>
 #include <SDL2/SDL.h>
 
-#include "./camera.h"
-#include "../phys/raycast.h"
-#include "../util.h"
-#include "font.h"
-#include "src/rudyscung.h"
+#include "src/render/camera.h"
+#include "src/phys/raycast.h"
+#include "src/util/util.h"
+#include "src/render/font.h"
+#include "src/client/rudyscung.h"
 #include "src/world/entity/ecs.h"
 #include "src/world/entity/ecs_components.h"
 #include "src/world/level.h"

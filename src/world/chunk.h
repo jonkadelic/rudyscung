@@ -1,8 +1,8 @@
 #pragma once
 
-#include "./tile.h"
-#include "./tile_shape.h"
-#include "side.h"
+#include "src/world/tile.h"
+#include "src/world/tile_shape.h"
+#include "src/world/side.h"
 
 #define CHUNK_SIZE 16
 

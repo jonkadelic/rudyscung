@@ -3,8 +3,8 @@
 #include <assert.h>
 #include <stdlib.h>
 
-#include "ecs_components.h"
-#include "../../util/logger.h"
+#include "src/world/entity/ecs_components.h"
+#include "src/util/logger.h"
 
 #define MAX_ENTITIES 1024
 

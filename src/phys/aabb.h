@@ -1,6 +1,6 @@
 #pragma once
 
-#include "../world/side.h"
+#include "src/world/side.h"
 
 typedef struct aabb aabb_t;
 

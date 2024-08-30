@@ -3,7 +3,7 @@
 #include <assert.h>
 #include <stdlib.h>
 
-#include "../util/logger.h"
+#include "src/util/logger.h"
 
 static void tile_new(tile_t const self);
 

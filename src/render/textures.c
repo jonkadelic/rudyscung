@@ -5,10 +5,10 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "src/util/gl.h"
+#include "src/render/gl.h"
 #include "lib/stb_image.h"
-#include "../util.h"
-#include "../util/logger.h"
+#include "src/util/util.h"
+#include "src/util/logger.h"
 
 struct textures {
     char const* resources_path;

@@ -1,8 +1,8 @@
 #pragma once
 
-#include "../world/tile.h"
-#include "../world/tile_shape.h"
-#include "./tessellator.h"
+#include "src/world/tile.h"
+#include "src/world/tile_shape.h"
+#include "src/render/tessellator.h"
 
 void tile_renderer_render_tile(tessellator_t* const self, int const pos[NUM_AXES], tile_t const tile, tile_shape_t const tile_shape, float const color[3], bool is_side_occluded[NUM_SIDES]);
 

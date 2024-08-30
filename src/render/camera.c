@@ -7,11 +7,8 @@
 
 #include <cglm/cglm.h>
 
-#include "src/util/gl.h"
-#include "../util.h"
-#include "cglm/mat4.h"
-#include "cglm/project.h"
-#include "cglm/types.h"
+#include "src/render/gl.h"
+#include "src/util/util.h"
 #include "src/util/logger.h"
 #include "src/world/side.h"
 

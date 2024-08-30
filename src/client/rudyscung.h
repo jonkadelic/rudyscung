@@ -1,10 +1,10 @@
 #pragma once
 
-#include "render/font.h"
-#include "render/shaders.h"
-#include "render/textures.h"
-#include "render/view_type.h"
-#include "window.h"
+#include "src/render/font.h"
+#include "src/render/shaders.h"
+#include "src/render/textures.h"
+#include "src/render/view_type.h"
+#include "src/client/window.h"
 
 typedef struct rudyscung rudyscung_t;
 

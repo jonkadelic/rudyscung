@@ -2,9 +2,9 @@
 
 #include <stddef.h>
 
-#include "../world/side.h"
-#include "../world/tile.h"
-#include "../world/level.h"
+#include "src/world/side.h"
+#include "src/world/tile.h"
+#include "src/world/level.h"
 
 typedef struct raycast {
     bool hit;

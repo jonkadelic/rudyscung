@@ -7,14 +7,14 @@
 
 #include <cglm/cglm.h>
 
-#include "src/util/gl.h"
+#include "src/render/gl.h"
 #include "lib/stb_image.h"
-#include "../rudyscung.h"
-#include "shader.h"
-#include "tessellator.h"
-#include "textures.h"
-#include "shaders.h"
-#include "../util/logger.h"
+#include "src/client/rudyscung.h"
+#include "src/render/shader.h"
+#include "src/render/tessellator.h"
+#include "src/render/textures.h"
+#include "src/render/shaders.h"
+#include "src/util/logger.h"
 
 #define MAX_ENTRIES 128
 

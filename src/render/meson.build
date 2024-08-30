@@ -1,4 +1,4 @@
-sources += files(
+client_sources += files(
     'camera.c',
     'chunk_renderer.c',
     'font.c',

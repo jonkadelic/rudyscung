@@ -1,3 +1,3 @@
-sources += files(
+client_sources += files(
     'stb_image.c'
 )

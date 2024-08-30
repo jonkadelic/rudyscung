@@ -2,7 +2,7 @@
 
 #include <stddef.h>
 
-#include "../world/side.h"
+#include "src/world/side.h"
 
 typedef struct rudyscung rudyscung_t;
 typedef struct camera camera_t;

@@ -6,13 +6,11 @@
 
 #include <cglm/cglm.h>
 
-#include "src/util/logger.h"
 #include "src/world/side.h"
-#include "tessellator.h"
-#include "textures.h"
-#include "../rudyscung.h"
-#include "./camera.h"
-#include "../util.h"
+#include "src/render/tessellator.h"
+#include "src/render/textures.h"
+#include "src/client/rudyscung.h"
+#include "src/render/camera.h"
 
 typedef struct sprite_entry {
     texture_t** tex;

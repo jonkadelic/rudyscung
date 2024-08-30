@@ -1,7 +1,7 @@
 #pragma once
 
-#include "../../phys/aabb.h"
-#include "../../render/sprites.h"
+#include "src/phys/aabb.h"
+#include "src/render/sprites.h"
 
 typedef enum ecs_component {
     ECS_COMPONENT__POS,

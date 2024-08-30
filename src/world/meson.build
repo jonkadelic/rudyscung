@@ -1,6 +1,6 @@
 subdir('entity')
 subdir('gen')
-sources += files(
+common_sources += files(
     'chunk.c',
     'level.c',
     'side.c',
