@@ -15,6 +15,7 @@
 #include "src/render/textures.h"
 #include "src/render/shaders.h"
 #include "src/util/logger.h"
+#include "src/util/object_counter.h"
 
 #define MAX_ENTRIES 128
 
@@ -54,8 +55,6 @@ font_t* const font_new(client_t* const client, char const* const resources_path,
     assert(client != nullptr);
     assert(resources_path != nullptr);
     assert(font_name >= 0 && font_name < NUM_FONT_NAMES);
-
-    LOG_DEBUG("font_t: initializing \"%s\".", font_name);
 
     auto font_name_info = &(FONT_NAME_INFO[font_name]);
 
@@ -121,7 +120,7 @@ font_t* const font_new(client_t* const client, char const* const resources_path,
     self->tessellator = tessellator_new();
     tessellator_bind(self->tessellator, self->vao, self->vbo, 0);
 
-    LOG_DEBUG("font_t: initialized \"%s\".", font_name);
+    OBJ_CTR_INC(font_t);
 
     return self;
 }
@@ -132,9 +131,11 @@ void font_delete(font_t* const self) {
     glDeleteBuffers(1, &(self->vbo));
     glDeleteVertexArrays(1, &(self->vao));
 
+    tessellator_delete(self->tessellator);
+
     free(self);
 
-    LOG_DEBUG("font_t: deleted.");
+    OBJ_CTR_DEC(font_t);
 }
 
 void font_draw(font_t const* const self, char const* const text, int const x, int const y) {

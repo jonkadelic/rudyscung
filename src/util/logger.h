@@ -15,4 +15,6 @@ typedef enum log_level {
 
 void logger_set_log_level(log_level_t const log_level);
 
+void logger_set_log_time(bool const log_time);
+
 void logger_log(log_level_t const log_level, char const* const s, ...);

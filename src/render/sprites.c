@@ -6,11 +6,13 @@
 
 #include <cglm/cglm.h>
 
+#include "src/util/object_counter.h"
 #include "src/world/side.h"
 #include "src/render/tessellator.h"
 #include "src/render/textures.h"
 #include "src/client/client.h"
 #include "src/render/camera.h"
+#include "src/util/logger.h"
 
 typedef struct sprite_entry {
     texture_t** tex;
@@ -80,6 +82,8 @@ sprites_t* const sprites_new(client_t* const client) {
 
     tessellator_delete(tessellator);
 
+    OBJ_CTR_INC(sprites_t);
+
     return self;
 }
 
@@ -96,6 +100,8 @@ void sprites_delete(sprites_t* const self) {
     }
 
     free(self);
+
+    OBJ_CTR_DEC(sprites_t);
 }
 
 void sprites_get_size(sprites_t const* const self, sprite_t const sprite, size_t size[2]) {

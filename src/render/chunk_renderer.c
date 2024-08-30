@@ -6,11 +6,13 @@
 #include <SDL2/SDL_timer.h>
 
 #include "src/render/gl.h"
+#include "src/util/object_counter.h"
 #include "src/world/side.h"
 #include "src/world/chunk.h"
 #include "src/render/level_renderer.h"
 #include "src/render/tessellator.h"
 #include "src/render/tile_renderer.h"
+#include "src/util/logger.h"
 
 struct chunk_renderer {
     level_renderer_t* level_renderer;
@@ -47,6 +49,8 @@ chunk_renderer_t* const chunk_renderer_new(level_renderer_t* const level_rendere
 
     glBindVertexArray(0);
 
+    OBJ_CTR_INC(chunk_renderer_t);
+
     return self;
 }
 
@@ -58,6 +62,8 @@ void chunk_renderer_delete(chunk_renderer_t* const self) {
     glDeleteVertexArrays(1, &(self->vao));
 
     free(self);
+
+    OBJ_CTR_DEC(chunk_renderer_t);
 }
 
 chunk_t const* const chunk_renderer_get_chunk(chunk_renderer_t const* const self) {

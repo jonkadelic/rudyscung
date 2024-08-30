@@ -5,6 +5,7 @@
 #include <stdlib.h>
 
 #include "src/util/logger.h"
+#include "src/util/object_counter.h"
 #include "src/util/util.h"
 #include "src/world/chunk.h"
 #include "src/world/level.h"
@@ -23,7 +24,7 @@ server_t* const server_new() {
     server_t* self = malloc(sizeof(server_t));
     assert(self != nullptr);
 
-    LOG_DEBUG("server_t: initialized.");
+    OBJ_CTR_INC(server_t);
 
     return self;
 }
@@ -33,7 +34,7 @@ void server_delete(server_t* const self) {
 
     free(self);
 
-    LOG_DEBUG("server_t: deleted.");
+    OBJ_CTR_DEC(server_t);
 }
 
 void server_run(server_t* const self) {

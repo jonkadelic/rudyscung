@@ -5,6 +5,9 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "src/util/logger.h"
+#include "src/util/object_counter.h"
+
 #define MAX_ENTRIES (1024 * 128)
 
 typedef struct vertex {
@@ -46,6 +49,8 @@ tessellator_t* const tessellator_new(void) {
 
     tessellator_reset(self);
 
+    OBJ_CTR_INC(tessellator_t);
+
     return self;
 }
 
@@ -53,6 +58,8 @@ void tessellator_delete(tessellator_t* const self) {
     assert(self != nullptr);
 
     free(self);
+
+    OBJ_CTR_DEC(tessellator_t);
 }
 
 void tessellator_reset(tessellator_t* const self) {

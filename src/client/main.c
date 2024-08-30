@@ -1,11 +1,13 @@
 #include <SDL2/SDL.h>
 
 #include "src/client/client.h"
+#include "src/util/object_counter.h"
 #include "src/world/tile.h"
 #include "src/util/logger.h"
 
 int main(int argc, char** argv) {
     logger_set_log_level(LOG_LEVEL__DEBUG);
+    logger_set_log_time(true);
 
     LOG_INFO("Starting RudyScung...");
 
@@ -24,6 +26,11 @@ int main(int argc, char** argv) {
     client_run(client);
 
     client_delete(client);
+
+    // static cleanup
+    tiles_cleanup();
+
+    object_counter_summarize(true);
 
     return 0;
 }

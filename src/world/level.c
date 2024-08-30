@@ -6,6 +6,7 @@
 #include <sys/time.h>
 #include <string.h>
 
+#include "src/util/object_counter.h"
 #include "src/util/util.h"
 #include "src/world/chunk.h"
 #include "src/world/entity/ecs.h"
@@ -161,7 +162,7 @@ level_t* const level_new(size_chunks_t const size[NUM_AXES]) {
     uint64_t const end_time = get_time_ms();
     LOG_DEBUG("level_t: generated level in %lums.", end_time - start_time);
 
-    LOG_DEBUG("level_t: initialized.");
+    OBJ_CTR_INC(level_t);
 
     return self;
 }
@@ -180,13 +181,15 @@ void level_delete(level_t* const self) {
     }
     free(self->chunks);
 
+    random_delete(self->rand);
+
     level_gen_delete(self->level_gen);
 
     ecs_delete(self->ecs);
 
     free(self);
 
-    LOG_DEBUG("level_t: deleted.");
+    OBJ_CTR_DEC(level_t);
 }
 
 uint64_t const level_get_seed(level_t const* const self) {

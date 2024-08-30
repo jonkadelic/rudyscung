@@ -4,7 +4,9 @@
 #include <stdlib.h>
 #include <math.h>
 
+#include "src/util/object_counter.h"
 #include "src/util/random.h"
+#include "src/util/logger.h"
 
 struct perlin {
     uint8_t p[512];
@@ -39,6 +41,8 @@ perlin_t* const perlin_new(uint64_t const seed) {
 
     random_delete(rand);
 
+    OBJ_CTR_INC(perlin_t);
+
     return self;
 }
 
@@ -46,6 +50,8 @@ void perlin_delete(perlin_t* const self) {
     assert(self != nullptr);
 
     free(self);
+
+    OBJ_CTR_DEC(perlin_t);
 }
 
 double perlin_get_1d(perlin_t const* const self, double x) {

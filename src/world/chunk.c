@@ -4,6 +4,9 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "src/util/logger.h"
+#include "src/util/object_counter.h"
+
 #define COORD(pos) (((pos[AXIS__Y]) * CHUNK_SIZE * CHUNK_SIZE) + ((pos[AXIS__Z]) * CHUNK_SIZE) + (pos[AXIS__X]))
 
 struct chunk {
@@ -26,6 +29,9 @@ chunk_t* const chunk_new(size_chunks_t const pos[NUM_AXES]) {
             }
         }
     }
+
+    OBJ_CTR_INC(chunk_t);
+
     return self;
 }
 
@@ -33,6 +39,8 @@ void chunk_delete(chunk_t* const chunk) {
     assert(chunk != nullptr);
 
     free(chunk);
+
+    OBJ_CTR_DEC(chunk_t);
 }
 
 void chunk_get_pos(chunk_t const* const self, size_chunks_t pos[NUM_AXES]) {

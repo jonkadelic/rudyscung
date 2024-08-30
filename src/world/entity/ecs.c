@@ -3,6 +3,7 @@
 #include <assert.h>
 #include <stdlib.h>
 
+#include "src/util/object_counter.h"
 #include "src/world/entity/ecs_components.h"
 #include "src/util/logger.h"
 
@@ -43,7 +44,7 @@ ecs_t* const ecs_new(void) {
     ecs_t* self = calloc(1, sizeof(ecs_t));
     assert(self != nullptr);
 
-    LOG_DEBUG("ecs_t: initialized.");
+    OBJ_CTR_INC(ecs_t);
 
     return self;
 }
@@ -66,7 +67,7 @@ void ecs_delete(ecs_t* const self) {
 
     free(self);
 
-    LOG_DEBUG("ecs_t: deleted.");
+    OBJ_CTR_DEC(ecs_t);
 }
 
 void ecs_tick(ecs_t* const self, level_t* const level) {
@@ -110,6 +111,8 @@ entity_t const ecs_new_entity(ecs_t* const self) {
 
     self->entities[entity] = entity_storage;
 
+    OBJ_CTR_INC(entity_storage_t);
+
     return entity;
 }
 
@@ -127,6 +130,8 @@ void ecs_delete_entity(ecs_t* const self, entity_t const entity) {
 
     free(entity_storage);
     self->entities[entity] = nullptr;
+
+    OBJ_CTR_DEC(entity_storage_t);
 }
 
 void* const ecs_attach_component(ecs_t* const self, entity_t const entity, ecs_component_t const component) {

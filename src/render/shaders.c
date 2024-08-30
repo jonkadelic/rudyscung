@@ -7,6 +7,7 @@
 
 #include "src/render/shader.h"
 #include "src/util/logger.h"
+#include "src/util/object_counter.h"
 
 struct shaders {
     shader_t** shaders;
@@ -57,7 +58,7 @@ shaders_t* const shaders_new(char const* const resources_path) {
         LOG_DEBUG("shaders_t: initialized shader \"%s\".", SHADER_NAMES[i]);
     }
 
-    LOG_DEBUG("shaders_t: initialized.");
+    OBJ_CTR_INC(shaders_t);
 
     return self;
 }
@@ -76,7 +77,7 @@ void shaders_delete(shaders_t* const self) {
     free(self->shaders);
     free(self);
 
-    LOG_DEBUG("shaders_t: deleted.");
+    OBJ_CTR_DEC(shaders_t);
 }
 
 void shaders_bind(shaders_t* const self, char const* const name) {

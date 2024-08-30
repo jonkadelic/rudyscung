@@ -7,6 +7,7 @@
 #include <cglm/cglm.h>
 
 #include "src/render/gl.h"
+#include "src/util/object_counter.h"
 #include "src/world/entity/ecs.h"
 #include "src/world/side.h"
 #include "src/phys/aabb.h"
@@ -22,6 +23,7 @@
 #include "src/render/camera.h"
 #include "src/render/sprites.h"
 #include "src/phys/raycast.h"
+#include "src/util/logger.h"
 
 #define CHUNK_INDEX(x, y, z) (((y) * self->level_slice.size[AXIS__Z] * self->level_slice.size[AXIS__X]) + ((z) * self->level_slice.size[AXIS__X]) + (x))
 #define TO_CHUNK_SPACE(tile_coord) ((tile_coord) / CHUNK_SIZE)
@@ -51,6 +53,8 @@ level_renderer_t* const level_renderer_new(client_t* const client) {
 
     level_renderer_level_changed(self);
 
+    OBJ_CTR_INC(level_renderer_t);
+
     return self;
 }
 
@@ -64,6 +68,8 @@ void level_renderer_delete(level_renderer_t* const self) {
     sprites_delete(self->sprites);
     
     free(self);
+
+    OBJ_CTR_DEC(level_renderer_t);
 }
 
 void level_renderer_level_changed(level_renderer_t* const self) {
@@ -338,15 +344,21 @@ static void delete_chunk_renderers(level_renderer_t* const self) {
 
     size_t const chunks_area = self->level_slice.size[AXIS__Y] * self->level_slice.size[AXIS__Z] * self->level_slice.size[AXIS__X];
     if (self->chunk_renderers != nullptr) {
+        size_t num_deleted = 0;
         for (size_t i = 0; i < chunks_area; i++) {
             if (self->chunk_renderers[i] != nullptr) {
                 chunk_renderer_delete(self->chunk_renderers[i]);
                 self->chunk_renderers[i] = nullptr;
+                num_deleted++;
             }
         }
         
         free(self->chunk_renderers);
         self->chunk_renderers = nullptr;
+
+        if (num_deleted > 0) {
+            LOG_DEBUG("level_renderer_t: deleted %zu chunk renderers.", num_deleted);
+        }
     }
 }
 
@@ -368,14 +380,20 @@ static void reload_chunk_renderers(level_renderer_t* const self) {
     size_chunks_t level_size[NUM_AXES];
     level_get_size(level, level_size);
 
+    size_t num_reloaded = 0;
     for (size_chunks_t x = 0; x < self->level_slice.size[AXIS__X] && (self->level_slice.pos[AXIS__X] + x) < level_size[AXIS__X]; x++) {
         for (size_chunks_t y = 0; y < self->level_slice.size[AXIS__Y] && (self->level_slice.pos[AXIS__Y] + y) < level_size[AXIS__Y]; y++) {
             for (size_chunks_t z = 0; z < self->level_slice.size[AXIS__Z] && (self->level_slice.pos[AXIS__Z] + z) < level_size[AXIS__Z]; z++) {
                 if (self->chunk_renderers[CHUNK_INDEX(x, y, z)] == nullptr) {
                     chunk_t const* const chunk = level_get_chunk(level, (size_chunks_t[NUM_AXES]) { self->level_slice.pos[AXIS__X] + x, self->level_slice.pos[AXIS__Y] + y, self->level_slice.pos[AXIS__Z] + z });
                     self->chunk_renderers[CHUNK_INDEX(x, y, z)] = chunk_renderer_new(self, chunk);
+                    num_reloaded++;
                 }
             }
         }
+    }
+
+    if (num_reloaded > 0) {
+        LOG_DEBUG("level_renderer_t: reloaded %zu chunk renderers.", num_reloaded);
     }
 }

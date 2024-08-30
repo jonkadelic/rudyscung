@@ -14,6 +14,7 @@
 #include "src/render/font.h"
 #include "src/phys/raycast.h"
 #include "src/util/logger.h"
+#include "src/util/object_counter.h"
 
 static void check_errors(void);
 static void draw_overlay(renderer_t* const self);
@@ -43,7 +44,7 @@ renderer_t* const renderer_new(client_t* const client) {
     self->frames.last_fps_update_tick = SDL_GetTicks64();
     self->frames.frames_since_last_fps_update = 0;
 
-    LOG_DEBUG("renderer_t: initialized.");
+    OBJ_CTR_INC(renderer_t);
 
     return self;
 }
@@ -57,7 +58,7 @@ void renderer_delete(renderer_t* const self) {
 
     free(self);
 
-    LOG_DEBUG("renderer_t: deleted.");
+    OBJ_CTR_DEC(renderer_t);
 }
 
 void renderer_level_changed(renderer_t* const self) {

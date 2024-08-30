@@ -6,6 +6,8 @@
 #include <stdio.h>
 
 #include "src/render/gl.h"
+#include "src/util/logger.h"
+#include "src/util/object_counter.h"
 
 struct shader {
     GLuint program;
@@ -21,6 +23,8 @@ shader_t* const shader_new(void) {
     self->vertex_source = nullptr;
     self->fragment_source = nullptr;
     self->is_compiled = false;
+
+    OBJ_CTR_INC(shader_t);
 
     return self;
 }
@@ -71,6 +75,8 @@ void shader_delete(shader_t* const self) {
 
     glDeleteProgram(self->program);
     free(self);
+
+    OBJ_CTR_DEC(shader_t);
 }
 
 void shader_bind(shader_t const* const self) {

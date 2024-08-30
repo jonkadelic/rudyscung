@@ -4,6 +4,7 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "src/util/object_counter.h"
 #include "src/world/gen/perlin.h"
 #include "src/world/level.h"
 #include "src/util/logger.h"
@@ -197,7 +198,7 @@ level_gen_t* const level_gen_new(uint64_t const seed) {
 
     self->perlin = perlin_new(seed);
 
-    LOG_DEBUG("level_gen_t: initialized with seed %lu.", seed);
+    OBJ_CTR_INC(level_gen_t);
 
     return self;
 }
@@ -205,9 +206,11 @@ level_gen_t* const level_gen_new(uint64_t const seed) {
 void level_gen_delete(level_gen_t* const self) {
     assert(self != nullptr);
 
+    perlin_delete(self->perlin);
+
     free(self);
 
-    LOG_DEBUG("level_gen_t: deleted.");
+    OBJ_CTR_DEC(level_gen_t);
 }
 
 void level_gen_generate(level_gen_t* const self, chunk_t* const chunk) {

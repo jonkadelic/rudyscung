@@ -9,6 +9,7 @@
 
 #include "src/render/camera.h"
 #include "src/phys/raycast.h"
+#include "src/util/object_counter.h"
 #include "src/util/util.h"
 #include "src/render/font.h"
 #include "src/client/client.h"
@@ -86,6 +87,8 @@ view_type_entity_t* const view_type_entity_new(client_t* const client, entity_t 
     self->entity = entity;
 
     memset(&(self->keys), 0, sizeof(keys_t));
+
+    OBJ_CTR_INC(view_type_t);
     
     return (view_type_entity_t*) self;
 }
@@ -97,6 +100,8 @@ view_type_isometric_t* const view_type_isometric_new(client_t* const client, ent
 
     memset(&(self->keys), 0, sizeof(keys_t));
 
+    OBJ_CTR_INC(view_type_t);
+
     return (view_type_isometric_t*) self;
 }
 
@@ -106,6 +111,8 @@ void view_type_delete(view_type_t* const self) {
     camera_delete(self->camera);
 
     free(self);
+
+    OBJ_CTR_DEC(view_type_t);
 }
 
 camera_t* const view_type_get_camera(view_type_t const* const self) {

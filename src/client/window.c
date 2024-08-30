@@ -1,13 +1,13 @@
 #include "./window.h"
 
 #include <assert.h>
-#include <stdio.h>
 
 #include <SDL2/SDL_video.h>
 #include <SDL2/SDL.h>
 
 #include "src/render/gl.h"
 #include "src/util/logger.h"
+#include "src/util/object_counter.h"
 
 struct window {
     SDL_Window* window;
@@ -39,7 +39,7 @@ window_t* const window_new(char const* const title, int const width, int const h
 
     // SDL_GL_SetSwapInterval(0);
 
-    LOG_DEBUG("window_t: initialized.");
+    OBJ_CTR_INC(window_t);
 
     return self;
 }
@@ -52,7 +52,7 @@ void window_delete(window_t* const self) {
     self->window = nullptr;
     free(self);
 
-    LOG_DEBUG("window_t: deleted.");
+    OBJ_CTR_DEC(window_t);
 }
 
 void window_swap(window_t const* const self) {

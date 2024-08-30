@@ -4,7 +4,9 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "src/util/object_counter.h"
 #include "src/world/side.h"
+#include "src/util/logger.h"
 
 struct aabb {
     float min[NUM_AXES];
@@ -15,7 +17,9 @@ aabb_t* const aabb_new(float const min[NUM_AXES], float const max[NUM_AXES]) {
     aabb_t* self = malloc(sizeof(aabb_t));
 
     aabb_set_bounds(self, min, max);
-    
+
+    OBJ_CTR_INC(aabb_t);
+
     return self;
 }
 
@@ -27,6 +31,8 @@ void aabb_delete(aabb_t* const self) {
     assert(self != nullptr);
 
     free(self);
+
+    OBJ_CTR_DEC(aabb_t);
 }
 
 void aabb_set_bounds(aabb_t* const self, float const min[NUM_AXES], float const max[NUM_AXES]) {

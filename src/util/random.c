@@ -3,7 +3,9 @@
 #include <assert.h>
 #include <stdlib.h>
 
+#include "src/util/object_counter.h"
 #include "src/util/util.h"
+#include "src/util/logger.h"
 
 struct random {
     uint64_t seed;
@@ -16,6 +18,8 @@ random_t* const random_new(uint64_t const seed) {
     assert(self != nullptr);
 
     random_set_seed(self, seed);
+
+    OBJ_CTR_INC(random_t);
 
     return self;
 }
@@ -30,6 +34,8 @@ void random_delete(random_t* const self) {
     assert(self != nullptr);
 
     free(self);
+
+    OBJ_CTR_DEC(random_t);
 }
 
 void random_set_seed(random_t* const self, uint64_t const seed) {

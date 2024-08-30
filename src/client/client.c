@@ -10,7 +10,6 @@
 #include <SDL2/SDL_keycode.h>
 #include <SDL2/SDL_video.h>
 
-#include "cglm/common.h"
 #include "src/render/font.h"
 #include "src/render/level_renderer.h"
 #include "src/render/shaders.h"
@@ -24,6 +23,7 @@
 #include "src/world/side.h"
 #include "src/render/view_type.h"
 #include "src/util/logger.h"
+#include "src/util/object_counter.h"
 
 #define WINDOW_TITLE "rudyscung"
 #define WINDOW_INITIAL_WIDTH 800
@@ -59,7 +59,7 @@ client_t* const client_new(char const* const resources_path) {
     self->font = font_new(self, resources_path, FONT_NAME__DEFAULT);
     self->renderer = renderer_new(self);
     
-    LOG_DEBUG("client_t: initialized.");
+    OBJ_CTR_INC(client_t);
 
     return self;
 }
@@ -77,7 +77,7 @@ void client_delete(client_t* const self) {
 
     free(self);
 
-    LOG_DEBUG("client_t: deleted.");
+    OBJ_CTR_DEC(client_t);
 }
 
 void client_run(client_t* const self) {
@@ -248,6 +248,10 @@ static void new_level(client_t* const self, size_chunks_t const size[NUM_AXES]) 
         level_delete(self->level);
     }
 
+    if (self->view_type != nullptr) {
+        view_type_delete(self->view_type);
+    }
+
     self->level = level_new(size);
 
     ecs_t* const ecs = level_get_ecs(self->level);
@@ -264,12 +268,11 @@ static void new_level(client_t* const self, size_chunks_t const size[NUM_AXES]) 
     player_rot->rot[ROT_AXIS__Y] = M_PI / 4 * 3;
     player_rot->rot[ROT_AXIS__X] = M_PI / 4 * 2;
 
-    if (self->view_type != nullptr) {
-        view_type_delete(self->view_type);
-    }
     self->view_type = view_type_isometric_new(self, self->player);
 
     renderer_level_changed(self->renderer);
 
     update_slice(self, true);
+
+    object_counter_summarize(false);
 }

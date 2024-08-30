@@ -7,6 +7,7 @@
 
 #include "src/render/gl.h"
 #include "lib/stb_image.h"
+#include "src/util/object_counter.h"
 #include "src/util/util.h"
 #include "src/util/logger.h"
 
@@ -31,7 +32,7 @@ textures_t* const textures_new(char const* const resources_path) {
         self->textures[i] = nullptr;
     }
 
-    LOG_DEBUG("textures_t: initialized.");
+    OBJ_CTR_INC(textures_t);
 
     return self;
 }
@@ -44,12 +45,13 @@ void textures_delete(textures_t* const self) {
             glDeleteTextures(1, &(self->textures[tex]->name));
             free((void*) self->textures[tex]->pixels);
             free((void*) self->textures[tex]);
+            OBJ_CTR_DEC(texture_t);
         }
     }
 
     free(self);
 
-    LOG_DEBUG("textures_t: deleted.");
+    OBJ_CTR_DEC(textures_t);
 }
 
 void texture_delete(texture_t* const self) {
@@ -59,7 +61,7 @@ void texture_delete(texture_t* const self) {
     free((void*) self->pixels);
     free((void*) self);
 
-    LOG_DEBUG("texture_t: deleted.");
+    OBJ_CTR_DEC(texture_t);
 }
 
 texture_t const* const textures_get_texture(textures_t* const self, texture_name_t const texture_name) {
@@ -125,6 +127,8 @@ texture_t* const textures_load_texture(textures_t const* const self, char const*
     assert(texture != nullptr);
 
     memcpy(texture, &texture_local, sizeof(texture_t));
+
+    OBJ_CTR_INC(texture_t);
 
     return texture;
 }

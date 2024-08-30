@@ -12,3 +12,5 @@ typedef enum tile : uint8_t {
 } tile_t;
 
 void tiles_init(void);
+
+void tiles_cleanup(void);

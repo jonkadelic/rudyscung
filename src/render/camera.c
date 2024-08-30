@@ -8,6 +8,7 @@
 #include <cglm/cglm.h>
 
 #include "src/render/gl.h"
+#include "src/util/object_counter.h"
 #include "src/util/util.h"
 #include "src/util/logger.h"
 #include "src/world/side.h"
@@ -37,11 +38,15 @@ static void camera_ortho_set_matrices(camera_t* const self, size_t const window_
 camera_perspective_t* const camera_perspective_new(void) {
     camera_t* self = camera_new(CAMERA_TYPE__PERSPECTIVE,  camera_perspective_set_matrices);
 
+    OBJ_CTR_INC(camera_t);
+
     return (camera_perspective_t*) self;
 }
 
 camera_ortho_t* const camera_ortho_new(void) {
     camera_t* self = camera_new(CAMERA_TYPE__ORTHO, camera_ortho_set_matrices);
+
+    OBJ_CTR_INC(camera_t);
 
     return (camera_ortho_t*) self;
 }
@@ -50,6 +55,8 @@ void camera_delete(camera_t* const self) {
     assert(self != nullptr);
 
     free(self);
+
+    OBJ_CTR_DEC(camera_t);
 }
 
 void camera_set_matrices(camera_t* const self, size_t const window_size[2], shader_t* const shader) {
