@@ -214,6 +214,15 @@ void level_get_size(level_t const* const self, size_chunks_t size[NUM_AXES]) {
     memcpy(size, self->size, sizeof(size_chunks_t) * NUM_AXES);
 }
 
+bool const level_is_tile_oob(level_t const* const self, size_t const pos[NUM_AXES]) {
+    assert(self != nullptr);
+
+    return
+        (pos[AXIS__X] >= self->size[AXIS__X] * CHUNK_SIZE) ||
+        (pos[AXIS__Y] >= self->size[AXIS__Y] * CHUNK_SIZE) ||
+        (pos[AXIS__Z] >= self->size[AXIS__Z] * CHUNK_SIZE);
+}
+
 random_t* const level_get_random(level_t* const self) {
     assert(self != nullptr);
 

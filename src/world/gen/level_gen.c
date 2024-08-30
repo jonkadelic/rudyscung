@@ -343,15 +343,15 @@ static void look_up_sides(level_t const* const level, size_chunks_t const level_
         side_get_offsets(i, offsets);
         int pos_t[NUM_AXES] = { pos[AXIS__X] + offsets[AXIS__X], pos[AXIS__Y] + offsets[AXIS__Y], pos[AXIS__Z] + offsets[AXIS__Z] };
 
-        sides[i] = true;
+        sides[i] = false;
 
         for (axis_t a = 0; a < NUM_AXES; a++) {
             if (pos_t[a] < 0 || pos_t[a] >= level_size_tiles[a]) {
-                sides[i] = false;
+                sides[i] = true;
                 break;
             }
         }
-        if (sides[i]) {
+        if (!sides[i]) {
             size_t const pos_t_u[NUM_AXES] = { pos_t[AXIS__X], pos_t[AXIS__Y], pos_t[AXIS__Z] };
             tile_t const offset_tile = level_get_tile(level, pos_t_u);
             sides[i] = offset_tile != TILE__AIR;
@@ -376,10 +376,10 @@ static bool tile_matches_pattern(level_t const* const level, tile_shape_t const 
                 bool north_east;
                 bool south_east;
             } extra = {
-                .north_west = level_get_tile(level, pos_north_west) != TILE__AIR,
-                .south_west = level_get_tile(level, pos_south_west) != TILE__AIR,
-                .north_east = level_get_tile(level, pos_north_east) != TILE__AIR,
-                .south_east = level_get_tile(level, pos_south_east) != TILE__AIR
+                .north_west = !level_is_tile_oob(level, pos_north_west) ? level_get_tile(level, pos_north_west) != TILE__AIR : true,
+                .south_west = !level_is_tile_oob(level, pos_south_west) ? level_get_tile(level, pos_south_west) != TILE__AIR : true,
+                .north_east = !level_is_tile_oob(level, pos_north_east) ? level_get_tile(level, pos_north_east) != TILE__AIR : true,
+                .south_east = !level_is_tile_oob(level, pos_south_east) ? level_get_tile(level, pos_south_east) != TILE__AIR : true
             };
             if (memcmp(&extra, &(SHAPE_LOOKUP[tile_shape].extra), sizeof(extra)) != 0) {
                 return false;

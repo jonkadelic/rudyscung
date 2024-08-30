@@ -20,6 +20,8 @@ uint64_t const level_get_seed(level_t const* const self);
 
 void level_get_size(level_t const* const self, size_chunks_t size[NUM_AXES]);
 
+bool const level_is_tile_oob(level_t const* const self, size_t const pos[NUM_AXES]);
+
 random_t* const level_get_random(level_t* const self);
 
 bool const level_is_chunk_dirty(level_t const* const self, size_chunks_t const pos[NUM_AXES]);
