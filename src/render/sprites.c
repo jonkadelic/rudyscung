@@ -6,6 +6,7 @@
 
 #include <cglm/cglm.h>
 
+#include "src/util/logger.h"
 #include "src/world/side.h"
 #include "tessellator.h"
 #include "textures.h"
@@ -130,7 +131,7 @@ void sprites_render(sprites_t const* const self, sprite_t const sprite, camera_t
     shader_bind(shader);
 
     float camera_pos[NUM_AXES];
-    camera_get_pos(camera, camera_pos);
+    camera_get_pos_for_sprites(camera, camera_pos);
     float camera_rot[NUM_ROT_AXES];
     camera_get_rot(camera, camera_rot);
 
@@ -151,7 +152,6 @@ void sprites_render(sprites_t const* const self, sprite_t const sprite, camera_t
         pos[AXIS__X] - camera_pos[AXIS__X],
         pos[AXIS__Z] - camera_pos[AXIS__Z]
     };
-
 
     GLuint tex;
     if (entry->num_angles == 1) {

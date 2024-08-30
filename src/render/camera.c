@@ -13,6 +13,7 @@
 #include "cglm/project.h"
 #include "cglm/types.h"
 #include "src/util/logger.h"
+#include "src/world/side.h"
 
 typedef enum camera_type {
     CAMERA_TYPE__PERSPECTIVE,
@@ -87,7 +88,7 @@ void camera_set_rot(camera_t* const self, float const rot[NUM_ROT_AXES]) {
     memcpy(self->rot, rot, sizeof(float) * NUM_ROT_AXES);
 }
 
-bool camera_pick(camera_t* const self, size_t const window_size[2], size_t const screen_pos[2], float world_pos[NUM_AXES]) {
+bool const camera_pick(camera_t* const self, size_t const window_size[2], size_t const screen_pos[2], float world_pos[NUM_AXES]) {
     assert(self != nullptr);
     assert(window_size[0] > 0);
     assert(window_size[1] > 0);
@@ -126,6 +127,32 @@ bool camera_pick(camera_t* const self, size_t const window_size[2], size_t const
     world_pos[2] = pos[2] - pos4[2];
 
     return true;
+}
+
+void camera_get_pos_for_sprites(camera_t const* const self, float pos[NUM_AXES]) {
+    assert(self != nullptr);
+
+    switch (self->camera_type) {
+        case CAMERA_TYPE__PERSPECTIVE: {
+            camera_get_pos(self, pos);
+            break;
+        }
+        case CAMERA_TYPE__ORTHO: {
+            vec4 pos4 = { 0.0f, 0.0f, -1000.0f, 1.0f };
+            mat4 slightly_further;
+            glm_mat4_identity(slightly_further);
+            glm_rotate(slightly_further, -self->rot[ROT_AXIS__Y], (vec3) { 0.0f, 1.0f, 0.0f });
+            glm_mat4_mulv(slightly_further, pos4, pos4);
+
+            pos[AXIS__X] = self->pos[AXIS__X] - pos4[0];
+            pos[AXIS__Y] = self->pos[AXIS__Y] - pos4[1];
+            pos[AXIS__Z] = self->pos[AXIS__Z] - pos4[2];
+
+            break;
+        }
+        default:
+            assert(false);
+    }
 }
 
 static camera_t* const camera_new(camera_type_t const camera_type, set_matrices const set_matrices) {
