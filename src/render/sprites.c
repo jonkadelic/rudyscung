@@ -56,12 +56,24 @@ sprites_t* const sprites_new(rudyscung_t* const rudyscung) {
         SPRITE__MOB,
         textures,
         tessellator,
-        4,
+        16,
         (char const*[]) {
-            "/sprite/mob/front.png",
-            "/sprite/mob/right.png",
-            "/sprite/mob/back.png",
-            "/sprite/mob/left.png"
+            "/sprite/mob/0.png",
+            "/sprite/mob/1.png",
+            "/sprite/mob/2.png",
+            "/sprite/mob/3.png",
+            "/sprite/mob/4.png",
+            "/sprite/mob/5.png",
+            "/sprite/mob/6.png",
+            "/sprite/mob/7.png",
+            "/sprite/mob/8.png",
+            "/sprite/mob/9.png",
+            "/sprite/mob/10.png",
+            "/sprite/mob/11.png",
+            "/sprite/mob/12.png",
+            "/sprite/mob/13.png",
+            "/sprite/mob/14.png",
+            "/sprite/mob/15.png",
         },
         (size_t[2]) { 16, 32 },
         (float[2]) { 0.5f, 1.0f }
@@ -140,12 +152,13 @@ void sprites_render(sprites_t const* const self, sprite_t const sprite, camera_t
         pos[AXIS__Z] - camera_pos[AXIS__Z]
     };
 
-    float angle_y = (atan2(delta[1], delta[0]) - rotation_offset) + M_PI; // Range = 0 - 2pi
 
     GLuint tex;
     if (entry->num_angles == 1) {
         tex = entry->tex[0]->name;
     } else {
+        float angle_y = (atan2(delta[1], delta[0]) - rotation_offset) + M_PI; // Range = 0 - 2pi
+        
         // front = 3/2pi
         float const base = M_PI * 1.5f;
         float const increment = (2.0f * M_PI) / entry->num_angles;
