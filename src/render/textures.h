@@ -14,11 +14,6 @@ typedef struct texture {
 typedef enum texture_name {
     TEXTURE_NAME__TERRAIN,
     TEXTURE_NAME__FONT_DEFAULT,
-    TEXTURE_NAME__SPRITE_TREE,
-    TEXTURE_NAME__SPRITE_MOB_FRONT,
-    TEXTURE_NAME__SPRITE_MOB_BACK,
-    TEXTURE_NAME__SPRITE_MOB_LEFT,
-    TEXTURE_NAME__SPRITE_MOB_RIGHT,
     NUM_TEXTURE_NAMES
 } texture_name_t;
 
@@ -28,6 +23,10 @@ textures_t* const textures_new(char const* const resources_path);
 
 void textures_delete(textures_t* const self);
 
+void texture_delete(texture_t* const self);
+
 texture_t const* const textures_get_texture(textures_t* const self, texture_name_t const texture_name);
+
+texture_t* const textures_load_texture(textures_t const* const self, char const* const path);
 
 uint32_t const texture_get_pixel(texture_t const* const self, size_t const pos[2]);

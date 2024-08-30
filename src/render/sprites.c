@@ -13,16 +13,9 @@
 #include "./camera.h"
 #include "../util.h"
 
-typedef enum sprite_angle {
-    SPRITE_ANGLE__FRONT,
-    SPRITE_ANGLE__BACK,
-    SPRITE_ANGLE__LEFT,
-    SPRITE_ANGLE__RIGHT,
-    NUM_SPRITE_ANGLES
-} sprite_angle_t;
-
 typedef struct sprite_entry {
-    GLuint tex[NUM_SPRITE_ANGLES];
+    texture_t** tex;
+    size_t num_angles;
     size_t size[2];
     float origin[2];
     GLuint vao;
@@ -35,7 +28,7 @@ struct sprites {
     sprite_entry_t sprites[NUM_SPRITES];
 };
 
-static void sprite_new(sprites_t* const self, sprite_t const sprite, textures_t* const textures, tessellator_t* tessellator, texture_name_t const texture_names[NUM_SPRITE_ANGLES], size_t size[2], float origin[2]);
+static void sprite_new(sprites_t* const self, sprite_t const sprite, textures_t* const textures, tessellator_t* tessellator, size_t const num_texture_paths, char const* const texture_paths[], size_t size[2], float origin[2]);
 
 sprites_t* const sprites_new(rudyscung_t* const rudyscung) {
     assert(rudyscung != nullptr);
@@ -52,11 +45,9 @@ sprites_t* const sprites_new(rudyscung_t* const rudyscung) {
         SPRITE__TREE,
         textures,
         tessellator,
-        (texture_name_t[NUM_SPRITE_ANGLES]) {
-            [SPRITE_ANGLE__FRONT] = TEXTURE_NAME__SPRITE_TREE,
-            [SPRITE_ANGLE__BACK] = TEXTURE_NAME__SPRITE_TREE,
-            [SPRITE_ANGLE__LEFT] = TEXTURE_NAME__SPRITE_TREE,
-            [SPRITE_ANGLE__RIGHT] = TEXTURE_NAME__SPRITE_TREE
+        1,
+        (char const*[]) {
+            "/sprite/tree.png"
         }, 
         (size_t[2]) { 64, 128 }, 
         (float[2]) { 0.5f, 1.0f }
@@ -65,11 +56,12 @@ sprites_t* const sprites_new(rudyscung_t* const rudyscung) {
         SPRITE__MOB,
         textures,
         tessellator,
-        (texture_name_t[NUM_SPRITE_ANGLES]) {
-            [SPRITE_ANGLE__FRONT] = TEXTURE_NAME__SPRITE_MOB_FRONT,
-            [SPRITE_ANGLE__BACK] = TEXTURE_NAME__SPRITE_MOB_BACK,
-            [SPRITE_ANGLE__LEFT] = TEXTURE_NAME__SPRITE_MOB_LEFT,
-            [SPRITE_ANGLE__RIGHT] = TEXTURE_NAME__SPRITE_MOB_RIGHT
+        4,
+        (char const*[]) {
+            "/sprite/mob/front.png",
+            "/sprite/mob/right.png",
+            "/sprite/mob/back.png",
+            "/sprite/mob/left.png"
         },
         (size_t[2]) { 16, 32 },
         (float[2]) { 0.5f, 1.0f }
@@ -84,8 +76,12 @@ void sprites_delete(sprites_t* const self) {
     assert(self != nullptr);
 
     for (sprite_t sprite = 0; sprite < NUM_SPRITES; sprite++) {
-        glDeleteBuffers(1, &(self->sprites[sprite].vbo));
-        glDeleteVertexArrays(1, &(self->sprites[sprite].vao));
+        sprite_entry_t* const sprite_entry = &(self->sprites[sprite]);
+        glDeleteBuffers(1, &(sprite_entry->vbo));
+        glDeleteVertexArrays(1, &(sprite_entry->vao));
+        for (size_t i = 0; i < sprite_entry->num_angles; i++) {
+            texture_delete(sprite_entry->tex[i]);
+        }
     }
 
     free(self);
@@ -144,25 +140,28 @@ void sprites_render(sprites_t const* const self, sprite_t const sprite, camera_t
         pos[AXIS__Z] - camera_pos[AXIS__Z]
     };
 
-    float angle_y = atan2(delta[1], delta[0]) - rotation_offset;
-    while (angle_y < -M_PI) {
-        angle_y += 2 * M_PI;
-    }
-    while (angle_y > M_PI) {
-        angle_y -= 2 * M_PI;
-    }
+    float angle_y = (atan2(delta[1], delta[0]) - rotation_offset) + M_PI; // Range = 0 - 2pi
 
-    float q_pi = M_PI / 4;
-
-    GLuint tex = 0;
-    if (angle_y < -q_pi * 3 || angle_y > q_pi * 3) {
-        tex = entry->tex[SPRITE_ANGLE__RIGHT];
-    } else if (angle_y > -q_pi * 3 && angle_y < -q_pi) {
-        tex = entry->tex[SPRITE_ANGLE__BACK];
-    } else if (angle_y > -q_pi && angle_y < q_pi) {
-        tex = entry->tex[SPRITE_ANGLE__LEFT];
+    GLuint tex;
+    if (entry->num_angles == 1) {
+        tex = entry->tex[0]->name;
     } else {
-        tex = entry->tex[SPRITE_ANGLE__FRONT];
+        // front = 3/2pi
+        float const base = M_PI * 1.5f;
+        float const increment = (2.0f * M_PI) / entry->num_angles;
+        float const half_increment = increment / 2.0f;
+
+        angle_y -= base - half_increment;
+        while (angle_y < 0.0f) {
+            angle_y += 2 * M_PI;
+        }
+        while (angle_y > 2 * M_PI) {
+            angle_y -= 2 * M_PI;
+        }
+        assert(angle_y >= 0.0f && angle_y < 2.0f * M_PI);
+        size_t const tex_index = (size_t) (angle_y / increment);
+
+        tex = entry->tex[tex_index]->name;
     }
 
     glBindTexture(GL_TEXTURE_2D, tex);
@@ -179,19 +178,21 @@ void sprites_render(sprites_t const* const self, sprite_t const sprite, camera_t
     glDisable(GL_CULL_FACE);
 }
 
-static void sprite_new(sprites_t* const self, sprite_t const sprite, textures_t* const textures, tessellator_t* const tessellator, texture_name_t const texture_names[NUM_SPRITE_ANGLES], size_t size[2], float origin[2]) {
+static void sprite_new(sprites_t* const self, sprite_t const sprite, textures_t* const textures, tessellator_t* tessellator, size_t const num_texture_paths, char const* const texture_paths[], size_t size[2], float origin[2]) {
     assert(self != nullptr);
     assert(sprite >= 0 && sprite < NUM_SPRITES);
     assert(textures != nullptr);
 
     sprite_entry_t* const entry = &(self->sprites[sprite]);
+    entry->tex = malloc(sizeof(texture_t*) * num_texture_paths);
 
-    for (sprite_angle_t angle = 0; angle < NUM_SPRITE_ANGLES; angle++) {
-        entry->tex[angle] = textures_get_texture(textures, texture_names[angle])->name;
+    for (size_t i = 0; i < num_texture_paths; i++) {
+        entry->tex[i] = textures_load_texture(textures, texture_paths[i]);
     }
     memcpy(entry->size, size, sizeof(size_t) * 2);
     memcpy(entry->origin, origin, sizeof(float) * 2);
     entry->num_elements = 0;
+    entry->num_angles = num_texture_paths;
 
     // Set up arrays
     glGenVertexArrays(1, &(entry->vao));

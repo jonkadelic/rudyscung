@@ -6,12 +6,17 @@ project('rudyscung', 'c',
         ]
 )
 
+host_system = host_machine.system()
+
 cc = meson.get_compiler('c')
 
 m_dep = cc.find_library('m', required: false)
 cglm_dep = dependency('cglm')
 gl_dep = dependency('gl')
 glew_dep = dependency('glew', static: true)
+if host_system != 'darwin'
+        sdl2main_dep = dependency('sdl2main')
+endif
 sdl2_dep = dependency('sdl2')
 
 sources = []
@@ -19,7 +24,6 @@ sources = []
 subdir('lib')
 subdir('src')
 
-host_system = host_machine.system()
 
 if host_system == 'darwin'
         executable('rudyscung', sources,
@@ -32,7 +36,6 @@ if host_system == 'darwin'
                 ]
         )
 else
-        sdl2main_dep = dependency('sdl2main')
         executable('rudyscung', sources,
         c_args: [
                 '-DGLEW_STATIC'
