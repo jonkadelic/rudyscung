@@ -46,7 +46,6 @@ static void update_slice(client_t* const self, level_t* const level, bool const 
 client_t* const client_new(char const* const resources_path) {
     assert(resources_path != nullptr);
 
-
     client_t* self = malloc(sizeof(client_t));
     assert(self != nullptr);
 
@@ -134,7 +133,7 @@ void client_run(client_t* const self) {
         renderer_render(self->renderer, view_type_get_camera(self->view_type), partial_tick);
 
         // Game tick
-        size_t ticks = (size_t)(delta_tick / MS_PER_TICK);
+        size_t ticks = (size_t) (delta_tick / MS_PER_TICK);
         for (uint64_t t = 0; t < ticks; t++) {
             view_type_tick(self->view_type, level);
             tick(self, level);

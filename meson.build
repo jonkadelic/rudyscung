@@ -45,12 +45,12 @@ if host_system == 'darwin'
                         sdl2_dep
                 ]
         )
-        # executable('server', server_sources,
-        #         link_with: common_lib,
-        #         dependencies: [
-        #                 m_dep
-        #         ]
-        # )
+        executable('server', server_sources,
+                link_with: common_lib,
+                dependencies: [
+                        m_dep
+                ]
+        )
 else
         executable('client', client_sources,
                 c_args: [
@@ -69,13 +69,13 @@ else
                         '-static'
                 ]
         )
-        # executable('server', server_sources,
-        #         link_with: common_lib,
-        #         dependencies: [
-        #                 m_dep
-        #         ],
-        #         link_args: [
-        #                 '-static'
-        #         ]
-        # )
+        executable('server', server_sources,
+                link_with: common_lib,
+                dependencies: [
+                        m_dep
+                ],
+                link_args: [
+                        '-static'
+                ]
+        )
 endif

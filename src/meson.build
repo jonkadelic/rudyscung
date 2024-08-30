@@ -1,5 +1,6 @@
 subdir('client')
 subdir('phys')
 subdir('render')
+subdir('server')
 subdir('util')
 subdir('world')
