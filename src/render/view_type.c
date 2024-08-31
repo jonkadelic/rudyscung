@@ -454,7 +454,7 @@ static void entity_tick(_view_type_entity_t* const self, level_t* const level) {
             last_block_break = current_tick;
 
             raycast_t raycast;
-            raycast_cast_in_level(&raycast, level, entity_pos->pos, entity_rot->rot);
+            raycast_cast_in_level(&raycast, level, (float[NUM_AXES]) { entity_pos->pos[AXIS__X], entity_pos->pos[AXIS__Y] + 1.8f, entity_pos->pos[AXIS__Z] }, entity_rot->rot);
 
             if (raycast.hit) {
                 if (self->keys.left_click) {

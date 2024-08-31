@@ -69,6 +69,10 @@ void ecs_system_velocity(ecs_t* const self, level_t* const level, entity_t const
                 }
             }
         }
+
+        if ((aabb->colliding[AXIS__X] || aabb->colliding[AXIS__Z]) && aabb->colliding[AXIS__Y]) {
+            vel->vel[AXIS__Y] = 0.65f;
+        }
     }
 
     for (axis_t a = 0; a < NUM_AXES; a++) {
@@ -126,10 +130,10 @@ void ecs_system_move_random(ecs_t* const self, level_t* const level, entity_t co
         rot->rot[ROT_AXIS__Y] = M_PI * 2 * random_next_float(rand);
     }
 
-    bool jump = false;
-    if (random_next_int_bounded(rand, 50) == 0) {
-        jump = true;
-    }
+    // bool jump = false;
+    // if (random_next_int_bounded(rand, 50) == 0) {
+    //     jump = true;
+    // }
 
     float forward = 0.3f;
     float cos_rot_dy = cos(rot->rot[ROT_AXIS__Y]);
@@ -141,7 +145,7 @@ void ecs_system_move_random(ecs_t* const self, level_t* const level, entity_t co
     vel->vel[AXIS__X] = vel_x;
     vel->vel[AXIS__Z] = vel_z;
 
-    if (jump) {
-        vel->vel[AXIS__Y] = 1.0f;
-    }
+    // if (jump) {
+    //     vel->vel[AXIS__Y] = 1.0f;
+    // }
 }
