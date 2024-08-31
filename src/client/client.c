@@ -59,6 +59,8 @@ client_t* const client_new(char const* const resources_path) {
     self->textures = textures_new(resources_path);
     self->font = font_new(self, resources_path, FONT_NAME__DEFAULT);
     self->renderer = renderer_new(self);
+    self->view_type = nullptr;
+    self->level = nullptr;
 
     line_init();
     

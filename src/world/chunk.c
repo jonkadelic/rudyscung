@@ -91,3 +91,136 @@ void chunk_set_tile_shape(chunk_t* const self, size_t const pos[NUM_AXES], tile_
 
     self->tile_shapes[COORD(pos)] = shape;
 }
+
+/* SERIALIZATION FORMAT:
+ *     1 byte marker
+ *     4 bytes data size (not including preamble)
+ *     n bytes data
+ */
+
+#define FORMAT_VERSION 1
+
+typedef enum ser_marker {
+    SER_MARKER__VERSION,
+    SER_MARKER__POS,
+    SER_MARKER__TILES,
+    SER_MARKER__TILE_SHAPES,
+    NUM_SER_MARKERS
+} ser_marker_t;
+
+static size_t const EXPECTED_DATA_SIZES[NUM_SER_MARKERS] = {
+    [SER_MARKER__VERSION] = 4,
+    [SER_MARKER__POS] = 8 + 8 + 8,
+    [SER_MARKER__TILES] = CHUNK_SIZE * CHUNK_SIZE * CHUNK_SIZE,
+    [SER_MARKER__TILE_SHAPES] = CHUNK_SIZE * CHUNK_SIZE * CHUNK_SIZE
+};
+
+size_t const chunk_serialize(chunk_t const* const self, uint8_t* const data) {
+    assert(self != nullptr);
+
+    size_t expected_size = 0;
+    for (ser_marker_t marker = 0; marker < NUM_SER_MARKERS; marker++) {
+        expected_size += 1;
+        expected_size += 4;
+        expected_size += EXPECTED_DATA_SIZES[marker];
+    }
+
+    if (data == nullptr) {
+        return expected_size;
+    }
+
+    size_t i = 0;
+
+    // Write version
+    data[i] = SER_MARKER__VERSION; i += 1;
+    *(uint32_t*)(&(data[i])) = EXPECTED_DATA_SIZES[SER_MARKER__VERSION]; i += 4;
+    *(uint32_t*)(&(data[i])) = FORMAT_VERSION; i += 4;
+
+    // Write pos
+    data[i] = SER_MARKER__POS; i += 1;
+    *(uint32_t*)(&(data[i])) = EXPECTED_DATA_SIZES[SER_MARKER__POS]; i += 4;
+    *(uint64_t*)(&(data[i])) = self->pos[0]; i += 8;
+    *(uint64_t*)(&(data[i])) = self->pos[1]; i += 8;
+    *(uint64_t*)(&(data[i])) = self->pos[2]; i += 8;
+
+    // Write tiles
+    data[i] = SER_MARKER__TILES; i += 1;
+    *(uint32_t*)(&(data[i])) = EXPECTED_DATA_SIZES[SER_MARKER__TILES]; i += 4;
+    for (size_t j = 0; j < CHUNK_SIZE * CHUNK_SIZE * CHUNK_SIZE; j++) {
+        data[i] = self->tiles[j];
+        i += 1;
+    }
+
+    // Write tile shapes
+    data[i] = SER_MARKER__TILE_SHAPES; i += 1;
+    *(uint32_t*)(&(data[i])) = EXPECTED_DATA_SIZES[SER_MARKER__TILE_SHAPES]; i += 4;
+    for (size_t j = 0; j < CHUNK_SIZE * CHUNK_SIZE * CHUNK_SIZE; j++) {
+        data[i] = self->tile_shapes[j];
+        i += 1;
+    }
+
+    return expected_size;
+}
+
+chunk_t* const chunk_deserialize(size_t const data_size, uint8_t const data[data_size]) {
+    size_t expected_size = 0;
+    for (ser_marker_t marker = 0; marker < NUM_SER_MARKERS; marker++) {
+        expected_size += 1;
+        expected_size += 4;
+        expected_size += EXPECTED_DATA_SIZES[marker];
+    }
+
+    assert(data_size >= expected_size);
+
+    // Check we have all the appropriate markers
+    size_t num_markers[NUM_SER_MARKERS];
+    size_t i = 0;
+    while (i < data_size) {
+        ser_marker_t marker = (ser_marker_t) data[i];
+        if (marker >= NUM_SER_MARKERS) {
+            LOG_ERROR("Invalid marker %zu at byte %zu!", (size_t) marker, i);
+            return nullptr;
+        }
+        num_markers[marker]++;
+        i = i + 1 + 4;
+        i += *(uint32_t*)(&(data[i]));
+    }
+    for (size_t j = 0; j < NUM_SER_MARKERS; j++) {
+        if (num_markers[j] != 1) {
+            LOG_ERROR("%zu instances of marker found!", num_markers[j]);
+            return nullptr;
+        }
+    }
+
+    chunk_t* chunk = chunk_new((size_chunks_t[NUM_AXES]) { 0, 0, 0 });
+
+    // Read from markers
+    i = 0;
+    while (i < data_size) {
+        ser_marker_t marker = (ser_marker_t) data[i]; i++;
+        size_t data_size = *(uint32_t*)(&(data[i])); i += 4;
+        if (data_size < EXPECTED_DATA_SIZES[marker]) {
+            LOG_ERROR("Data size for marker is too small - expected %zu, got %zu!", EXPECTED_DATA_SIZES[marker], data_size);
+        }
+        size_t j = i;
+        switch (marker) {
+            case SER_MARKER__POS: {
+                chunk->pos[AXIS__X] = *(uint64_t*)(&(data[j])); j += 8;
+                chunk->pos[AXIS__Y] = *(uint64_t*)(&(data[j])); j += 8;
+                chunk->pos[AXIS__Z] = *(uint64_t*)(&(data[j])); j += 8;
+                break;
+            }
+            case SER_MARKER__TILES: {
+                memcpy(chunk->tiles, &(data[j]), CHUNK_SIZE * CHUNK_SIZE * CHUNK_SIZE);
+                break;
+            }
+            case SER_MARKER__TILE_SHAPES: {
+                memcpy(chunk->tiles, &(data[j]), CHUNK_SIZE * CHUNK_SIZE * CHUNK_SIZE);
+                break;
+            }
+        }
+        i += *(uint32_t*)(&(data[i]));
+    }
+
+    return chunk;
+}

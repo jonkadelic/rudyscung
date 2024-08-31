@@ -53,6 +53,7 @@ level_renderer_t* const level_renderer_new(client_t* const client) {
 
     self->tessellator = tessellator_new();
     self->sprites = sprites_new(client);
+    self->chunk_renderers = nullptr;
 
     level_renderer_level_changed(self);
 
