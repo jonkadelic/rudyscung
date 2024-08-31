@@ -90,3 +90,8 @@ void shader_put_uniform_mat4(shader_t* const shader, char const* const uniform, 
     GLuint location = glGetUniformLocation(shader->program, uniform);
     glUniformMatrix4fv(location, 1, GL_FALSE, (GLfloat*) value);
 }
+
+void shader_put_uniform_bool(shader_t* const shader, char const* const uniform, bool const value) {
+    GLuint location = glGetUniformLocation(shader->program, uniform);
+    glUniform1i(location, value);
+}

@@ -3,6 +3,7 @@ client_sources += files(
     'chunk_renderer.c',
     'font.c',
     'level_renderer.c',
+    'line.c',
     'renderer.c',
     'shader.c',
     'shaders.c',

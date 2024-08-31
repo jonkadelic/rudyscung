@@ -12,6 +12,7 @@
 
 #include "src/render/font.h"
 #include "src/render/level_renderer.h"
+#include "src/render/line.h"
 #include "src/render/shaders.h"
 #include "src/render/textures.h"
 #include "src/render/camera.h"
@@ -58,6 +59,8 @@ client_t* const client_new(char const* const resources_path) {
     self->textures = textures_new(resources_path);
     self->font = font_new(self, resources_path, FONT_NAME__DEFAULT);
     self->renderer = renderer_new(self);
+
+    line_init();
     
     OBJ_CTR_INC(client_t);
 
@@ -74,6 +77,8 @@ void client_delete(client_t* const self) {
     textures_delete(self->textures);
     shaders_delete(self->shaders);
     window_delete(self->window);
+
+    line_cleanup();
 
     free(self);
 

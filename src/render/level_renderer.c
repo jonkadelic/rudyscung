@@ -6,9 +6,11 @@
 
 #include <cglm/cglm.h>
 
+#include "cglm/mat4.h"
 #include "src/render/gl.h"
 #include "src/util/object_counter.h"
 #include "src/world/entity/ecs.h"
+#include "src/world/entity/ecs_components.h"
 #include "src/world/side.h"
 #include "src/phys/aabb.h"
 #include "src/client/client.h"
@@ -24,6 +26,7 @@
 #include "src/render/sprites.h"
 #include "src/phys/raycast.h"
 #include "src/util/logger.h"
+#include "src/render/line.h"
 
 #define CHUNK_INDEX(x, y, z) (((y) * self->level_slice.size[AXIS__Z] * self->level_slice.size[AXIS__X]) + ((z) * self->level_slice.size[AXIS__X]) + (x))
 #define TO_CHUNK_SPACE(tile_coord) ((tile_coord) / CHUNK_SIZE)
@@ -231,6 +234,9 @@ void level_renderer_draw(level_renderer_t* const self, camera_t* const camera, f
     textures_t* const textures = client_get_textures(self->client);
     glBindTexture(GL_TEXTURE_2D, textures_get_texture(textures, TEXTURE_NAME__TERRAIN)->name);
 
+    shader_put_uniform_bool(shader, "hasTexture", true);
+    shader_put_uniform_bool(shader, "hasColor", true);
+
     for (size_chunks_t x = 0; x < self->level_slice.size[AXIS__X]; x++) {
         for (size_chunks_t y = 0; y < self->level_slice.size[AXIS__Y]; y++) {
             for (size_chunks_t z = 0; z < self->level_slice.size[AXIS__Z]; z++) {
@@ -257,7 +263,37 @@ void level_renderer_draw(level_renderer_t* const self, camera_t* const camera, f
     glDisable(GL_CULL_FACE);
 
     ecs_t* ecs = level_get_ecs(level);
+
+    entity_t const following = view_type_get_following(client_get_view_type(self->client));
+    if (ecs_has_component(ecs, following, ECS_COMPONENT__POS) && ecs_has_component(ecs, following, ECS_COMPONENT__AABB)) {
+        ecs_component_pos_t const* const following_pos = ecs_get_component_data(ecs, following, ECS_COMPONENT__POS);
+        ecs_component_aabb_t const* const following_aabb = ecs_get_component_data(ecs, following, ECS_COMPONENT__AABB);
+
+        float aabb_min[NUM_AXES];
+        float aabb_max[NUM_AXES];
+        aabb_get_point(following_aabb->aabb, (side_t[NUM_AXES]) { SIDE__NORTH, SIDE__BOTTOM, SIDE__WEST }, aabb_min);
+        aabb_get_point(following_aabb->aabb, (side_t[NUM_AXES]) { SIDE__SOUTH, SIDE__TOP, SIDE__EAST }, aabb_max);
+        for (axis_t a = 0; a < NUM_AXES; a++) {
+            float const lerped = lerp(following_pos->pos_o[a], following_pos->pos[a], partial_tick);
+            aabb_min[a] += lerped;
+            aabb_max[a] += lerped;
+        }
+
+        float color[3] = { 1.0f, 1.0f, 1.0f };
+
+        glm_mat4_identity(mat_model);
+        shader_put_uniform_mat4(shader, "model", mat_model);
+
+        shader_put_uniform_bool(shader, "hasTexture", false);
+
+        glEnable(GL_DEPTH_TEST);
+        line_render_box(aabb_min, aabb_max, 2.0f, color);        
+        glDisable(GL_DEPTH_TEST);
+    }
+
     entity_t const highest_entity_id = ecs_get_highest_entity_id(ecs);
+
+    shader_put_uniform_bool(shader, "hasTexture", true);
 
     for (entity_t entity = 0; entity <= highest_entity_id; entity++) {
         if (ecs_does_entity_exist(ecs, entity)) {

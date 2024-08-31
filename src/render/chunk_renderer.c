@@ -12,7 +12,6 @@
 #include "src/render/level_renderer.h"
 #include "src/render/tessellator.h"
 #include "src/render/tile_renderer.h"
-#include "src/util/logger.h"
 
 struct chunk_renderer {
     level_renderer_t* level_renderer;

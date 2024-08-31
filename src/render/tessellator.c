@@ -81,6 +81,15 @@ void tessellator_bind(tessellator_t* const self, GLuint vao, GLuint vbo, GLuint 
     self->ebo = ebo;
 }
 
+void tessellator_has(tessellator_t* const self, bool has_color[1], bool has_tex[1]) {
+    assert(self != nullptr);
+    assert(has_color != nullptr);
+    assert(has_tex != nullptr);
+
+    has_color[0] = self->has_color;
+    has_tex[0] = self->has_tex;
+}
+
 size_t tessellator_draw(tessellator_t* const self) {
     assert(self != nullptr);
     assert(self->vao > 0);
