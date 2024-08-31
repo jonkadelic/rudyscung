@@ -20,6 +20,8 @@ void view_type_delete(view_type_t* const self);
 
 camera_t* const view_type_get_camera(view_type_t const* const self);
 
+entity_t const view_type_get_following(view_type_t const* const self);
+
 bool const view_type_handle_event(view_type_t* const self, SDL_Event const* const event, level_t* const level);
 
 void view_type_tick(view_type_t* const self, level_t* const level);

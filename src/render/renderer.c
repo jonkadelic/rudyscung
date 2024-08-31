@@ -13,8 +13,12 @@
 #include "src/client/window.h"
 #include "src/render/font.h"
 #include "src/phys/raycast.h"
+#include "src/render/view_type.h"
 #include "src/util/logger.h"
 #include "src/util/object_counter.h"
+#include "src/world/entity/ecs.h"
+#include "src/world/entity/ecs_components.h"
+#include "src/world/side.h"
 
 static void check_errors(void);
 static void draw_overlay(renderer_t* const self);
@@ -133,30 +137,45 @@ static void draw_overlay(renderer_t* const self) {
 
     font_t const* const font = client_get_font(self->client);
 
+    size_t i = 0;
+
     char line_buffer[64];
     snprintf(line_buffer, sizeof(line_buffer) / sizeof(line_buffer[0]), "FPS: %.2f", self->frames.fps);
-    font_draw(font, line_buffer, 0, 0);
+    font_draw(font, line_buffer, 0, i++ * 12);
 
     if (self->level_renderer != nullptr) {
         level_t* const level = client_get_level(self->client);
         ecs_t* const ecs = level_get_ecs(level);
-        entity_t const player = client_get_player(self->client);
+        view_type_t* const view_type = client_get_view_type(self->client);
+        entity_t const following = view_type_get_following(view_type);
 
-        ecs_component_pos_t const* const player_pos = ecs_get_component_data(ecs, player, ECS_COMPONENT__POS);
-        ecs_component_vel_t const* const player_vel = ecs_get_component_data(ecs, player, ECS_COMPONENT__VEL);
-        ecs_component_rot_t const* const player_rot = ecs_get_component_data(ecs, player, ECS_COMPONENT__ROT);
+        ecs_component_pos_t const* const following_pos = ecs_get_component_data(ecs, following, ECS_COMPONENT__POS);
+        ecs_component_vel_t const* const following_vel = ecs_get_component_data(ecs, following, ECS_COMPONENT__VEL);
+        ecs_component_rot_t const* const following_rot = ecs_get_component_data(ecs, following, ECS_COMPONENT__ROT);
 
-        snprintf(line_buffer, sizeof(line_buffer) / sizeof(line_buffer[0]), "x: %.2f y: %.2f z: %.2f", player_pos->pos[AXIS__X], player_pos->pos[AXIS__Y], player_pos->pos[AXIS__Z]);
-        font_draw(font, line_buffer, 0, 12);
+        snprintf(line_buffer, sizeof(line_buffer), "x: %.2f y: %.2f z: %.2f", following_pos->pos[AXIS__X], following_pos->pos[AXIS__Y], following_pos->pos[AXIS__Z]);
+        font_draw(font, line_buffer, 0, i++ * 12);
 
-        snprintf(line_buffer, sizeof(line_buffer) / sizeof(line_buffer[0]), "vx: %.2f vy: %.2f z: %.2f", player_vel->vel[AXIS__X], player_vel->vel[AXIS__Y], player_vel->vel[AXIS__Z]);
-        font_draw(font, line_buffer, 0, 24);
+        snprintf(line_buffer, sizeof(line_buffer), "vx: %.2f vy: %.2f z: %.2f", following_vel->vel[AXIS__X], following_vel->vel[AXIS__Y], following_vel->vel[AXIS__Z]);
+        font_draw(font, line_buffer, 0, i++ * 12);
 
         raycast_t raycast;
-        raycast_cast_in_level(&raycast, level, player_pos->pos, player_rot->rot);
+        raycast_cast_in_level(&raycast, level, following_pos->pos, following_rot->rot);
         if (raycast.hit) {
-            snprintf(line_buffer, sizeof(line_buffer) / sizeof(line_buffer[0]), "hit: %zu %zu %zu, block: %d", raycast.tile_pos[AXIS__X], raycast.tile_pos[AXIS__Y], raycast.tile_pos[AXIS__Z], raycast.tile);
-            font_draw(font, line_buffer, 0, 36);
+            snprintf(line_buffer, sizeof(line_buffer), "hit: %zu %zu %zu, block: %d", raycast.tile_pos[AXIS__X], raycast.tile_pos[AXIS__Y], raycast.tile_pos[AXIS__Z], raycast.tile);
+            font_draw(font, line_buffer, 0, i++ * 12);
+        }
+
+        if (ecs_has_component(ecs, following, ECS_COMPONENT__AABB)) {
+            ecs_component_aabb_t const* const following_aabb = ecs_get_component_data(ecs, following, ECS_COMPONENT__AABB);
+            snprintf(line_buffer, sizeof(line_buffer), "colliding: %s%s%s%s%s", 
+                following_aabb->colliding[AXIS__X] ? "x" : "",
+                following_aabb->colliding[AXIS__X] && (following_aabb->colliding[AXIS__Y] || following_aabb->colliding[AXIS__Z]) ? ", " : "",
+                following_aabb->colliding[AXIS__Y] ? "y" : "",
+                (following_aabb->colliding[AXIS__X] || following_aabb->colliding[AXIS__Y]) && following_aabb->colliding[AXIS__Z] ? ", " : "",
+                following_aabb->colliding[AXIS__Z] ? "z" : ""
+            );
+            font_draw(font, line_buffer, 0, i++ * 12);
         }
     }
 }

@@ -171,6 +171,12 @@ entity_t const client_get_player(client_t* const self) {
     return self->player;
 }
 
+view_type_t* const client_get_view_type(client_t* const self) {
+    assert(self != nullptr);
+
+    return self->view_type;
+}
+
 void client_set_view_type(client_t* const self, view_type_t* const view_type) {
     assert(self != nullptr);
     assert(view_type != nullptr);

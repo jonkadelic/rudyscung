@@ -50,6 +50,7 @@ struct view_type {
     view_type_id_t view_type_id;
     client_t* client;
     camera_t* camera;
+    entity_t following;
     handle_event handle_event;
     tick tick;
     render_tick render_tick;
@@ -57,17 +58,15 @@ struct view_type {
 
 typedef struct _view_type_entity {
     view_type_t super;
-    entity_t entity;
     keys_t keys;
 } _view_type_entity_t;
 
 typedef struct _view_type_isometric {
     view_type_t super;
-    entity_t player;
     keys_t keys;
 } _view_type_isometric_t;
 
-static view_type_t* const view_type_new(view_type_id_t const view_type_id, client_t* const client, camera_t* const camera, handle_event const handle_event, tick const tick, render_tick const render_tick, size_t const size);
+static view_type_t* const view_type_new(view_type_id_t const view_type_id, client_t* const client, camera_t* const camera, entity_t const following, handle_event const handle_event, tick const tick, render_tick const render_tick, size_t const size);
 
 static bool entity_handle_event(_view_type_entity_t* const self, SDL_Event const* const event, level_t* const level);
 
@@ -82,9 +81,7 @@ static void entity_render_tick(_view_type_entity_t* const self, level_t* const l
 static void isometric_render_tick(_view_type_isometric_t* const self, level_t* const level, float const partial_tick);
 
 view_type_entity_t* const view_type_entity_new(client_t* const client, entity_t const entity) {
-    _view_type_entity_t* const self = (_view_type_entity_t*) view_type_new(VIEW_TYPE_ID__ENTITY, client, camera_perspective_new(), (handle_event) entity_handle_event, (tick) entity_tick, (render_tick) entity_render_tick, sizeof(_view_type_entity_t));
-
-    self->entity = entity;
+    _view_type_entity_t* const self = (_view_type_entity_t*) view_type_new(VIEW_TYPE_ID__ENTITY, client, camera_perspective_new(), entity, (handle_event) entity_handle_event, (tick) entity_tick, (render_tick) entity_render_tick, sizeof(_view_type_entity_t));
 
     memset(&(self->keys), 0, sizeof(keys_t));
 
@@ -94,9 +91,7 @@ view_type_entity_t* const view_type_entity_new(client_t* const client, entity_t 
 }
 
 view_type_isometric_t* const view_type_isometric_new(client_t* const client, entity_t const player) {
-    _view_type_isometric_t* const self = (_view_type_isometric_t*) view_type_new(VIEW_TYPE_ID__ISOMETRIC, client, camera_ortho_new(), (handle_event) isometric_handle_event, (tick) isometric_tick, (render_tick) isometric_render_tick, sizeof(_view_type_isometric_t));
-
-    self->player = player;
+    _view_type_isometric_t* const self = (_view_type_isometric_t*) view_type_new(VIEW_TYPE_ID__ISOMETRIC, client, camera_ortho_new(), player, (handle_event) isometric_handle_event, (tick) isometric_tick, (render_tick) isometric_render_tick, sizeof(_view_type_isometric_t));
 
     memset(&(self->keys), 0, sizeof(keys_t));
 
@@ -121,6 +116,12 @@ camera_t* const view_type_get_camera(view_type_t const* const self) {
     return self->camera;
 }
 
+entity_t const view_type_get_following(view_type_t const* const self) {
+    assert(self != nullptr);
+
+    return self->following;
+}
+
 bool const view_type_handle_event(view_type_t* const self, SDL_Event const* const event, level_t* const level) {
     assert(self != nullptr);
     assert(event != nullptr);
@@ -140,7 +141,7 @@ void view_type_render_tick(view_type_t* const self, level_t* const level, float 
     self->render_tick(self, level, partial_tick);
 }
 
-static view_type_t* const view_type_new(view_type_id_t const view_type_id, client_t* const client, camera_t* const camera, handle_event const handle_event, tick const tick, render_tick const render_tick, size_t const size) {
+static view_type_t* const view_type_new(view_type_id_t const view_type_id, client_t* const client, camera_t* const camera, entity_t const following, handle_event const handle_event, tick const tick, render_tick const render_tick, size_t const size) {
     assert(view_type_id >= 0 && view_type_id < NUM_VIEW_TYPE_IDS);
     assert(client != nullptr);
     assert(camera != nullptr);
@@ -155,6 +156,7 @@ static view_type_t* const view_type_new(view_type_id_t const view_type_id, clien
     self->view_type_id = view_type_id;
     self->client = client;
     self->camera = camera;
+    self->following = following;
     self->handle_event = handle_event;
     self->tick = tick;
     self->render_tick = render_tick;
@@ -206,11 +208,19 @@ static bool entity_handle_event(_view_type_entity_t* const self, SDL_Event const
         case SDL_MOUSEMOTION: {
             if (SDL_GetRelativeMouseMode()) {
                 ecs_t* const ecs = level_get_ecs(level);
-                if (ecs_has_component(ecs, self->entity, ECS_COMPONENT__ROT)) {
-                    ecs_component_rot_t* const entity_rot = ecs_get_component_data(ecs, self->entity, ECS_COMPONENT__ROT);
+                if (ecs_has_component(ecs, self->super.following, ECS_COMPONENT__ROT)) {
+                    ecs_component_rot_t* const entity_rot = ecs_get_component_data(ecs, self->super.following, ECS_COMPONENT__ROT);
 
                     entity_rot->rot[ROT_AXIS__Y] += event->motion.xrel / 125.0f;
                     entity_rot->rot[ROT_AXIS__X] += event->motion.yrel / 125.0f;
+
+                    if (entity_rot->rot[ROT_AXIS__X] > M_PI / 2) {
+                        entity_rot->rot[ROT_AXIS__X] = M_PI / 2;
+                    }
+                    if (entity_rot->rot[ROT_AXIS__X] < -M_PI / 2) {
+                        entity_rot->rot[ROT_AXIS__X] = -M_PI / 2;
+                    }
+
                     return true;
                 }
             }
@@ -222,7 +232,7 @@ static bool entity_handle_event(_view_type_entity_t* const self, SDL_Event const
             switch (event->key.keysym.sym) {
                 case SDLK_ESCAPE:
                     ecs_t* const ecs = level_get_ecs(level);
-                    ecs_detach_component(ecs, self->entity, ECS_COMPONENT__CONTROLLED);
+                    ecs_detach_component(ecs, self->super.following, ECS_COMPONENT__CONTROLLED);
                     view_type_isometric_t* const view_type = view_type_isometric_new(self->super.client, client_get_player(self->super.client));
                     client_set_view_type(self->super.client, view_type);
                     return true;
@@ -337,9 +347,9 @@ static void entity_tick(_view_type_entity_t* const self, level_t* const level) {
 
     ecs_t* ecs = level_get_ecs(level);
 
-    bool const has_pos = ecs_get_component_data(ecs, self->entity, ECS_COMPONENT__POS);
-    bool const has_vel = ecs_get_component_data(ecs, self->entity, ECS_COMPONENT__VEL);
-    bool const has_rot = ecs_get_component_data(ecs, self->entity, ECS_COMPONENT__ROT);
+    bool const has_pos = ecs_get_component_data(ecs, self->super.following, ECS_COMPONENT__POS);
+    bool const has_vel = ecs_get_component_data(ecs, self->super.following, ECS_COMPONENT__VEL);
+    bool const has_rot = ecs_get_component_data(ecs, self->super.following, ECS_COMPONENT__ROT);
 
     bool any_movement_input = self->keys.w || self->keys.s || self->keys.a || self->keys.d;
     bool any_vertical_movement_input = self->keys.shift || self->keys.space;
@@ -347,7 +357,7 @@ static void entity_tick(_view_type_entity_t* const self, level_t* const level) {
     bool any_click = self->keys.left_click || self->keys.right_click;
 
     if (has_rot) {
-        ecs_component_rot_t* entity_rot = ecs_get_component_data(ecs, self->entity, ECS_COMPONENT__ROT);
+        ecs_component_rot_t* entity_rot = ecs_get_component_data(ecs, self->super.following, ECS_COMPONENT__ROT);
 
         if (entity_rot->rot[ROT_AXIS__X] > M_PI / 2) {
             entity_rot->rot[ROT_AXIS__X] = M_PI / 2;
@@ -355,6 +365,7 @@ static void entity_tick(_view_type_entity_t* const self, level_t* const level) {
         if (entity_rot->rot[ROT_AXIS__X] < -M_PI / 2) {
             entity_rot->rot[ROT_AXIS__X] = -M_PI / 2;
         }
+
     }
 
     if (any_movement_input && has_vel && has_rot) {
@@ -375,8 +386,8 @@ static void entity_tick(_view_type_entity_t* const self, level_t* const level) {
             left -= speed;
         }
 
-        ecs_component_vel_t* entity_vel = ecs_get_component_data(ecs, self->entity, ECS_COMPONENT__VEL);
-        ecs_component_rot_t* entity_rot = ecs_get_component_data(ecs, self->entity, ECS_COMPONENT__ROT);
+        ecs_component_vel_t* entity_vel = ecs_get_component_data(ecs, self->super.following, ECS_COMPONENT__VEL);
+        ecs_component_rot_t* entity_rot = ecs_get_component_data(ecs, self->super.following, ECS_COMPONENT__ROT);
 
         float cos_rot_dy = cos(entity_rot->rot[ROT_AXIS__Y]);
         float sin_rot_dy = sin(entity_rot->rot[ROT_AXIS__Y]);
@@ -399,7 +410,7 @@ static void entity_tick(_view_type_entity_t* const self, level_t* const level) {
             up -= speed;
         }
 
-        ecs_component_vel_t* entity_vel = ecs_get_component_data(ecs, self->entity, ECS_COMPONENT__VEL);
+        ecs_component_vel_t* entity_vel = ecs_get_component_data(ecs, self->super.following, ECS_COMPONENT__VEL);
 
         float vel_y = up;
 
@@ -424,7 +435,7 @@ static void entity_tick(_view_type_entity_t* const self, level_t* const level) {
             rot_dx += speed;
         }
 
-        ecs_component_rot_t* entity_rot = ecs_get_component_data(ecs, self->entity, ECS_COMPONENT__ROT);
+        ecs_component_rot_t* entity_rot = ecs_get_component_data(ecs, self->super.following, ECS_COMPONENT__ROT);
 
         float new_rot_y = entity_rot->rot[ROT_AXIS__Y] + rot_dy;
         float new_rot_x = entity_rot->rot[ROT_AXIS__X] + rot_dx;
@@ -434,8 +445,8 @@ static void entity_tick(_view_type_entity_t* const self, level_t* const level) {
     }
 
     if (any_click && has_pos && has_rot) {
-        ecs_component_pos_t const* const entity_pos = ecs_get_component_data(ecs, self->entity, ECS_COMPONENT__POS);
-        ecs_component_rot_t const* const entity_rot = ecs_get_component_data(ecs, self->entity, ECS_COMPONENT__ROT);
+        ecs_component_pos_t const* const entity_pos = ecs_get_component_data(ecs, self->super.following, ECS_COMPONENT__POS);
+        ecs_component_rot_t const* const entity_rot = ecs_get_component_data(ecs, self->super.following, ECS_COMPONENT__ROT);
 
         uint64_t current_tick = SDL_GetTicks64();
 
@@ -466,8 +477,8 @@ static void isometric_tick(_view_type_isometric_t* const self, level_t* const le
 
     ecs_t* ecs = level_get_ecs(level);
 
-    ecs_component_vel_t* player_vel = ecs_get_component_data(ecs, self->player, ECS_COMPONENT__VEL);
-    ecs_component_rot_t* player_rot = ecs_get_component_data(ecs, self->player, ECS_COMPONENT__ROT);
+    ecs_component_vel_t* player_vel = ecs_get_component_data(ecs, self->super.following, ECS_COMPONENT__VEL);
+    ecs_component_rot_t* player_rot = ecs_get_component_data(ecs, self->super.following, ECS_COMPONENT__ROT);
 
     if (player_rot->rot[ROT_AXIS__X] > M_PI / 2) {
         player_rot->rot[ROT_AXIS__X] = M_PI / 2;
@@ -589,12 +600,12 @@ static void entity_render_tick(_view_type_entity_t* const self, level_t* const l
 
     ecs_t* ecs = level_get_ecs(level);
 
-    if (ecs_has_component(ecs, self->entity, ECS_COMPONENT__POS)) {
-        ecs_component_pos_t const* const entity_pos = ecs_get_component_data(ecs, self->entity, ECS_COMPONENT__POS);
+    if (ecs_has_component(ecs, self->super.following, ECS_COMPONENT__POS)) {
+        ecs_component_pos_t const* const entity_pos = ecs_get_component_data(ecs, self->super.following, ECS_COMPONENT__POS);
         camera_set_pos(self->super.camera, (float[NUM_AXES]) { lerp(entity_pos->pos_o[AXIS__X], entity_pos->pos[AXIS__X], partial_tick), lerp(entity_pos->pos_o[AXIS__Y] + 1.8f, entity_pos->pos[AXIS__Y] + 1.8f, partial_tick), lerp(entity_pos->pos_o[AXIS__Z], entity_pos->pos[AXIS__Z], partial_tick) });
     }
-    if (ecs_has_component(ecs, self->entity, ECS_COMPONENT__ROT)) {
-        ecs_component_rot_t const* const entity_rot = ecs_get_component_data(ecs, self->entity, ECS_COMPONENT__ROT);
+    if (ecs_has_component(ecs, self->super.following, ECS_COMPONENT__ROT)) {
+        ecs_component_rot_t const* const entity_rot = ecs_get_component_data(ecs, self->super.following, ECS_COMPONENT__ROT);
         camera_set_rot(self->super.camera, entity_rot->rot);
     }
 }
@@ -609,8 +620,8 @@ static void isometric_render_tick(_view_type_isometric_t* const self, level_t* c
 
     ecs_t* ecs = level_get_ecs(level);
 
-    ecs_component_pos_t const* const player_pos = ecs_get_component_data(ecs, self->player, ECS_COMPONENT__POS);
-    ecs_component_rot_t const* const player_rot = ecs_get_component_data(ecs, self->player, ECS_COMPONENT__ROT);
+    ecs_component_pos_t const* const player_pos = ecs_get_component_data(ecs, self->super.following, ECS_COMPONENT__POS);
+    ecs_component_rot_t const* const player_rot = ecs_get_component_data(ecs, self->super.following, ECS_COMPONENT__ROT);
 
     camera_set_pos(self->super.camera, (float[NUM_AXES]) { lerp(player_pos->pos_o[AXIS__X], player_pos->pos[AXIS__X], partial_tick), lerp(player_pos->pos_o[AXIS__Y], player_pos->pos[AXIS__Y], partial_tick), lerp(player_pos->pos_o[AXIS__Z], player_pos->pos[AXIS__Z], partial_tick) });
     camera_set_rot(self->super.camera, player_rot->rot);
